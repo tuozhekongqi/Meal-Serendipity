@@ -1,0 +1,2134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一餐之缘 · 今日何食</title>
+<style>
+/* ========== 基础：宣纸 · 朱砂 · 墨色 · 黛青 ========== */
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+:root {
+  --zhu: #a63a2a; --zhu2: #c05a3a;        /* 朱砂 */
+  --mo: #2b2620; --mo2: #4a4038;           /* 墨色 */
+  --qing: #3d5a6e; --qing2: #6d8da0;       /* 黛青 */
+  --gold: #c9a05e; --gold2: #e0c28a;       /* 描金 */
+  --paper: #f5efe4; --card: #fffdf7;        /* 宣纸 */
+  --ink: #2b2620; --sub: #6f5f4d; --line: #e8dcc8;
+}
+body {
+  background: var(--paper); color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  line-height: 1.6; padding: 0 14px 44px;
+}
+.wrap { max-width: 720px; margin: 0 auto; }
+.kai, h1, h2, .cover-title, .seal, .v-title, .progress .step, .plan-name, .pdish .pn { font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif; }
+.num { font-family: "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; font-weight: 700; letter-spacing: 0; }
+.plan-total .num { font-size: inherit; color: inherit; }
+.pdish .pp.num { font-size: 12px; font-weight: 600; }
+.plan-total { font-size: 13px; }
+.page { animation: fadeUp .5s ease both; }
+
+/* ========== 封面：月洞门借景 ========== */
+#pageCover { min-height: 86vh; display: flex; align-items: center; justify-content: center; }
+.cover-frame::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 1; opacity: 0;
+  transition: opacity .6s;
+}
+.cover-frame.wx-rain::after {
+  opacity: 1; background: repeating-linear-gradient(115deg, transparent 0 7px, rgba(93, 118, 140, .22) 7px 9px);
+  animation: rainFall .45s linear infinite;
+}
+@keyframes rainFall { 0% { background-position: 0 0; } 100% { background-position: -10px 26px; } }
+.cover-frame.wx-snow::after {
+  opacity: 1; background-image: radial-gradient(rgba(255, 255, 255, .9) 1.6px, transparent 2.2px);
+  background-size: 34px 34px; animation: snowFall 5s linear infinite;
+}
+@keyframes snowFall { 0% { background-position: 0 -34px; } 100% { background-position: 8px 34px; } }
+.cover-frame.wx-hot::after {
+  opacity: 1; background: radial-gradient(60% 40% at 50% 6%, rgba(242, 196, 116, .5), transparent 70%);
+}
+.cover-frame.wx-fog::after {
+  opacity: 1; background: linear-gradient(rgba(240, 236, 224, .55), rgba(240, 236, 224, .15));
+}
+.cover-frame {
+  position: relative; width: 100%; max-width: 520px; margin: 0 auto;
+  padding: 34px 30px 28px; text-align: center; overflow: hidden;
+  background: radial-gradient(120% 100% at 50% 0%, #faf5ea 0%, #f1e9d8 100%);
+  border: 1.5px solid #d8cbb0; border-radius: 4px;
+  box-shadow: 0 20px 54px rgba(90, 70, 40, .16), inset 0 0 0 5px rgba(255, 253, 247, .65);
+}
+.cn { position: absolute; width: 34px; height: 34px; border-color: var(--gold); border-style: solid; border-width: 0; z-index: 2; }
+.cn.tl { top: 8px; left: 8px; border-top-width: 2px; border-left-width: 2px; }
+.cn.tr { top: 8px; right: 8px; border-top-width: 2px; border-right-width: 2px; }
+.cn.bl { bottom: 8px; left: 8px; border-bottom-width: 2px; border-left-width: 2px; }
+.cn.br { bottom: 8px; right: 8px; border-bottom-width: 2px; border-right-width: 2px; }
+/* 横批匾额 */
+.plaque {
+  display: inline-flex; align-items: center; gap: 14px;
+  background: linear-gradient(180deg, #3a2f24, #241d15);
+  color: #ecd9b4; padding: 10px 34px; border-radius: 3px; position: relative;
+  box-shadow: 0 6px 18px rgba(36, 29, 21, .35), inset 0 1px 0 rgba(255, 240, 210, .18);
+}
+.plaque::before, .plaque::after {
+  content: '◆'; position: absolute; top: 50%; transform: translateY(-50%);
+  color: var(--gold2); font-size: 7px;
+}
+.plaque::before { left: 12px; } .plaque::after { right: 12px; }
+.plaque .pt { font-size: 30px; letter-spacing: 10px; text-indent: 10px; font-weight: 700; }
+.plaque .ps { display: flex; flex-direction: column; gap: 1px; font-size: 11px; line-height: 1.3; color: var(--gold2); opacity: .85; font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif; }
+/* 月洞门 */
+.moon-gate {
+  width: 236px; height: 236px; margin: 22px auto 18px; border-radius: 50%;
+  position: relative; overflow: hidden;
+  border: 2px solid var(--mo);
+  box-shadow: 0 0 0 5px var(--paper), 0 0 0 6px var(--gold2), 0 14px 34px rgba(43, 38, 32, .22), inset 0 0 44px rgba(43, 38, 32, .12);
+  background: linear-gradient(180deg, #f2eadb 0%, #e9e0cd 55%, #ddd2bb 100%);
+}
+.moon-gate .hills { position: absolute; inset: 0; }
+.moon-gate .bowl-scene { position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%); width: 108px; height: 108px; }
+.moon-gate .bowl-scene svg { width: 108px; height: 108px; filter: drop-shadow(0 10px 14px rgba(43, 38, 32, .25)); }
+/* 窗下副题 */
+.cover-sub { margin-top: 4px; color: #7a6a55; font-size: 13.5px; letter-spacing: 5px; text-indent: 5px; }
+.gold-line {
+  width: 140px; height: 1px; margin: 16px auto; position: relative;
+  background: linear-gradient(90deg, transparent, var(--gold2), transparent);
+}
+.gold-line::after {
+  content: '◆'; position: absolute; top: -9px; left: 50%; transform: translateX(-50%);
+  color: var(--gold); font-size: 8px;
+}
+.cover-btn {
+  border: none; cursor: pointer; font-family: inherit;
+  background: linear-gradient(135deg, var(--zhu), var(--zhu2));
+  color: #fff; font-size: 16.5px; font-weight: 700; letter-spacing: 4px;
+  padding: 15px 44px; border-radius: 4px; position: relative;
+  box-shadow: 0 12px 28px rgba(166, 58, 42, .32), inset 0 1px 0 rgba(255, 255, 255, .22);
+  transition: transform .18s, box-shadow .2s, filter .2s;
+  display: inline-flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.cover-btn::before {
+  content: ''; position: absolute; inset: 4px; border: 1px solid rgba(255, 226, 200, .5);
+  border-radius: 2px; pointer-events: none;
+}
+.cover-btn small { font-size: 11.5px; font-weight: 400; letter-spacing: 2px; opacity: .9; }
+.cover-btn:hover { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(166, 58, 42, .4); filter: brightness(1.06); }
+.cover-btn:active { transform: scale(.96); }
+.cover-verse { margin-top: 16px; font-size: 12px; color: #a08a6a; letter-spacing: 2px; }
+.cover-verse small { display: block; font-size: 10.5px; color: #bfae99; letter-spacing: 1px; margin-top: 3px; }
+
+/* ========== 页头与进度（启承转合） ========== */
+.page-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 20px 2px 8px; font-size: 17px; font-weight: 800; letter-spacing: 2px; color: var(--mo);
+}
+.page-head .ph-sub { font-size: 11px; font-weight: 400; color: #b09a7c; letter-spacing: 1px; margin-left: 2px; }
+.back-btn {
+  width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid var(--line);
+  background: var(--card); color: #6b5d4b; font-size: 20px; line-height: 1;
+  cursor: pointer; transition: all .15s; font-family: inherit;
+  display: flex; align-items: center; justify-content: center; padding-bottom: 3px;
+}
+.back-btn:hover { border-color: var(--gold); color: var(--gold); }
+.back-btn:active { transform: scale(.9); background: #f6f0e6; }
+.progress { display: flex; align-items: center; justify-content: center; gap: 7px; margin: 6px 2px 16px; }
+.progress .step {
+  width: 30px; height: 30px; border-radius: 5px; border: 1.5px solid #d8cbb0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #b8a888; background: var(--card);
+  transition: all .25s;
+}
+.progress .step.on { background: var(--zhu); border-color: var(--zhu); color: #fff; box-shadow: 0 3px 10px rgba(166, 58, 42, .35); animation: stamp .35s ease both; }
+.progress .link { width: 26px; height: 1px; background: #d8cbb0; }
+
+/* ========== 册页 ========== */
+/* 失焦局部校验：微弱红框 + 小字提示 */
+.leaf.miss-weak { border-color: rgba(200, 90, 70, .6) !important; box-shadow: 0 0 0 3px rgba(200, 90, 70, .08); }
+.weak-tip { font-size: 11px; color: #b0483a; margin-top: 8px; letter-spacing: 1px; }
+.weak-tip::before { content: '⚠ '; }
+/* 选填模块：底色略深 + 灰色标记，一眼可辨 */
+.leaf.leaf-opt { background: #f7f2e6; }
+.tag-l.opt { background: #b3a88f; }
+/* 模式互斥：当前激活高亮，另一个置灰 */
+.mode-btn.mode-on { box-shadow: 0 0 0 3px rgba(166, 58, 42, .4), 0 12px 30px rgba(166, 58, 42, .3); transform: translateY(-2px); }
+.mode-btn.mode-off { opacity: .5; filter: saturate(.6) grayscale(.25); transform: scale(.98); }
+/* 标签选中轻微回弹 */
+@keyframes tapPop { 0% { transform: scale(.94); } 55% { transform: scale(1.05); } 100% { transform: scale(1); } }
+.vopt.active, .chip.active, .tp-chip.on, .scope-btn.on { animation: tapPop .28s ease; }
+/* 重置按钮 */
+.form-actions { display: flex; gap: 10px; margin-top: 4px; }
+.ghost-btn {
+  border: 1.5px solid var(--gold); background: transparent; color: var(--gold);
+  font-family: inherit; font-size: 13px; letter-spacing: 1px; padding: 12px 14px;
+  border-radius: 99px; cursor: pointer; transition: all .18s; flex-shrink: 0;
+}
+.ghost-btn:hover { background: rgba(201, 160, 94, .1); }
+.ghost-btn:active { transform: scale(.96); }
+.leaf {
+  position: relative; background: var(--card); border-radius: 12px;
+  padding: 18px 18px 16px 58px; margin-bottom: 14px;
+  border: 1px solid rgba(232, 220, 200, .9);
+  box-shadow: 0 2px 12px rgba(90, 70, 40, .06);
+}
+.leaf .v-title {
+  position: absolute; left: 11px; top: 14px; bottom: 14px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; font-size: 12.5px; line-height: 1.25; color: #8a7a68;
+  border-right: 1px solid var(--gold2); padding-right: 7px;
+  user-select: none; pointer-events: none;
+  font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif;
+}
+.leaf h2 { font-size: 15.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; color: #4a3f31; }
+.leaf h2 .seal-mini {
+  font-size: 10px; color: var(--zhu); border: 1.2px solid var(--zhu);
+  border-radius: 3px; padding: 0 4px; transform: rotate(-3deg); line-height: 1.5;
+}
+.tag-l { font-size: 10.5px; color: var(--gold); border: 1px solid var(--gold2); border-radius: 99px; padding: 0 8px; font-weight: 600; letter-spacing: 1px; background: rgba(201, 160, 94, .08); }
+.row { margin-bottom: 14px; }
+.row:last-child { margin-bottom: 0; }
+.label { font-size: 12px; color: var(--sub); margin-bottom: 10px; letter-spacing: .5px; }
+
+select, input[type="text"], input[type="number"] {
+  width: 100%; padding: 11px 12px; border: 1.5px solid var(--line); border-radius: 8px;
+  font-size: 14px; background: #fdfaf4; color: var(--ink); font-family: inherit;
+  transition: border .2s, background .2s;
+}
+select:focus, input:focus { outline: none; border-color: var(--gold); background: #fff; }
+input::placeholder { color: #c8b8a2; }
+
+/* ========== 筷子人数 ========== */
+.chop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.chop-btn {
+  border: 1.5px solid var(--line); background: #fdfaf4; border-radius: 10px;
+  padding: 12px 6px 10px; cursor: pointer; font-family: inherit;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  transition: all .18s;
+}
+.chop-btn svg { width: 44px; height: 44px; display: block; }
+.chop-btn .ct { font-size: 13px; font-weight: 600; color: #6b5d4b; }
+.chop-btn:hover { border-color: var(--gold2); background: #faf4ea; }
+.chop-btn:active { transform: scale(.96); }
+.chop-btn.active {
+  border-color: var(--zhu); background: linear-gradient(180deg, #fdf6f0, #faf0e6);
+  box-shadow: 0 3px 12px rgba(166, 58, 42, .16);
+}
+.chop-btn.active .ct { color: var(--zhu); }
+.chop-btn.active svg { animation: setDown .35s ease both; }
+@keyframes setDown { 0% { transform: translateY(-9px) rotate(-3deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+
+/* 横向胶囊（天气） */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  border: 1.5px solid var(--line); background: #fdfaf4; color: #6b5d4b;
+  padding: 8px 13px; border-radius: 99px; font-size: 13px; cursor: pointer;
+  transition: all .18s; user-select: none; font-family: inherit;
+  min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
+}
+.chip:hover { border-color: var(--gold2); background: #faf4ea; }
+.chip:active { transform: scale(.93); }
+.chip.active { color: #fff; border-color: transparent; font-weight: 600; box-shadow: 0 3px 10px rgba(0, 0, 0, .16); animation: stamp .3s ease both; }
+.chip[data-set="weather"].active { background: linear-gradient(135deg, var(--qing), #5a7d94); box-shadow: 0 3px 10px rgba(61, 90, 110, .35); }
+.hidden-inline { display: none !important; }
+
+/* ========== 竖排选项与盖戳 ========== */
+.vlist { display: flex; flex-direction: column; gap: 8px; }
+.vopt {
+  display: flex; align-items: center; gap: 12px; text-align: left; width: 100%;
+  border: 1.5px solid var(--line); background: #fdfaf4; border-radius: 10px;
+  padding: 10px 14px; cursor: pointer; font-family: inherit;
+  transition: all .18s;
+}
+.vopt:hover { border-color: var(--gold2); background: #faf4ea; }
+.vopt:active { transform: scale(.985); }
+.vopt .ve { font-size: 21px; width: 30px; text-align: center; flex-shrink: 0; }
+.vopt .ve svg, .chip svg, .cross-col .ve svg { width: 22px; height: 22px; vertical-align: -5px; display: inline-block; }
+.vopt .vt { flex: 1; font-size: 14px; font-weight: 600; color: #4a3f31; line-height: 1.45; }
+.vopt .vd { display: block; font-size: 11.5px; font-weight: 400; color: var(--sub); margin-top: 2px; letter-spacing: .3px; }
+/* 盖戳 */
+.seal-mark {
+.seal-mark.wait {
+  border-color: rgba(184, 168, 136, .85) !important; color: #b8a888 !important;
+  font-size: 11px; opacity: .95; box-shadow: none !important;
+}
+  width: 24px; height: 24px; border: 1.6px solid var(--zhu); border-radius: 4px;
+  color: var(--zhu); font-size: 12px; font-weight: 700; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transform: rotate(-4deg); background: rgba(166, 58, 42, .04);
+}
+.seal-mark.k2 { border-color: #b0722a; color: #b0722a; background: rgba(176, 114, 42, .04); }
+.seal-mark.k3 { border-color: #7a7f85; color: #7a7f85; background: rgba(122, 127, 133, .04); }
+.stamp-now { animation: stamp .32s ease both; }
+.vopt.active { border-color: var(--zhu); background: linear-gradient(180deg, #fdf6f0, #faf0e6); box-shadow: 0 3px 10px rgba(166, 58, 42, .12); }
+.vopt.active .vt { color: var(--zhu); }
+.vopt.t1 { border-color: var(--gold); background: linear-gradient(180deg, #fdf9f1, #faf3e6); box-shadow: 0 3px 10px rgba(201, 160, 94, .18); }
+.vopt.t1 .vt { color: #a87c3a; }
+.vopt.t2 { border-color: var(--zhu); background: linear-gradient(180deg, #fdf6f0, #faf0e6); }
+.vopt.t2 .vt { color: var(--zhu); }
+.vopt.t3 { border-color: #c4b8a6; background: #faf7f1; }
+.vopt.t3 .vt { color: #83745f; }
+/* 两栏交叉 */
+.person-tabs { display: flex; gap: 9px; margin: 2px 0 10px; flex-wrap: wrap; }
+.ptab {
+  width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid #d8cbb0;
+  background: var(--card); color: #a08a6a; font-size: 14px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: all .18s;
+  display: flex; align-items: center; justify-content: center;
+}
+.ptab:hover { border-color: var(--gold); color: var(--gold); }
+.ptab:active { transform: scale(.9); }
+.ptab.on, .scope-btn.on { animation: tapPop .25s ease; }
+.scope-btn:active { transform: scale(.95); }
+.copy-btn:active { transform: scale(.92); }
+.chip-x button:active { transform: scale(.85); }
+.plan.alt:active { transform: translateY(0) scale(.985); }
+.ptab.on { background: linear-gradient(135deg, var(--zhu), var(--zhu2)); border-color: transparent; color: #fff; box-shadow: 0 3px 10px rgba(166, 58, 42, .35); }
+.ptab.done { background: linear-gradient(135deg, var(--gold), #a87c3a); border-color: transparent; color: #fff; }
+.person-title {
+  font-size: 15px; font-weight: 700; color: var(--zhu); letter-spacing: 3px;
+  margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px dashed rgba(201, 160, 94, .4);
+}
+/* 方案里的归属标注 */
+.who {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 4px; margin-right: 5px;
+  font-size: 10.5px; color: #fff; font-weight: 700; font-style: normal;
+  font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif; transform: rotate(-3deg);
+  background: linear-gradient(135deg, var(--qing), #27435a); vertical-align: -4px;
+}
+.who.who1 { background: linear-gradient(135deg, #c9a05e, #a87c3a); }
+.who.who2 { background: linear-gradient(135deg, #5a7d94, #27435a); }
+.who.who3 { background: linear-gradient(135deg, #a63a2a, #7d2a1e); }
+.cross-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.cross-col .vopt { padding: 9px 10px; gap: 8px; }
+.cross-col .vopt .ve { font-size: 18px; width: 24px; }
+.cross-col .vopt .vt { font-size: 13px; }
+.cross-col .vopt .vd { font-size: 10.5px; }
+/* 主食份数徽章：选=朱砂章，✕2=金章 */
+.vcheck {
+  width: 25px; height: 25px; border-radius: 4px;
+  border: 1.5px dashed rgba(201, 160, 94, .55);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+}
+.type-badge {
+  width: 25px; height: 25px; border-radius: 4px; background: var(--zhu); color: #fff;
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transform: rotate(-4deg); font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif;
+  box-shadow: 0 2px 6px rgba(166, 58, 42, .35);
+}
+.type-badge.x2 { background: linear-gradient(135deg, var(--gold), #a87c3a); box-shadow: 0 2px 6px rgba(168, 124, 58, .4); }
+@media (max-width: 560px) {
+  .plans-alt { grid-template-columns: 1fr; } .cross-grid { grid-template-columns: 1fr; } }
+
+/* ========== 主按钮 ========== */
+.primary-btn {
+  width: 100%; border: none; cursor: pointer; font-family: inherit;
+  position: relative; overflow: hidden;
+  background: linear-gradient(135deg, var(--zhu), var(--zhu2)); color: #fff;
+  padding: 15px; border-radius: 10px; font-size: 15.5px; font-weight: 700; letter-spacing: 3px;
+  box-shadow: 0 8px 20px rgba(166, 58, 42, .28);
+  transition: transform .18s, box-shadow .2s, filter .2s; margin-top: 4px;
+}
+.primary-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(166, 58, 42, .34); filter: brightness(1.05); }
+.primary-btn.ink::after {
+  content: ''; position: absolute; left: 50%; top: 50%; width: 26px; height: 26px;
+  border-radius: 50%; background: radial-gradient(circle, rgba(43, 38, 32, .5), rgba(43, 38, 32, 0) 70%);
+  transform: translate(-50%, -50%); pointer-events: none;
+  animation: inkBurst .65s ease-out forwards;
+}
+@keyframes inkBurst { 0% { transform: translate(-50%, -50%) scale(.3); opacity: .8; } 100% { transform: translate(-50%, -50%) scale(4); opacity: 0; } }
+.primary-btn:active { transform: scale(.97); }
+.primary-btn.ghost {
+  background: var(--card); color: #6b5d4b; border: 1.5px solid var(--line);
+  box-shadow: none; letter-spacing: 1px; font-weight: 600;
+}
+.primary-btn.ghost:hover { border-color: var(--gold); color: var(--gold); box-shadow: 0 6px 16px rgba(90, 70, 40, .08); filter: none; }
+.primary-btn.ghost:active { background: #f6f0e6; }
+.btn-row { display: flex; gap: 10px; margin-top: 4px; }
+.btn-row .primary-btn { flex: 1; margin-top: 0; }
+.btn-row svg { vertical-align: -3px; margin-right: 6px; }
+
+/* ========== 模式：上下两帖 ========== */
+#pageMode { display: flex; flex-direction: column; min-height: calc(100vh - 100px); }
+.mode-grid { display: flex; flex-direction: column; gap: 16px; flex: 1; justify-content: center; padding: 12px 0 18px; }
+.mode-btn {
+  border: none; cursor: pointer; font-family: inherit; text-align: center;
+  background: var(--card); border: 1.5px solid var(--line); border-radius: 16px;
+  flex: 1; font-size: 16px; font-weight: 800; color: var(--mo);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  transition: transform .18s, box-shadow .2s, border-color .2s;
+}
+.mode-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 26px rgba(90, 70, 40, .14); }
+.mode-btn:active { transform: scale(.96); }
+.mode-btn .me { font-size: 48px; display: flex; }
+.mode-btn .me svg { width: 54px; height: 54px; }
+.mode-btn .mt { font-size: 19px; letter-spacing: 4px; }
+.mode-btn small { display: block; font-size: 12px; font-weight: 400; color: var(--sub); margin-top: 6px; letter-spacing: 2px; }
+.mode-btn .seal-mark { width: 30px; height: 30px; font-size: 15px; }
+.mb-smart { border-color: #f0d4b8; background: linear-gradient(180deg, #fffaf5, #fff6ee); }
+.mb-lot { border-color: #cfd8e2; background: linear-gradient(180deg, #f8fbfd, #f2f7fa); }
+
+/* ========== 结果：首选大帖 + 备选小帖 ========== */
+.result-scroll {
+  position: relative; background: linear-gradient(180deg, #fdf9f1, #f8f1e3);
+  border: 1px solid #e8dcc8; border-radius: 3px;
+  padding: 28px 16px 20px; box-shadow: 0 10px 30px rgba(90, 70, 40, .12);
+}
+.result-scroll::before, .result-scroll::after {
+  content: ''; position: absolute; left: -6px; right: -6px; height: 10px;
+  background: linear-gradient(180deg, #d9b97e, #b8904f);
+  border-radius: 5px; box-shadow: 0 2px 6px rgba(90, 70, 40, .28);
+}
+.result-scroll::before {
+  animation: axisGrow .6s ease both; transform-origin: center; top: -5px; }
+.result-scroll::after { bottom: -5px; animation: axisGrow .6s ease both; transform-origin: center; }
+@keyframes axisGrow { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+.result-scroll { position: relative; animation: scrollOpen .55s ease both; }
+@keyframes scrollOpen { 0% { transform: scaleY(.03); opacity: 0; } 100% { transform: scaleY(1); opacity: 1; } }
+.seal-script {
+  position: absolute; right: 6px; top: -8px; width: 36px; height: 36px;
+  opacity: 0; z-index: 3; animation: sealStamp .55s .5s ease forwards;
+}
+@keyframes sealStamp {
+  0% { transform: scale(1.7) rotate(-16deg); opacity: 0; }
+  55% { transform: scale(.9) rotate(-5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-5deg); opacity: 1; }
+}
+.seal-script rect { animation: sealDraw 1s .3s ease forwards; }
+@keyframes sealDraw { to { stroke-dashoffset: 0; } }
+.plans-alt { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+.plan {
+  position: relative; border: 1.5px solid var(--line); border-radius: 12px;
+  padding: 14px 14px 12px; margin-top: 14px; opacity: .78; filter: saturate(.9);
+}
+/* 首选：深墨描金大帖 */
+.plan.top {
+  opacity: 1; filter: none;
+  background: linear-gradient(160deg, #352b20 0%, #241d15 100%);
+  border-color: var(--gold); color: #f3e9d5;
+  box-shadow: 0 10px 30px rgba(43, 38, 32, .35), inset 0 0 0 1px rgba(201, 160, 94, .25);
+  padding: 18px 18px 16px;
+}
+.plan.top .badge { background: linear-gradient(135deg, var(--gold), #a87c3a); color: #2b2620; box-shadow: 0 2px 8px rgba(201, 160, 94, .4); }
+.plan.top .plan-name { color: #f3e9d5; font-size: 19px; letter-spacing: 1px; }
+.plan.top .pdish { border-bottom-color: rgba(201, 160, 94, .25); }
+.plan.top .pn { color: #f3e9d5; }
+.plan.top .pp { color: var(--gold2); }
+.plan.top .tag { background: rgba(201, 160, 94, .16); color: var(--gold2); }
+.plan.top .plan-why { color: var(--gold2); }
+.plan.top .plan-desc { color: #b8a888; }
+.plan.top .plan-total { color: var(--gold2); border-top: 1px solid rgba(201, 160, 94, .35); padding-top: 8px; margin-top: 10px; }
+.badge {
+  position: absolute; top: -11px; left: 12px; font-size: 11px; font-weight: 700;
+  padding: 2px 10px; border-radius: 99px; color: #fff;
+  background: linear-gradient(135deg, var(--zhu), var(--zhu2));
+  box-shadow: 0 2px 8px rgba(166, 58, 42, .35);
+}
+.plan.alt .badge {
+  background: transparent; color: #8a7c68; border: 1.2px solid #b8a888;
+  border-radius: 3px; padding: 1px 7px; box-shadow: none;
+  transform: rotate(-2deg); font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif;
+}
+.plan.alt { cursor: pointer; transition: transform .18s, box-shadow .18s, border-color .18s; }
+.plan.alt:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(90, 70, 40, .14); border-color: rgba(201, 160, 94, .6); }
+.pick-row {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  margin-top: 12px; flex-wrap: wrap;
+}
+.pick-hint {
+  font-size: 11px; color: #b8a888; letter-spacing: .5px;
+  font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif;
+}
+.pick-hint b { color: var(--gold2); }
+.pick-btn {
+  display: block; margin: 0; border: none; cursor: pointer; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--zhu), var(--zhu2)); color: #fff;
+  font-family: inherit; font-size: 13.5px; font-weight: 700; letter-spacing: 1px;
+  padding: 10px 22px; border-radius: 99px;
+  box-shadow: 0 6px 16px rgba(166, 58, 42, .35); transition: all .18s;
+}
+.pick-btn:hover { transform: translateY(-2px); filter: brightness(1.07); }
+.pick-btn:active { transform: scale(.95); }
+.order-card {
+  background: var(--card); border: 1px solid rgba(232, 220, 200, .9); border-radius: 12px;
+  padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 2px 10px rgba(90, 70, 40, .06);
+}
+.oc-name { font-size: 17px; font-weight: 800; color: var(--ink); letter-spacing: .5px; }
+.oc-meta { font-size: 11.5px; color: var(--sub); margin-top: 2px; }
+.oc-search { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 12.5px; color: var(--sub); flex-wrap: wrap; }
+.oc-search b { color: var(--ink); letter-spacing: .5px; }
+.copy-btn {
+  border: 1px solid var(--gold); background: transparent; color: var(--gold);
+  padding: 4px 13px; border-radius: 99px; font-size: 12px; cursor: pointer;
+  font-family: inherit; transition: all .15s;
+}
+.copy-btn:hover { background: rgba(201, 160, 94, .1); }
+.copy-btn:active { transform: scale(.93); }
+.oc-links { display: flex; gap: 10px; }
+.oc-links a {
+  flex: 1; text-align: center; padding: 12px 6px; border-radius: 10px;
+  background: #fdfaf3; border: 1px solid rgba(201, 160, 94, .5);
+  color: var(--mo); font-size: 13px; font-weight: 700; text-decoration: none;
+  letter-spacing: 1px; transition: all .2s; white-space: nowrap;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.oc-links a:hover {
+  background: linear-gradient(135deg, #f9edcd, #f3dfab);
+  border-color: var(--gold); transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(168, 124, 58, .22);
+}
+.oc-links a:active { transform: scale(.96); }
+.oc-seal {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 4px; margin-right: 5px;
+  font-size: 11px; color: #fff; font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif;
+  transform: rotate(-4deg); vertical-align: -4px; box-shadow: 0 2px 5px rgba(43, 38, 32, .25);
+}
+.oc-seal.s-mt { background: linear-gradient(135deg, #c9a05e, #a87c3a); }
+.oc-seal.s-elm { background: linear-gradient(135deg, #5a7d94, #27435a); }
+.oc-seal.s-tb { background: linear-gradient(135deg, #a63a2a, #7d2a1e); }
+.oc-go { color: var(--gold); font-size: 12px; }
+.plan.alt { border-color: #e5d5b8; }
+.plan-name { font-size: 17px; font-weight: 800; margin-top: 2px; }
+.plan.alt .plan-name { font-size: 14.5px; font-weight: 600; color: #5a5145; }
+.pdish {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  border-bottom: 1px solid #f2ead9; padding: 5px 2px; font-size: 13.5px;
+}
+.pdish:last-child { border-bottom: none; }
+.pdish .pn { font-weight: 600; color: #4a3f31; }
+.pdish .pp { font-size: 11.5px; color: #a08a6a; flex-shrink: 0; }
+.plan.alt .pdish { font-size: 12.5px; padding: 4px 2px; }
+.plan.alt .pp { font-size: 10.5px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 6px; }
+.tag { font-size: 11px; padding: 2px 9px; border-radius: 99px; background: #f1ece2; color: #7a6c58; }
+.plan.top .tag { background: rgba(201, 160, 94, .16); color: var(--gold2); }
+.plan-why { font-size: 12.5px; color: var(--zhu); font-weight: 600; }
+.plan.alt .plan-why { color: #a99b8a; font-weight: 500; font-size: 11.5px; }
+.plan-desc { font-size: 12px; color: var(--sub); margin-top: 4px; }
+.plan-total { font-size: 13px; color: var(--gold); font-weight: 700; margin-top: 6px; }
+.plan.alt .plan-total { font-size: 11.5px; }
+
+/* ========== 随缘摇签：深墨签台 ========== */
+.lot-stage {
+  position: relative; background: linear-gradient(170deg, #362c20, #1d1812);
+  border: 1px solid var(--gold); border-radius: 14px;
+  padding: 22px 16px 20px; text-align: center; overflow: hidden;
+  box-shadow: 0 14px 36px rgba(43, 38, 32, .4), inset 0 0 70px rgba(201, 160, 94, .07);
+}
+.lot-stage::before {
+  content: ''; position: absolute; top: -70px; left: 50%; transform: translateX(-50%);
+  width: 260px; height: 130px; pointer-events: none;
+  background: radial-gradient(ellipse, rgba(224, 194, 138, .25), transparent 70%);
+}
+.lot-scope { display: flex; gap: 10px; margin-bottom: 4px; position: relative; z-index: 2; }
+.scope-btn {
+  flex: 1; border: 1.2px solid rgba(201, 160, 94, .45); background: transparent; color: var(--gold2);
+  font-family: inherit; font-size: 12px; letter-spacing: 2px; padding: 9px 8px;
+  border-radius: 99px; cursor: pointer; transition: all .18s; text-align: center;
+}
+.scope-btn:hover { border-color: var(--gold2); color: #f3e9d5; }
+.scope-btn.on { background: linear-gradient(135deg, var(--zhu), var(--zhu2)); border-color: transparent; color: #fff; box-shadow: 0 3px 10px rgba(166, 58, 42, .4); }
+.lot-tube-wrap { width: 90px; margin: 12px auto 4px; position: relative; z-index: 2; }
+.lot-tube-wrap svg { width: 90px; height: 118px; display: block; filter: drop-shadow(0 12px 16px rgba(0, 0, 0, .45)); }
+@keyframes shakeTube { 0%, 100% { transform: rotate(0); } 10% { transform: rotate(-9deg); } 22% { transform: rotate(8deg); } 34% { transform: rotate(-7deg); } 46% { transform: rotate(6deg); } 58% { transform: rotate(-5deg); } 70% { transform: rotate(4deg); } 82% { transform: rotate(-2deg); } 92% { transform: rotate(1deg); } }
+.tube-shake { animation: shakeTube 1.2s ease-in-out; transform-origin: 50% 90%; }
+/* 摇签时桶里的签上下跳动 */
+@keyframes sticksBob { from { transform: translateY(0); } to { transform: translateY(7px); } }
+.tube-shake .lot-sticks { animation: sticksBob .24s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center bottom; }
+.lot-slips {
+  display: flex; flex-wrap: wrap; gap: 16px; justify-content: center;
+  margin-top: 16px; position: relative; z-index: 2; align-items: flex-end;
+}
+/* 细长签：签上刻字，无卡片框 */
+.lot-slip {
+  position: relative; width: 46px; min-height: 252px;
+  overflow: visible;
+  background: linear-gradient(180deg, #fcf4e2 0%, #f3e6c8 60%, #ecdbb6 100%);
+  border: 1px solid #ddc9a2;
+  border-radius: 22px 22px 7px 7px;
+  box-shadow: 0 12px 20px rgba(0, 0, 0, .3);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 26px 3px 12px;
+}
+.lot-slip::before {
+  content: ''; position: absolute; top: 9px; left: 50%; transform: translateX(-50%);
+  width: 8px; height: 8px; border-radius: 50%; background: var(--zhu);
+  box-shadow: 0 1px 3px rgba(166, 58, 42, .5);
+}
+.lot-slip::after {
+  content: ''; position: absolute; left: 50%; bottom: 0;
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 1.5px solid rgba(166, 58, 42, .5);
+  opacity: 0; transform: translateX(-50%);
+  animation: inkRipple .8s ease-out forwards;
+  animation-delay: calc(var(--d, 0s) + .62s);
+  pointer-events: none;
+}
+@keyframes inkRipple {
+  0% { opacity: .9; width: 8px; height: 8px; border-width: 2px; }
+  100% { opacity: 0; width: 66px; height: 66px; border-width: .5px; }
+}
+.lot-slip .slip-who {
+  font-size: 9.5px; color: #8a7a68; letter-spacing: 2px; margin-top: 1px;
+  font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif;
+}
+.lot-slip .slip-grade {
+  position: static; background: none; color: var(--zhu);
+  font-size: 11px; letter-spacing: 3px; padding: 0; transform: none;
+  font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif; margin-top: 4px;
+}
+.lot-slip .slip-name {
+  display: flex; flex-direction: column; align-items: center;
+  font-size: 19px; font-weight: 800; color: #2b2620; line-height: 1.35;
+  margin: 10px 0 8px; letter-spacing: 2px;
+}
+.lot-slip .slip-name span { display: block; }
+.lot-slip .slip-verse {
+  display: flex; flex-direction: column; align-items: center;
+  font-size: 10.5px; color: #8a7a68; line-height: 1.4;
+  font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif;
+}
+.lot-slip .slip-verse span { display: block; }
+.lot-slip .slip-meta {
+  margin-top: auto; font-size: 11px; color: #a08a6a; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+/* 上上签：金箔签 + 祥云暗纹 */
+.lot-slip.grade-gold {
+  background: linear-gradient(180deg, #f9ecca 0%, #f3ddA4 60%, #eccf8e 100%);
+  border: 1.2px solid var(--gold);
+  box-shadow: 0 12px 22px rgba(0, 0, 0, .36), 0 0 0 1px rgba(168, 124, 58, .22), inset 0 0 16px rgba(255, 240, 200, .5);
+}
+.lot-slip.grade-gold::after {
+  content: ''; position: absolute; top: 24px; right: 2px; width: 16px; height: 34px; pointer-events: none;
+  background: radial-gradient(ellipse at 60% 30%, rgba(168, 124, 58, .28), transparent 70%);
+}
+.lot-slip.grade-gold .slip-grade { color: #8a5a1e; }
+.lot-slip.grade-gold .slip-name { color: #6b4518; }
+.lot-slip.grade-gold .slip-verse { color: #96703a; }
+.lot-slip.grade-gold .slip-meta { color: #a8834a; }
+/* 上签 */
+.lot-slip.grade-red { border-color: #d8a08a; }
+.lot-slip.grade-red::before { background: var(--zhu); }
+/* 中签：素雅 */
+.lot-slip.grade-plain { background: linear-gradient(180deg, #f6f1e2, #ede5d0); border-color: #d8cbb0; }
+.lot-slip[data-p="0"] { border-top: 4px solid #c9a05e !important; }
+.lot-slip[data-p="1"] { border-top: 4px solid #3d5a6e !important; }
+.lot-slip[data-p="2"] { border-top: 4px solid #a63a2a !important; }
+.lot-slip.grade-plain .slip-grade { color: #8a7a68; }
+.lot-slip.grade-plain .slip-name { color: #6b5d4b; }
+.lot-slip.grade-plain .slip-verse { color: #8a7a68; }
+@keyframes slipPop {
+  0% { transform: translateY(-170px) scale(.6) rotate(-6deg); opacity: 0; }
+  55% { transform: translateY(14px) scale(1.02); opacity: 1; }
+  100% { transform: none; opacity: 1; }
+}
+.slip-pop { animation: slipPop .75s cubic-bezier(.25, .8, .35, 1) both; }
+.lot-hint { font-size: 12px; color: rgba(224, 194, 138, .8); letter-spacing: 3px; margin: 12px 0 2px; font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif; position: relative; z-index: 2; }
+.lot-shake-btn {
+  border: 1.5px solid var(--gold); background: linear-gradient(135deg, var(--zhu), var(--zhu2));
+  color: #fff; font-family: inherit; font-size: 15px; letter-spacing: 5px; text-indent: 5px; font-weight: 700;
+  padding: 12px 32px; border-radius: 99px; cursor: pointer; margin-top: 12px;
+  box-shadow: 0 8px 20px rgba(166, 58, 42, .35); transition: all .18s; position: relative; z-index: 2;
+}
+.lot-shake-btn:hover { transform: translateY(-2px); filter: brightness(1.06); }
+.lot-shake-btn:active { transform: scale(.96); }
+.lot-shake-btn:disabled { opacity: .65; cursor: wait; transform: none; }
+.slip-grade {
+  position: absolute; top: -9px; right: 10px; font-size: 10px; color: #fff;
+  background: var(--zhu); border-radius: 3px; padding: 1px 6px; transform: rotate(2deg);
+  font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif; letter-spacing: 1px;
+}
+.slip-name { font-size: 24px; font-weight: 800; color: #2b2620; letter-spacing: 1px; }
+.slip-verse { font-size: 12px; color: var(--zhu); margin-top: 2px; letter-spacing: 1px; font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif; }
+.slip-meta { font-size: 11px; color: #8a7a68; margin-top: 4px; }
+
+/* 小按钮 / 禁忌 */
+.mini-btn {
+  border: 1.5px solid var(--line); background: #fff; color: #7a6c58;
+  padding: 9px 18px; border-radius: 99px; font-size: 13px; cursor: pointer; font-family: inherit;
+  transition: all .15s;
+  min-height: 44px; display: inline-flex; align-items: center; justify-content: center;
+}
+.mini-btn:hover { border-color: var(--gold); color: var(--gold); }
+.mini-btn:active { transform: scale(.94); background: #f6f0e6; }
+.chip-x {
+  display: inline-flex; align-items: center; gap: 6px; border: 1.5px solid #f0d4c8;
+  background: #fdf3ee; color: #c0503a; padding: 7px 12px; border-radius: 99px; font-size: 13px;
+}
+.chip-x button { border: none; background: none; color: #c0503a; font-size: 15px; cursor: pointer; line-height: 1; padding: 10px; margin: -10px; }
+.tp-group { margin-top: 12px; }
+.tp-label { font-size: 11px; color: #a08a6a; letter-spacing: 2px; font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif; display: block; margin-bottom: 7px; }
+.tp-label em { font-style: normal; font-size: 10px; color: #c9bfae; letter-spacing: 1px; margin-left: 6px; }
+.tp-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.tp-chip {
+  border: 1px solid #e0d5c2; background: #faf7f1; color: #8a7a68;
+  padding: 5px 13px; border-radius: 99px; font-size: 12px; cursor: pointer;
+  font-family: inherit; transition: all .18s;
+}
+.tp-chip:hover { border-color: var(--gold); color: var(--gold); }
+.tp-chip.on { background: linear-gradient(135deg, var(--zhu), var(--zhu2)); border-color: transparent; color: #fff; box-shadow: 0 2px 8px rgba(166, 58, 42, .3); }
+.add-line { display: flex; gap: 8px; margin-bottom: 10px; }
+.add-line input { flex: 1; }
+.btn-add {
+  border: none; background: linear-gradient(135deg, var(--zhu), var(--zhu2)); color: #fff;
+  padding: 0 18px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: transform .15s, filter .2s; font-family: inherit; flex-shrink: 0;
+}
+.btn-add:hover { filter: brightness(1.06); }
+.btn-add:active { transform: scale(.94); }
+.hist-empty { font-size: 12.5px; color: #bfae99; }
+
+/* 弹窗 / 提示 */
+.overlay {
+  position: fixed; inset: 0; background: rgba(30, 24, 18, .5); z-index: 99;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.modal { background: var(--card); border-radius: 14px; padding: 22px; width: 100%; max-width: 330px; text-align: center; animation: pop .25s ease; border: 1px solid #e8dcc8; }
+.m-title { font-size: 17px; font-weight: 800; margin-bottom: 8px; color: var(--mo); }
+.m-body { font-size: 13.5px; color: #7a6c58; margin-bottom: 16px; line-height: 1.7; }
+.m-body .big { font-size: 20px; font-weight: 800; color: var(--ink); display: inline-block; margin: 4px 0 2px; }
+.m-btn {
+  width: 100%; border: none; border-radius: 9px; padding: 12px; font-size: 15px; font-weight: 700;
+  color: #fff; background: linear-gradient(135deg, var(--zhu), var(--zhu2)); cursor: pointer;
+  transition: transform .15s, filter .2s; font-family: inherit;
+}
+.m-btn:hover { filter: brightness(1.06); }
+.m-btn:active { transform: scale(.96); }
+.m-btn.ghost { background: var(--card); color: #6b5d4b; border: 1.5px solid var(--line); }
+.m-btn.ghost:hover { border-color: var(--gold); color: var(--gold); filter: none; }
+.toast {
+  position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%) translateY(20px);
+  background: rgba(43, 38, 32, .94); color: #f3e9d5; font-size: 13px; padding: 10px 18px;
+  border-radius: 99px; opacity: 0; pointer-events: none; transition: all .3s; z-index: 100;
+  white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* 动画 */
+@keyframes pop { from { transform: scale(.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes fadeUp { from { transform: translateY(8px); opacity: 0; } to { transform: none; } }
+@keyframes stamp { 0% { transform: scale(1.5) rotate(-4deg); opacity: 0; } 60% { transform: scale(.97) rotate(-2deg); opacity: 1; } 100% { transform: scale(1) rotate(-3deg); opacity: 1; } }
+.reveal { animation: fadeUp .5s cubic-bezier(.25, .8, .35, 1) both; }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+.miss { animation: shake .3s 2; border-color: var(--zhu) !important; outline: 2px solid rgba(166, 58, 42, .45); outline-offset: 2px; }
+
+footer { text-align: center; color: #c4b29a; font-size: 11.5px; margin-top: 22px; letter-spacing: 3px; }
+.hidden { display: none !important; }
+
+@media (max-width: 520px) {
+  .ptab { width: 44px; height: 44px; font-size: 16px; }
+  .scope-btn { min-height: 44px; }
+  .copy-btn { min-height: 44px; padding: 6px 16px; font-size: 13px; }
+  .pick-btn { min-height: 46px; font-size: 14.5px; }
+  .back-btn { width: 44px; height: 44px; font-size: 22px; }
+  .lot-slip { width: 40px; }
+  .person-tabs { gap: 8px; }
+  .moon-gate { width: 200px; height: 200px; }
+  .moon-gate .bowl-scene { width: 92px; height: 92px; }
+  .plaque .pt { font-size: 25px; letter-spacing: 7px; text-indent: 7px; }
+  .cover-frame { padding: 26px 18px 24px; }
+  .plans-alt { grid-template-columns: 1fr; }
+  .mode-btn .me { font-size: 42px; }
+  select, input[type="text"], input[type="number"] { font-size: 16px; }
+  /* 触控热区 ≥44px */
+  .chip, .tp-chip { padding: 10px 15px; min-height: 44px; font-size: 13px; }
+  .vopt { min-height: 46px; }
+  .btn-add, .ghost-btn, .primary-btn { min-height: 46px; }
+  .vopt .ve { width: 28px; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="gR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c05a3a"/><stop offset="1" stop-color="#8f2f20"/></linearGradient>
+  <linearGradient id="gG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e0c28a"/><stop offset="1" stop-color="#a87c3a"/></linearGradient>
+  <linearGradient id="gB" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d4ab6a"/><stop offset="1" stop-color="#8a6a42"/></linearGradient>
+  <linearGradient id="gQ" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a7d94"/><stop offset="1" stop-color="#27435a"/></linearGradient>
+  <linearGradient id="gP" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fdf8ec"/><stop offset="1" stop-color="#e8dcc0"/></linearGradient>
+  <linearGradient id="gGr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7fb069"/><stop offset="1" stop-color="#4d7c3a"/></linearGradient>
+</defs></svg>
+
+<div class="wrap">
+
+  <!-- ========== 启 · 封面：月洞门借景 ========== -->
+  <section class="page" id="pageCover">
+    <div class="cover-frame">
+      <i class="cn tl"></i><i class="cn tr"></i><i class="cn bl"></i><i class="cn br"></i>
+
+      <!-- 横批匾额 -->
+      <div class="plaque">
+        <span class="ps" data-text="缘起"></span>
+        <span class="pt kai">一餐之缘</span>
+        <span class="ps" data-text="今日"></span>
+      </div>
+
+      <!-- 月洞门：远山 + 青花碗 -->
+      <div class="moon-gate">
+        <svg class="hills" viewBox="0 0 236 236" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <path d="M0 150 Q55 70 118 128 T236 110 L236 236 L0 236 Z" fill="rgba(61,90,110,.16)"/>
+          <path d="M0 168 Q85 95 165 145 T236 132 L236 236 L0 236 Z" fill="rgba(61,90,110,.26)"/>
+          <path d="M0 190 Q110 135 205 170 L236 160 L236 236 L0 236 Z" fill="rgba(43,38,32,.34)"/>
+          <path d="M150 196 q10 -6 26 0 l-5 5 q-8 -3 -16 0 Z" fill="rgba(43,38,32,.42)"/>
+        </svg>
+        <div class="bowl-scene" aria-hidden="true">
+          <svg viewBox="0 0 96 96">
+            <defs>
+              <linearGradient id="bowlBody" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#fdf9f1"/><stop offset="1" stop-color="#eae1cf"/>
+              </linearGradient>
+              <linearGradient id="blueGlaze" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#4a7cb4"/><stop offset="1" stop-color="#2c5686"/>
+              </linearGradient>
+              <linearGradient id="bamboo" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#d4ab6a"/><stop offset="1" stop-color="#a87c3a"/>
+              </linearGradient>
+            </defs>
+            <path d="M13 42 Q13 76 48 76 Q83 76 83 42 Z" fill="url(#bowlBody)" stroke="#d9cbb0" stroke-width="1.5"/>
+            <path d="M19 58 Q27 51 35 58 T51 58 T67 58" stroke="url(#blueGlaze)" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+            <path d="M17 67 Q29 60 41 67 T65 67" stroke="url(#blueGlaze)" stroke-width="2" fill="none" stroke-linecap="round" opacity=".65"/>
+            <circle cx="26" cy="51" r="2.2" fill="#3d6fa8"/><circle cx="48" cy="48" r="2.2" fill="#3d6fa8"/><circle cx="70" cy="51" r="2.2" fill="#3d6fa8"/>
+            <ellipse cx="48" cy="42" rx="35" ry="8.5" fill="#fffdf8" stroke="#d9cbb0" stroke-width="1.5"/>
+            <ellipse cx="48" cy="42" rx="28" ry="6.2" fill="#f2e6cd"/>
+            <ellipse cx="48" cy="42" rx="35" ry="8.5" fill="none" stroke="#c9a05e" stroke-width="1.2"/>
+            <path d="M36 26 q4 -6 0 -11" stroke="#b9a888" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".85"/>
+            <path d="M48 21 q4 -6 0 -11" stroke="#b9a888" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".85"/>
+            <path d="M60 26 q4 -6 0 -11" stroke="#b9a888" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".85"/>
+            <g stroke="url(#bamboo)" stroke-width="3.4" stroke-linecap="round">
+              <line x1="60" y1="74" x2="86" y2="26"/>
+              <line x1="70" y1="76" x2="96" y2="28"/>
+            </g>
+            <g stroke="rgba(255,244,220,.55)" stroke-width="1.1">
+              <line x1="62" y1="70" x2="83" y2="31"/>
+              <line x1="72" y1="72" x2="93" y2="33"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <p class="cover-sub kai">食无定味 · 适口者珍</p>
+      <div class="gold-line"></div>
+      <button type="button" class="cover-btn" id="btnStart">开启今日一餐<small>让缘分替你定下这一顿</small></button>
+      <p class="cover-verse kai">一粥一饭，当思来处不易<small>——《朱子家训》</small></p>
+    </div>
+  </section>
+
+  <!-- ========== 承 · 今日所需（册页） ========== -->
+  <section class="page hidden" id="pageForm">
+    <div class="page-head"><button type="button" class="back-btn" data-back="pageCover">‹</button><span>今日所需</span><span class="ph-sub">说说你的今日</span></div>
+    <div class="progress" id="progress"></div>
+
+    <!-- 壹 · 几客同食 -->
+    <div class="leaf">
+      <span class="v-title" data-text="壹 · 几客同食"></span>
+      <h2><svg viewBox="0 0 24 24" width="17" height="17" style="vertical-align:-2px;margin-right:2px"><path d="M4.5 8.5l4.5 8M4.5 8.5L9 16.5M4.5 8.5c1.4 1.8 3 1.8 4.5 0M3 7.2l2.6 1.6M7 7.2l-1.4 3.2M14.5 8.5l4.5 8M14.5 8.5L19 16.5M14.5 8.5c1.4 1.8 3 1.8 4.5 0M13 7.2l2.6 1.6M17 7.2l-1.4 3.2" stroke="#c9a05e" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg>几客同食 <span class="seal-mini">同食</span> <span class="tag-l">必填</span></h2>
+      <div class="label">几客同席，一桌好味</div>
+      <div class="chop-grid" id="chopGrid"></div>
+      <input type="number" id="customPpl" class="hidden-inline" min="1" max="50" placeholder="输入用餐人数，如 5" style="margin-top:10px">
+    </div>
+
+    <!-- 贰 · 今日餐资 -->
+    <div class="leaf">
+      <span class="v-title" data-text="贰 · 今日餐资"></span>
+      <h2><svg viewBox="0 0 24 24" width="17" height="17" style="vertical-align:-2px;margin-right:2px"><circle cx="12" cy="12" r="8" fill="none" stroke="#c9a05e" stroke-width="1.5"/><rect x="10.2" y="7" width="3.6" height="10" rx="1.8" fill="none" stroke="#c9a05e" stroke-width="1.3"/></svg>今日餐资 <span class="tag-l">必填</span></h2>
+      <div class="label">人多人少，餐资随人而变</div>
+      <select id="budget"></select>
+    </div>
+
+    <!-- 叁 · 今日光景 -->
+    <div class="leaf">
+      <span class="v-title" data-text="叁 · 今日光景"></span>
+      <h2><svg viewBox="0 0 24 24" width="17" height="17" style="vertical-align:-2px;margin-right:2px"><path d="M4 13c1-3.4 3.5-4 5.5-2C11 8.5 13.5 8 15 11c2-.5 3.6 0 4.5 2" fill="none" stroke="#6d8da0" stroke-width="1.3" stroke-linecap="round"/><path d="M6 16.5h12" stroke="#6d8da0" stroke-width="1.3" stroke-linecap="round"/><path d="M8.5 12.5l.8-1.6M14 12l.8-1.4" stroke="#c9a05e" stroke-width="1.1" stroke-linecap="round"/></svg>今日光景 <span class="tag-l">必填</span></h2>
+      <div class="label">人数不同，光景亦不同 —— 选一个最贴近此刻的你</div>
+      <div class="vlist" id="scenesBox"></div>
+    </div>
+
+    <!-- 肆 · 口味偏好（味道 × 主食 交叉） -->
+    <div class="leaf">
+      <span class="v-title" data-text="肆 · 口味偏好"></span>
+      <h2><svg viewBox="0 0 24 24" width="17" height="17" style="vertical-align:-2px;margin-right:2px"><path d="M4 11h16l-1.3 8a2 2 0 0 1-2 1.5H7.3a2 2 0 0 1-2-1.5Z" fill="none" stroke="#a63a2a" stroke-width="1.3"/><path d="M4 11a8 8 0 0 1 16 0Z" fill="none" stroke="#a63a2a" stroke-width="1.3"/><path d="M12 3.5v2M8.6 4.3l.9 1.5M15.4 4.3l-.9 1.5" stroke="#c9a05e" stroke-width="1.1" stroke-linecap="round"/></svg>口味偏好 <span class="tag-l">必填</span></h2>
+      <div class="label">每位食客各自定制：先给第 1 位选，再依次给第 2、3 位…选</div>
+      <div class="person-tabs" id="personTabs"></div>
+      <div class="person-title kai" id="personTitle">第 1 位食客</div>
+      <div class="cross-grid">
+        <div class="cross-col">
+          <div class="label" style="margin-bottom:8px"><b>味道</b> · 点按依次为主味、次味、末味，最多 3 味</div>
+          <div class="vlist" id="tasteList"></div>
+        </div>
+        <div class="cross-col">
+          <div class="label" id="typeHint" style="margin-bottom:8px"><b>主食</b> · 点 1 下选中这位的主食，再点取消</div>
+          <div class="vlist" id="typeList"></div>
+        </div>
+      </div>
+      <button type="button" class="mini-btn" id="btnNextPerson" style="margin-top:12px;width:100%">完成 · 下一位 →</button>
+    </div>
+
+    <!-- 伍 · 饮食避讳（选填） -->
+    <div class="leaf leaf-opt">
+      <span class="v-title" data-text="伍 · 饮食避讳"></span>
+      <h2><svg viewBox="0 0 24 24" width="17" height="17" style="vertical-align:-2px;margin-right:2px"><circle cx="12" cy="12" r="8" fill="none" stroke="#a63a2a" stroke-width="1.4"/><path d="M8 8.5l8 7M16 8.5l-8 7" stroke="#a63a2a" stroke-width="1.3" stroke-linecap="round"/></svg>饮食避讳 <span class="tag-l opt">选填</span></h2>
+      <div class="label">有所不食，方能食之安心</div>
+      <div class="add-line">
+        <input id="tabooInput" type="text" placeholder="例：螺蛳粉 / 海鲜 / 不吃辣">
+        <button type="button" id="btnTaboo" class="btn-add">＋添加</button>
+      </div>
+      <div class="chips" id="tabooBox"></div>
+      <div id="tabooPresets"></div>
+    </div>
+
+    <!-- 陆 · 天时 -->
+    <div class="leaf">
+      <span class="v-title" data-text="陆 · 天时"></span>
+      <h2><svg viewBox="0 0 24 24" width="17" height="17" style="vertical-align:-2px;margin-right:2px"><path d="M6 13c0-2.8 2.2-4.5 4.8-4.2C11.5 6.7 13.3 5.5 15.4 6c2.4.5 3.6 2.5 3.1 4.6 1.6.3 2.8 1.6 2.8 3.2 0 1.8-1.5 3.2-3.2 3.2H8.8c-2 0-3.6-1.6-3.6-3.6 0-1.5.9-2.8 2.3-3.2" fill="none" stroke="#6d8da0" stroke-width="1.3" stroke-linecap="round"/><path d="M8.8 19.8l-.9 1.3M12.2 19.8l-.9 1.3M15.6 19.8l-.9 1.3" stroke="#3d5a6e" stroke-width="1.2" stroke-linecap="round"/></svg>天时 <span class="tag-l">微调</span></h2>
+      <div class="label">天时不同，食事亦不同</div>
+      <div class="chips" id="chipsWeather"></div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="ghost-btn" id="btnReset">↺ 重置全部条件</button>
+      <button type="button" class="primary-btn" id="btnNext" style="flex:2">落笔定案 ✨</button>
+    </div>
+  </section>
+
+  <!-- ========== 转 · 如何择一餐 ========== -->
+  <section class="page hidden" id="pageMode">
+    <div class="page-head"><button type="button" class="back-btn" data-back="pageForm">‹</button><span>如何择一餐</span></div>
+    <div class="progress" id="progress2"></div>
+    <div class="mode-grid">
+      <button type="button" id="btnSmart" class="mode-btn mb-smart">
+        <span class="me"><svg viewBox="0 0 72 72" aria-hidden="true">
+          <defs>
+            <linearGradient id="paperG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fdf8ec"/><stop offset="1" stop-color="#efe3c8"/></linearGradient>
+            <linearGradient id="rollerG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a6a42"/><stop offset=".5" stop-color="#c9a05e"/><stop offset="1" stop-color="#7d5c33"/></linearGradient>
+            <linearGradient id="penG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d4ab6a"/><stop offset="1" stop-color="#a87c3a"/></linearGradient>
+          </defs>
+          <circle cx="36" cy="36" r="32" fill="#fdfaf3" stroke="#e5d5b8" stroke-width="1.5"/>
+          <circle cx="36" cy="36" r="27.5" fill="none" stroke="rgba(201,160,94,.4)" stroke-width="1" stroke-dasharray="3 3"/>
+          <ellipse cx="36" cy="64" rx="26" ry="4" fill="rgba(90,70,40,.12)"/>
+          <rect x="10" y="30" width="52" height="28" rx="3" fill="url(#paperG)" stroke="#d8c39a" stroke-width="1.2"/>
+          <rect x="6" y="34" width="5" height="20" rx="2.5" fill="url(#rollerG)"/>
+          <rect x="61" y="34" width="5" height="20" rx="2.5" fill="url(#rollerG)"/>
+          <line x1="17" y1="40" x2="40" y2="40" stroke="#2b2620" stroke-width="2" stroke-linecap="round"/>
+          <line x1="17" y1="46" x2="52" y2="46" stroke="#2b2620" stroke-width="2" stroke-linecap="round"/>
+          <line x1="17" y1="52" x2="34" y2="52" stroke="#2b2620" stroke-width="2" stroke-linecap="round"/>
+          <line x1="48" y1="16" x2="62" y2="40" stroke="url(#penG)" stroke-width="3.4" stroke-linecap="round"/>
+          <path d="M61.5 38 L65 47 L56.5 43.5 Z" fill="#2b2620"/>
+          <line x1="50" y1="19" x2="60" y2="36" stroke="rgba(255,244,220,.5)" stroke-width="1.2"/>
+          <rect x="42" y="46" width="11" height="11" rx="2" fill="#a63a2a" opacity=".9" transform="rotate(-4 47 51)"/>
+          <text x="47" y="54.5" text-anchor="middle" font-size="8" fill="#fff" font-family="KaiTi,serif">案</text>
+        </svg></span>
+        <span class="mt kai">精择 · 三案呈上</span>
+        <small>谋定三案，从容而择</small>
+      </button>
+      <button type="button" id="btnLot" class="mode-btn mb-lot">
+        <span class="me"><svg viewBox="0 0 72 72" aria-hidden="true">
+          <defs>
+            <linearGradient id="mtubeBam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a6a42"/><stop offset=".35" stop-color="#c9a05e"/><stop offset=".65" stop-color="#a87c3a"/><stop offset="1" stop-color="#7d5c33"/></linearGradient>
+          </defs>
+          <circle cx="36" cy="36" r="32" fill="#f7fafd" stroke="#cfd8e2" stroke-width="1.5"/>
+          <circle cx="36" cy="36" r="27.5" fill="none" stroke="rgba(61,90,110,.35)" stroke-width="1" stroke-dasharray="3 3"/>
+          <ellipse cx="36" cy="64" rx="22" ry="4" fill="rgba(90,70,40,.15)"/>
+          <g stroke="#f0e4cd" stroke-width="4" stroke-linecap="round">
+            <line x1="24" y1="16" x2="22" y2="34"/><line x1="34" y1="12" x2="31" y2="34"/>
+            <line x1="44" y1="16" x2="42" y2="34"/><line x1="52" y1="22" x2="50" y2="34"/>
+          </g>
+          <circle cx="24" cy="13" r="2.4" fill="#a63a2a"/><circle cx="34" cy="9" r="2.4" fill="#a63a2a"/><circle cx="44" cy="13" r="2.4" fill="#a63a2a"/><circle cx="52" cy="19" r="2.4" fill="#a63a2a"/>
+          <path d="M12 34 L60 34 L53 62 L19 62 Z" fill="url(#mtubeBam)" stroke="#6d4f2b" stroke-width="1.4"/>
+          <path d="M14 44 L58 44" stroke="#6d4f2b" stroke-width="1.3" opacity=".6"/>
+          <ellipse cx="36" cy="34" rx="24" ry="5.5" fill="#5a4126" stroke="#6d4f2b" stroke-width="1.4"/>
+          <ellipse cx="36" cy="34" rx="19" ry="4" fill="#3f2d1a"/>
+          <path d="M17 38 L21 58" stroke="rgba(255,236,200,.35)" stroke-width="2.6" stroke-linecap="round"/>
+        </svg></span>
+        <span class="mt kai">随缘 · 摇一签</span>
+        <small>一签既定，随缘而安</small>
+      </button>
+    </div>
+  </section>
+
+  <!-- ========== 合 · 择定下单 ========== -->
+  <section class="page hidden" id="pageOrder">
+    <div class="page-head">
+      <button type="button" class="back-btn" data-back="pageResult">‹</button>
+      <div>
+        <div class="ph-title">缘定 · 双站寻味</div>
+        <div class="ph-sub">复制搜索词，直达美团 / 淘宝闪购 搜索下单</div>
+      </div>
+    </div>
+    <div class="order-list" id="orderList"></div>
+    <button type="button" class="primary-btn" id="btnOrderHome" style="margin-top:14px">回首页 🏠</button>
+  </section>
+
+  <!-- ========== 合 · 一餐已定 ========== -->
+  <section class="page hidden" id="pageResult">
+    <div class="page-head"><button type="button" class="back-btn" data-back="pageMode">‹</button><span>一餐已定</span></div>
+    <div class="progress" id="progress3"></div>
+    <div id="smartBox"></div>
+    <div id="lotBox" class="hidden"></div>
+    <div class="btn-row" style="margin-top:14px">
+      <button type="button" class="primary-btn ghost" id="btnRedo">
+        <svg viewBox="0 0 32 32" width="15" height="15" aria-hidden="true">
+          <defs>
+            <linearGradient id="redoG" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#e0c28a"/><stop offset="1" stop-color="#c9a05e"/>
+            </linearGradient>
+          </defs>
+          <path d="M24 12 A10.5 10.5 0 1 0 25.5 20" fill="none" stroke="url(#redoG)" stroke-width="2.6" stroke-linecap="round"/>
+          <path d="M25 8.5 L27.5 14 L22 14 Z" fill="url(#redoG)"/>
+          <path d="M8 20 A10.5 10.5 0 1 1 6.5 12" fill="none" stroke="url(#redoG)" stroke-width="2.6" stroke-linecap="round" opacity=".45"/>
+        </svg>重择一餐
+      </button>
+      <button type="button" class="primary-btn ghost" id="btnHome">🏠 回到门庭</button>
+    </div>
+  </section>
+
+  <footer><svg viewBox="0 0 24 24" width="15" height="15" style="vertical-align:-2px;margin-right:3px"><path d="M4.5 9h12v6a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5Z" fill="none" stroke="#a08a6a" stroke-width="1.3"/><path d="M16.5 9.5h1.8a2.3 2.3 0 0 1 0 4.6h-1.5" fill="none" stroke="#a08a6a" stroke-width="1.3"/><path d="M8 12.2l.9 1.6M11.5 12.2l.9 1.6" stroke="#c9a05e" stroke-width="1.1" stroke-linecap="round"/></svg>一餐之缘 · 食无定味，适口者珍</footer>
+</div>
+
+<!-- 通用弹窗 -->
+<div class="overlay hidden" id="overlay">
+  <div class="modal">
+    <div class="m-title" id="mTitle"></div>
+    <div class="m-body" id="mBody"></div>
+    <div style="display:flex;gap:10px">
+      <button type="button" class="m-btn" id="mBtn" style="flex:1"></button>
+      <button type="button" class="m-btn ghost hidden" id="mBtn2" style="flex:1"></button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+/* ================= 数据：38 个常见品类 =================
+   n=名称  t=口味标签  p=人均价位档(1:10-15 / 2:15-25 / 3:25-40 / 4:40+)
+   w=适配天气(晴/雨/热)  c=主流(1)/小众(0)  k=食材关键词(避讳用)  d=一句话描述
+   营养搭配参考：《中国居民膳食指南》——食物多样、谷类为主、荤素搭配 */
+const DISHES = [
+  /* 🍚 米饭类 */
+  { n: '黄焖鸡米饭',   t: ['辣', '咸鲜'],     ty: '米饭',   p: 2, w: ['晴', '雨'], c: 1, k: ['鸡'],   d: '出餐快、汤汁下饭，微辣党的日常之选' },
+  { n: '扬州炒饭',     t: ['咸鲜'],           ty: '米饭',   p: 1, w: ['晴'],       c: 1, k: ['蛋'],    d: '粒粒分明，蛋菜俱全，便宜管饱' },
+  { n: '鱼香肉丝盖饭', t: ['辣', '酸'],       ty: '米饭',   p: 2, w: ['晴'],       c: 1, k: ['芹菜'],  d: '经典下饭，酸甜微辣' },
+  { n: '腊味煲仔饭',   t: ['咸鲜', '浓郁'],   ty: '米饭',   p: 3, w: ['雨'],       c: 0, k: [],       d: '锅巴焦香，腊味油润' },
+  { n: '石锅拌饭',     t: ['辣'],             ty: '米饭',   p: 3, w: ['晴'],       c: 0, k: ['蛋'],    d: '锅底锅巴香脆，蔬菜配料丰富' },
+  { n: '广式烧腊饭',   t: ['咸鲜', '甜'],     ty: '米饭',   p: 3, w: ['晴'],       c: 1, k: [],       d: '叉烧烧鸭油亮喷香，配青菜解腻' },
+  { n: '番茄牛腩饭',   t: ['咸鲜', '清淡'],   ty: '米饭',   p: 3, w: ['雨'],       c: 1, k: ['牛'],   d: '番茄酸甜，牛腩软烂' },
+  { n: '糖醋里脊饭',   t: ['甜', '酸'],       ty: '米饭',   p: 3, w: ['晴'],       c: 0, k: [],       d: '酸甜酥脆，甜口党最爱' },
+  { n: '红烧肉饭',     t: ['甜', '咸鲜'],     ty: '米饭',   p: 3, w: ['晴'],       c: 1, k: [],       d: '肥而不腻，入口即化，家常顶配' },
+  { n: '麻辣香锅',     t: ['辣', '浓郁'],     ty: '米饭',   p: 3, w: ['晴'],       c: 1, k: ['芹菜'],  d: '重口过瘾，香锅配饭正合适' },
+  /* 🍜 粉面类 */
+  { n: '兰州牛肉拉面', t: ['咸鲜', '清淡'],   ty: '粉面',   p: 2, w: ['雨', '晴'], c: 1, k: ['牛', '香菜'], d: '热汤热面，雨天来一碗格外舒服' },
+  { n: '螺蛳粉',       t: ['辣', '酸'],       ty: '粉面',   p: 2, w: ['雨'],       c: 0, k: [],       d: '酸辣上头，闻着臭吃着香' },
+  { n: '重庆小面',     t: ['辣'],             ty: '粉面',   p: 2, w: ['晴', '雨'], c: 1, k: ['香菜'],  d: '麻辣鲜香，便宜大碗' },
+  { n: '手工水饺',     t: ['咸鲜', '清淡'],   ty: '粉面',   p: 2, w: ['雨'],       c: 1, k: [],       d: '家常味，菜肉俱全，吃了踏实' },
+  { n: '鲜肉小馄饨',   t: ['咸鲜', '清淡'],   ty: '粉面',   p: 2, w: ['雨'],       c: 1, k: [],       d: '汤汤水水暖胃，皮薄馅嫩' },
+  { n: '皮蛋瘦肉粥',   t: ['清淡'],           ty: '粉面',   p: 1, w: ['雨'],       c: 1, k: [],       d: '软烂好消化，肠胃友好' },
+  { n: '广式肠粉',     t: ['清淡'],           ty: '粉面',   p: 2, w: ['雨', '热'], c: 0, k: [],       d: '爽滑清淡，淋上酱汁别有风味' },
+  { n: '桂林米粉',     t: ['咸鲜', '清淡'],   ty: '粉面',   p: 2, w: ['雨'],       c: 0, k: [],       d: '卤水香浓，米粉爽滑' },
+  { n: '武汉热干面',   t: ['咸鲜', '浓郁'],   ty: '粉面',   p: 2, w: ['晴'],       c: 0, k: [],       d: '芝麻酱香浓，拌匀超满足' },
+  { n: '酸辣粉',       t: ['酸', '辣'],       ty: '粉面',   p: 1, w: ['雨'],       c: 1, k: ['香菜'],  d: '酸辣开胃，嗦粉的快乐' },
+  { n: '韩式炸酱面',   t: ['甜', '咸鲜'],     ty: '粉面',   p: 2, w: ['晴'],       c: 0, k: [],       d: '酱香微甜，口味新鲜' },
+  { n: '海鲜炒面',     t: ['咸鲜', '清淡'],   ty: '粉面',   p: 3, w: ['晴'],       c: 0, k: ['海鲜'], d: '料足鲜香，镬气十足' },
+  { n: '沙县小吃',     t: ['咸鲜', '清淡'],   ty: '粉面',   p: 1, w: ['晴', '雨'], c: 1, k: [],       d: '拌面蒸饺炖汤样样有，便宜又稳妥' },
+  { n: '麻辣烫',       t: ['辣'],             ty: '锅仔',   p: 2, w: ['晴', '雨'], c: 1, k: [],       d: '想吃什么夹什么，荤素自己搭配' },
+  /* 🍢 夜宵烧烤类 */
+  { n: '烧烤烤串',     t: ['辣', '浓郁'],     ty: '烧烤',   p: 3, w: ['晴'],       c: 1, k: [],       d: '烟火气十足，撸串解馋' },
+  /* 🦆 卤味类 */
+  { n: '卤味鸭脖',     t: ['辣', '咸鲜'],     ty: '卤味',   p: 2, w: ['晴'],       c: 0, k: [],       d: '香辣入味，追剧好搭档' },
+  { n: '东北酱大骨饭', t: ['咸鲜', '浓郁'],   ty: '卤味',   p: 3, w: ['晴'],       c: 0, k: [],       d: '大骨酱香浓郁，吃肉吃到爽' },
+  /* 🥗 轻食减脂类 */
+  { n: '低脂轻食沙拉', t: ['清淡'],           ty: '轻食',   p: 3, w: ['热', '晴'], c: 1, k: [],       d: '蔬菜鸡胸配粗粮，低卡又顶饱' },
+  { n: '鸡胸肉糙米饭', t: ['咸鲜', '清淡'],   ty: '轻食',   p: 3, w: ['热'],       c: 1, k: [],       d: '高蛋白低脂肪，健身减脂标配' },
+  { n: '关东煮',       t: ['清淡', '咸鲜'],   ty: '轻食',   p: 2, w: ['热'],       c: 0, k: [],       d: '清汤寡淡热量低，热乎又轻盈' },
+  { n: '日式寿司便当', t: ['清淡'],           ty: '轻食',   p: 3, w: ['热'],       c: 0, k: [],       d: '清爽不油腻，一人食也精致' },
+  /* 🍔 西式类 */
+  { n: '炸鸡套餐',     t: ['咸鲜', '浓郁'],   ty: '炸物小吃',   p: 2, w: ['晴'],       c: 1, k: [],       d: '酥脆多汁，快乐加倍' },
+  { n: '汉堡薯条',     t: ['咸鲜'],           ty: '炸物小吃',   p: 3, w: ['晴'],       c: 1, k: [],       d: '经典快餐，点单不用犹豫' },
+  { n: '芝香披萨套餐', t: ['咸鲜', '浓郁'],   ty: '炸物小吃',   p: 4, w: ['晴'],       c: 1, k: [],       d: '芝士拉丝，肉蔬俱全，适合分享' },
+  /* 🥘 漂亮饭类 */
+  { n: '牛排铁板饭',   t: ['辣', '咸鲜'],     ty: '漂亮饭', p: 4, w: ['晴'],       c: 0, k: ['牛'],   d: '大口吃肉，仪式感拉满' },
+  { n: '清蒸鲈鱼套餐', t: ['清淡'],           ty: '漂亮饭', p: 3, w: ['雨'],       c: 0, k: ['海鲜'], d: '鲜嫩清淡，营养满分' },
+  { n: '山药排骨汤饭', t: ['清淡', '咸鲜'],   ty: '漂亮饭', p: 3, w: ['雨'],       c: 0, k: [],       d: '一盅热汤配米饭，暖到心里' },
+  { n: '鲍汁捞饭',     t: ['咸鲜'],           ty: '漂亮饭', p: 4, w: ['雨'],       c: 0, k: [],       d: '鲍汁浓郁，一勺入魂' },
+  { n: '杨枝甘露',     t: ['甜'],             ty: '甜品', p: 2, w: ['热'],       c: 0, k: [],       d: '芒果西柚清甜，餐后小甜点' },
+  /* 增补：米饭 */
+  { n: '台式卤肉饭',   t: ['咸鲜', '甜'],     ty: '米饭',   p: 2, w: ['晴'],       c: 1, k: [],       d: '卤肉浇汁，粒粒入味' },
+  { n: '梅菜扣肉饭',   t: ['咸鲜', '浓郁'],   ty: '米饭',   p: 3, w: ['晴'],       c: 0, k: [],       d: '梅菜咸香，扣肉软糯' },
+  { n: '咖喱鸡饭',     t: ['辣', '咸鲜'],     ty: '米饭',   p: 3, w: ['雨'],       c: 1, k: ['鸡'],   d: '咖喱浓郁，雨天暖胃' },
+  { n: '猪脚饭',       t: ['咸鲜', '浓郁'],   ty: '米饭',   p: 2, w: ['晴'],       c: 0, k: [],       d: '猪脚软烂，胶质满满' },
+  /* 增补：粉面 */
+  { n: '葱油拌面',     t: ['咸鲜'],           ty: '粉面',   p: 1, w: ['晴'],       c: 1, k: [],       d: '葱油焦香，简单满足' },
+  { n: '牛肉板面',     t: ['辣', '咸鲜'],     ty: '粉面',   p: 2, w: ['雨'],       c: 0, k: ['牛'],   d: '宽面劲道，辣汤过瘾' },
+  { n: '砂锅米线',     t: ['咸鲜', '清淡'],   ty: '粉面',   p: 2, w: ['雨'],       c: 1, k: [],       d: '砂锅咕嘟，一锅暖意' },
+  { n: '干炒牛河',     t: ['咸鲜'],           ty: '粉面',   p: 2, w: ['晴'],       c: 1, k: ['牛'],   d: '镬气十足，河粉爽滑' },
+  /* 增补：烧烤 / 卤味 */
+  { n: '铁板鱿鱼',     t: ['辣', '咸鲜'],     ty: '烧烤',   p: 3, w: ['晴'],       c: 0, k: ['海鲜'], d: '铁板滋滋，鱿鱼弹牙' },
+  { n: '烤鱼',         t: ['辣', '浓郁'],     ty: '烧烤',   p: 4, w: ['晴'],       c: 0, k: ['海鲜'], d: '一整条烤鱼，越煮越香' },
+  { n: '酱牛肉',       t: ['咸鲜'],           ty: '卤味',   p: 3, w: ['晴'],       c: 0, k: ['牛'],   d: '腱子肉筋道，卤香深沉' },
+  /* 增补：轻食 / 西式 */
+  { n: '藜麦蔬菜碗',   t: ['清淡'],           ty: '轻食',   p: 3, w: ['热'],       c: 0, k: [],       d: '藜麦粗粮，蔬果满碗' },
+  { n: '荞麦冷面',     t: ['清淡', '酸'],     ty: '轻食',   p: 2, w: ['热'],       c: 1, k: [],       d: '冰凉酸爽，暑气全消' },
+  { n: '番茄肉酱意面', t: ['酸', '咸鲜'],     ty: '粉面',   p: 3, w: ['晴'],       c: 1, k: [],       d: '酱香浓郁，面条弹韧' },
+  /* 增补：漂亮饭 */
+  { n: '佛跳墙',       t: ['咸鲜', '浓郁'],   ty: '漂亮饭', p: 4, w: ['雨'],       c: 0, k: ['海鲜'], d: '山珍海味，一盅集大成' },
+  /* 增补：辣味米饭（保证辣+米饭组合候选充足） */
+  { n: '辣子鸡饭',     t: ['辣'],             ty: '米饭',   p: 3, w: ['晴'],       c: 1, k: ['鸡'],   d: '鸡丁焦香，辣椒够味' },
+  { n: '麻婆豆腐饭',   t: ['辣'],             ty: '米饭',   p: 2, w: ['晴'],       c: 1, k: ['花生'],  d: '麻辣烫嘴，豆腐嫩滑' },
+  { n: '水煮肉片饭',   t: ['辣'],             ty: '米饭',   p: 3, w: ['雨'],       c: 0, k: ['牛'],   d: '肉片滑嫩，红油喷香' },
+  { n: '剁椒鱼头饭',   t: ['辣'],             ty: '米饭',   p: 3, w: ['雨'],       c: 0, k: ['海鲜'], d: '剁椒鲜辣，鱼头肥美' },
+  { n: '孜然羊肉饭',   t: ['辣'],             ty: '米饭',   p: 3, w: ['晴'],       c: 0, k: ['羊'],   d: '孜然焦香，羊肉劲道' },
+  { n: '香辣猪蹄饭',   t: ['辣', '浓郁'],     ty: '米饭',   p: 2, w: ['晴'],       c: 0, k: [],       d: '猪蹄软糯，辣意十足' },
+  /* 增补二 */
+  { n: '宫保鸡丁饭',   t: ['辣', '甜'],       ty: '米饭',   p: 3, w: ['晴'],       c: 1, k: ['鸡', '花生'], d: '酸甜微辣，花生酥脆' },
+  { n: '青椒肉丝饭',   t: ['咸鲜'],           ty: '米饭',   p: 2, w: ['晴'],       c: 1, k: [],       d: '青椒脆爽，肉丝滑嫩' },
+  { n: '照烧鸡腿饭',   t: ['甜', '咸鲜'],     ty: '米饭',   p: 2, w: ['晴'],       c: 1, k: ['鸡'],   d: '酱香微甜，鸡腿多汁' },
+  { n: '滑蛋牛肉饭',   t: ['咸鲜', '清淡'],   ty: '米饭',   p: 3, w: ['雨'],       c: 0, k: ['牛', '蛋'], d: '蛋滑肉嫩，温润暖胃' },
+  { n: '牛肉刀削面',   t: ['咸鲜', '辣'],     ty: '粉面',   p: 2, w: ['雨'],       c: 1, k: ['牛'],   d: '面片劲道，汤浓味厚' },
+  { n: '豌杂面',       t: ['辣', '咸鲜'],     ty: '粉面',   p: 2, w: ['晴'],       c: 0, k: [],       d: '豌豆软糯，杂酱喷香' },
+  { n: '过桥米线',     t: ['咸鲜', '清淡'],   ty: '粉面',   p: 3, w: ['雨'],       c: 1, k: [],       d: '一锅滚汤，配料自下' },
+  { n: '鲜虾云吞面',   t: ['咸鲜'],           ty: '粉面',   p: 2, w: ['雨'],       c: 0, k: ['海鲜'], d: '云吞饱满，汤清面爽' },
+  { n: '烤生蚝',       t: ['咸鲜', '辣'],     ty: '烧烤',   p: 3, w: ['晴'],       c: 0, k: ['海鲜'], d: '蒜蓉滋香，蚝肉肥美' },
+  { n: '蜜汁烤鸡翅',   t: ['甜', '咸鲜'],     ty: '烧烤',   p: 2, w: ['晴'],       c: 1, k: ['鸡'],   d: '蜜汁焦香，皮酥肉嫩' },
+  { n: '卤味拼盘',     t: ['咸鲜'],           ty: '卤味',   p: 3, w: ['晴'],       c: 0, k: ['牛'],   d: '荤素一碟，下酒下饭' },
+  { n: '牛油果鸡胸碗', t: ['清淡'],           ty: '轻食',   p: 3, w: ['热'],       c: 0, k: ['鸡'],   d: '果香清爽，低卡饱腹' },
+  { n: '全麦鸡肉三明治', t: ['清淡', '咸鲜'], ty: '轻食',   p: 2, w: ['热'],       c: 1, k: ['鸡'],   d: '全麦粗粮，鸡肉蛋白' },
+  { n: '芝士热狗',     t: ['咸鲜'],           ty: '炸物小吃',   p: 2, w: ['晴'],       c: 1, k: [],       d: '芝士拉丝，一口满足' },
+  { n: '漏奶华',       t: ['甜'],             ty: '甜品', p: 2, w: ['晴'],       c: 0, k: ['蛋'],   d: '港式甜品，甜到心里' },
+  /* 增补三：米饭 */
+  { n: '三杯鸡饭',     t: ['咸鲜'],           ty: '米饭',   p: 3, w: ['晴'],       c: 0, k: ['鸡'],   d: '九层塔香，酱色油亮' },
+  { n: '咖喱牛肉饭',   t: ['辣', '咸鲜'],     ty: '米饭',   p: 3, w: ['雨'],       c: 1, k: ['牛'],   d: '咖喱浓香，牛肉软烂' },
+  { n: '酸菜鱼饭',     t: ['酸', '辣'],       ty: '米饭',   p: 3, w: ['雨'],       c: 0, k: ['海鲜'], d: '酸辣开胃，鱼片嫩滑' },
+  { n: '农家小炒肉饭', t: ['辣', '咸鲜'],     ty: '米饭',   p: 2, w: ['晴'],       c: 1, k: [],       d: '五花肉焦香，下饭一绝' },
+  { n: '黑椒牛柳饭',   t: ['辣', '咸鲜'],     ty: '米饭',   p: 3, w: ['晴'],       c: 1, k: ['牛'],   d: '黑椒辛香，牛柳滑嫩' },
+  /* 增补三：粉面 */
+  { n: '红油抄手',     t: ['辣'],             ty: '粉面',   p: 2, w: ['雨'],       c: 0, k: [],       d: '皮薄馅嫩，红油喷香' },
+  { n: '沙茶面',       t: ['咸鲜', '辣'],     ty: '粉面',   p: 2, w: ['晴'],       c: 0, k: ['海鲜'], d: '沙茶浓香，闽南风味' },
+  { n: '鸭血粉丝汤',   t: ['咸鲜', '清淡'],   ty: '粉面',   p: 2, w: ['雨'],       c: 1, k: [],       d: '汤鲜味醇，鸭血嫩滑' },
+  { n: '鸡汤米线',     t: ['清淡', '咸鲜'],   ty: '粉面',   p: 2, w: ['雨'],       c: 0, k: ['鸡'],   d: '鸡汤清亮，米线爽滑' },
+  { n: '油泼面',       t: ['辣', '咸鲜'],     ty: '粉面',   p: 2, w: ['晴'],       c: 0, k: [],       d: '滚油一泼，蒜香四溢' },
+  /* 增补三：烧烤 / 卤味 */
+  { n: '烤鸡架',       t: ['咸鲜'],           ty: '烧烤',   p: 2, w: ['晴'],       c: 0, k: ['鸡'],   d: '焦香入味，越啃越香' },
+  { n: '烤茄子',       t: ['咸鲜', '清淡'],   ty: '烧烤',   p: 2, w: ['晴'],       c: 0, k: [],       d: '蒜蓉加持，软糯多汁' },
+  { n: '烤冷面',       t: ['甜', '咸鲜'],     ty: '烧烤',   p: 2, w: ['晴'],       c: 1, k: ['蛋'],   d: '酸甜酱香，夜市之光' },
+  { n: '卤鸭翅',       t: ['咸鲜', '辣'],     ty: '卤味',   p: 2, w: ['晴'],       c: 0, k: [],       d: '卤香入骨，追剧必备' },
+  { n: '卤藕片',       t: ['咸鲜'],           ty: '卤味',   p: 1, w: ['晴'],       c: 0, k: [],       d: '脆爽入味，素卤也香' },
+  /* 增补三：轻食 / 西式 */
+  { n: '酸奶水果杯',   t: ['甜', '清淡'],     ty: '轻食',   p: 2, w: ['热'],       c: 1, k: ['牛奶'], d: '酸奶顺滑，水果清甜' },
+  { n: '蔬菜蛋卷',     t: ['清淡'],           ty: '轻食',   p: 2, w: ['热'],       c: 0, k: ['蛋'],   d: '蛋香卷蔬，轻盈一餐' },
+  { n: '魔芋凉皮',     t: ['清淡', '酸'],     ty: '轻食',   p: 2, w: ['热'],       c: 0, k: [],       d: '低卡爽口，酸辣开胃' },
+  { n: '炸鱼薯条',     t: ['咸鲜'],           ty: '炸物小吃',   p: 3, w: ['晴'],       c: 0, k: ['海鲜'], d: '外酥里嫩，蘸酱一绝' },
+  { n: '培根蛋堡',     t: ['咸鲜'],           ty: '炸物小吃',   p: 2, w: ['晴'],       c: 1, k: ['蛋'],   d: '培根焦香，蛋嫩多汁' },
+  /* 增补三：漂亮饭 */
+  { n: '红酒烩牛肉',   t: ['咸鲜', '浓郁'],   ty: '漂亮饭', p: 4, w: ['雨'],       c: 0, k: ['牛'],   d: '红酒慢炖，肉质酥烂' },
+  { n: '花胶鸡汤饭',   t: ['咸鲜', '清淡'],   ty: '漂亮饭', p: 4, w: ['雨'],       c: 0, k: ['鸡'],   d: '汤浓胶厚，滋补一盅' },
+  /* 增补四：米饭 */
+  { n: '芋儿鸡饭',     t: ['辣', '咸鲜'],     ty: '米饭',   p: 3, w: ['雨'],       c: 0, k: ['鸡'],   d: '芋头软糯，鸡肉入味' },
+  { n: '咸鱼鸡粒炒饭', t: ['咸鲜'],           ty: '米饭',   p: 2, w: ['晴'],       c: 0, k: ['海鲜', '蛋'], d: '咸香粒粒，镬气十足' },
+  { n: '豆豉鲮鱼饭',   t: ['咸鲜', '辣'],     ty: '米饭',   p: 2, w: ['晴'],       c: 0, k: ['海鲜'], d: '豆豉咸香，鲮鱼下饭' },
+  { n: '黄焖排骨饭',   t: ['咸鲜', '浓郁'],   ty: '米饭',   p: 3, w: ['雨'],       c: 0, k: [],       d: '排骨软烂，酱香浓郁' },
+  /* 增补四：粉面 */
+  { n: '湖南米粉',     t: ['辣'],             ty: '粉面',   p: 2, w: ['雨'],       c: 1, k: [],       d: '湘辣过瘾，米粉爽滑' },
+  { n: '兰州炒面片',   t: ['咸鲜', '辣'],     ty: '粉面',   p: 2, w: ['晴'],       c: 0, k: [],       d: '面片筋道，炒得焦香' },
+  { n: '广式云吞汤',   t: ['咸鲜', '清淡'],   ty: '粉面',   p: 2, w: ['雨'],       c: 1, k: [],       d: '汤清云吞鲜，暖胃刚好' },
+  { n: '番茄鸡蛋面',   t: ['咸鲜', '酸'],     ty: '粉面',   p: 2, w: ['雨'],       c: 1, k: ['蛋'],   d: '番茄酸甜，家常暖味' },
+  { n: '潮汕牛肉丸粿条', t: ['咸鲜', '清淡'], ty: '粉面',   p: 3, w: ['雨'],       c: 0, k: ['牛'],   d: '牛丸弹牙，粿条滑嫩' },
+  /* 增补四：烧烤 / 卤味 */
+  { n: '烤韭菜',       t: ['咸鲜', '辣'],     ty: '烧烤',   p: 1, w: ['晴'],       c: 0, k: [],       d: '孜然焦香，夜宵之光' },
+  { n: '锡纸金针菇',   t: ['咸鲜', '清淡'],   ty: '烧烤',   p: 2, w: ['晴'],       c: 0, k: [],       d: '蒜香汁足，爽口解腻' },
+  { n: '烤猪蹄',       t: ['辣', '浓郁'],     ty: '烧烤',   p: 3, w: ['晴'],       c: 0, k: [],       d: '外焦里糯，胶原拉满' },
+  { n: '卤鸭头',       t: ['咸鲜', '辣'],     ty: '卤味',   p: 2, w: ['晴'],       c: 0, k: [],       d: '啃着过瘾，越吃越香' },
+  { n: '卤牛肚',       t: ['咸鲜'],           ty: '卤味',   p: 3, w: ['晴'],       c: 0, k: ['牛'],   d: '爽脆弹牙，卤香深沉' },
+  { n: '卤香干',       t: ['咸鲜'],           ty: '卤味',   p: 1, w: ['晴'],       c: 0, k: [],       d: '豆香卤香，便宜解馋' },
+  /* 增补四：轻食 / 西式 */
+  { n: '牛油果吐司',   t: ['清淡'],           ty: '轻食',   p: 3, w: ['热'],       c: 0, k: [],       d: '果泥绵密，全麦打底' },
+  { n: '蛋白能量碗',   t: ['清淡'],           ty: '轻食',   p: 3, w: ['热'],       c: 0, k: ['蛋'],   d: '蛋白满满，健身加餐' },
+  { n: '紫薯燕麦杯',   t: ['甜', '清淡'],     ty: '轻食',   p: 2, w: ['热'],       c: 1, k: ['牛奶'], d: '紫薯绵甜，燕麦顶饱' },
+  { n: '芝士薯条',     t: ['咸鲜'],           ty: '炸物小吃',   p: 2, w: ['晴'],       c: 1, k: [],       d: '芝士拉丝，热量快乐' },
+  { n: '烤鸡腿堡',     t: ['咸鲜'],           ty: '炸物小吃',   p: 3, w: ['晴'],       c: 1, k: ['鸡'],   d: '鸡腿多汁，一个顶饱' },
+  { n: '奶油蘑菇意面', t: ['咸鲜', '清淡'],   ty: '粉面',   p: 3, w: ['雨'],       c: 0, k: ['牛奶'], d: '奶香浓郁，菌菇鲜甜' },
+  /* 增补四：漂亮饭 */
+  { n: '蜜汁烤肋排',   t: ['甜', '咸鲜'],     ty: '漂亮饭', p: 4, w: ['晴'],       c: 0, k: ['牛'],   d: '蜜汁挂壳，肋排脱骨' },
+  { n: '松茸鸡汤饭',   t: ['咸鲜', '清淡'],   ty: '漂亮饭', p: 4, w: ['雨'],       c: 0, k: ['鸡'],   d: '松茸鲜香，鸡汤清润' },
+  { n: '鹅肝炒饭',     t: ['咸鲜', '浓郁'],   ty: '漂亮饭', p: 4, w: ['晴'],       c: 0, k: [],       d: '鹅肝油润，粒粒生香' },
+  /* 增补五：锅仔烫煮 */
+  { n: '冒菜',         t: ['辣', '咸鲜'],     ty: '锅仔',   p: 2, w: ['晴', '雨'], c: 1, k: [],       d: '一盆红油，万物可冒' },
+  { n: '串串香',       t: ['辣'],             ty: '锅仔',   p: 2, w: ['晴'],       c: 1, k: [],       d: '签签过瘾，数签结账' },
+  { n: '小火锅',       t: ['辣', '浓郁'],     ty: '锅仔',   p: 3, w: ['雨'],       c: 1, k: ['牛'],   d: '一人一锅，边煮边吃' },
+  { n: '麻辣拌',       t: ['辣', '酸'],       ty: '锅仔',   p: 2, w: ['晴'],       c: 0, k: [],       d: '干拌更入味，酸甜麻辣' },
+  /* 增补五：甜品饮品 */
+  { n: '珍珠奶茶',     t: ['甜'],             ty: '甜品',   p: 1, w: ['晴', '热'], c: 1, k: ['牛奶'], d: 'Q弹珍珠，快乐加满' },
+  { n: '双皮奶',       t: ['甜'],             ty: '甜品',   p: 2, w: ['晴'],       c: 1, k: ['牛奶', '蛋'], d: '奶皮醇厚，嫩滑入喉' },
+  { n: '红糖冰粉',     t: ['甜'],             ty: '甜品',   p: 1, w: ['热'],       c: 1, k: [],       d: '冰爽Q滑，暑气全消' },
+  { n: '银耳莲子羹',   t: ['甜', '清淡'],     ty: '甜品',   p: 2, w: ['雨'],       c: 1, k: [],       d: '胶质满满，润到心底' },
+  { n: '芋泥波波茶',   t: ['甜'],             ty: '甜品',   p: 2, w: ['热'],       c: 1, k: ['牛奶'], d: '芋泥绵密，波波弹牙' },
+  /* 增补六：锅仔烫煮 */
+  { n: '淮南牛肉汤',   t: ['咸鲜', '辣'],     ty: '锅仔',   p: 2, w: ['雨'],       c: 0, k: ['牛'],   d: '汤浓肉烂，千张入味' },
+  { n: '寿喜锅',       t: ['甜', '咸鲜'],     ty: '锅仔',   p: 3, w: ['雨'],       c: 1, k: ['牛', '蛋'], d: '甜鲜汤底，涮肉蘸蛋' },
+  { n: '椰子鸡火锅',   t: ['清淡', '甜'],     ty: '锅仔',   p: 4, w: ['雨'],       c: 0, k: ['鸡'],   d: '椰香清甜，鸡肉嫩滑' },
+  { n: '酸汤肥牛锅',   t: ['酸', '辣'],       ty: '锅仔',   p: 3, w: ['雨'],       c: 0, k: ['牛'],   d: '酸辣开胃，肥牛过瘾' },
+  { n: '冬阴功锅',     t: ['酸', '辣'],       ty: '锅仔',   p: 3, w: ['雨'],       c: 0, k: ['海鲜'], d: '香茅酸辣，泰式风味' },
+  /* 增补六：甜品饮品 */
+  { n: '红豆沙',       t: ['甜'],             ty: '甜品',   p: 1, w: ['雨'],       c: 1, k: [],       d: '绵密起沙，暖甜入喉' },
+  { n: '桂花酒酿圆子', t: ['甜', '清淡'],     ty: '甜品',   p: 2, w: ['雨'],       c: 1, k: [],       d: '酒酿微醺，圆子软糯' },
+  { n: '芒果班戟',     t: ['甜'],             ty: '甜品',   p: 3, w: ['晴'],       c: 1, k: ['牛奶', '蛋'], d: '奶油果肉，一口满足' },
+  { n: '抹茶冰淇淋',   t: ['甜'],             ty: '甜品',   p: 2, w: ['热'],       c: 1, k: ['牛奶'], d: '微苦回甘，清凉一夏' },
+  { n: '冰糖炖雪梨',   t: ['甜', '清淡'],     ty: '甜品',   p: 2, w: ['雨'],       c: 0, k: [],       d: '润肺清甜，温润一盅' },
+  /* 增补六：炸物小吃 */
+  { n: '盐酥鸡',       t: ['咸鲜'],           ty: '炸物小吃', p: 2, w: ['晴'],     c: 1, k: ['鸡'],   d: '外酥里嫩，九层塔香' },
+  { n: '炸鸡排',       t: ['咸鲜', '辣'],     ty: '炸物小吃', p: 2, w: ['晴'],     c: 1, k: ['鸡'],   d: '厚实多汁，咔嚓过瘾' },
+  { n: '狼牙土豆',     t: ['辣', '咸鲜'],     ty: '炸物小吃', p: 1, w: ['晴'],     c: 1, k: [],       d: '麻辣酸香，街头味道' },
+  { n: '炸鲜奶',       t: ['甜'],             ty: '炸物小吃', p: 2, w: ['晴'],     c: 0, k: ['牛奶'], d: '外脆内滑，奶香四溢' },
+  { n: '章鱼小丸子',   t: ['咸鲜'],           ty: '炸物小吃', p: 2, w: ['晴'],     c: 1, k: ['海鲜'], d: '木鱼花舞，章鱼弹牙' },
+  /* 增补六：其他 */
+  { n: '虾籽面',       t: ['咸鲜'],           ty: '粉面',   p: 3, w: ['雨'],       c: 0, k: ['海鲜'], d: '虾籽咸鲜，面条筋道' },
+  { n: '黄鱼面',       t: ['咸鲜', '清淡'],   ty: '粉面',   p: 3, w: ['雨'],       c: 0, k: ['海鲜'], d: '黄鱼嫩滑，汤鲜面爽' },
+  { n: '烤年糕',       t: ['甜', '咸鲜'],     ty: '烧烤',   p: 1, w: ['晴'],       c: 0, k: [],       d: '外脆里糯，酱香微甜' },
+  { n: '卤猪耳',       t: ['咸鲜'],           ty: '卤味',   p: 2, w: ['晴'],       c: 0, k: [],       d: '脆爽弹牙，下酒一绝' },
+  { n: '燕麦酸奶碗',   t: ['甜', '清淡'],     ty: '轻食',   p: 2, w: ['热'],       c: 1, k: ['牛奶'], d: '燕麦嚼感，酸奶清爽' },
+  /* 增补七：米饭 */
+  { n: '海南鸡饭',     t: ['咸鲜', '清淡'],   ty: '米饭',   p: 3, w: ['晴'],       c: 1, k: ['鸡'],   d: '鸡嫩饭香，姜蓉点睛' },
+  { n: '鳗鱼饭',       t: ['甜', '咸鲜'],     ty: '米饭',   p: 4, w: ['雨'],       c: 0, k: ['海鲜'], d: '蒲烧酱香，鳗鱼肥美' },
+  { n: '擂椒皮蛋饭',   t: ['辣'],             ty: '米饭',   p: 2, w: ['晴'],       c: 0, k: ['蛋'],   d: '擂椒焦香，皮蛋流心' },
+  { n: '沙茶牛肉饭',   t: ['咸鲜', '辣'],     ty: '米饭',   p: 3, w: ['晴'],       c: 0, k: ['牛'],   d: '沙茶浓郁，牛肉滑嫩' },
+  /* 增补七：粉面 */
+  { n: '岐山臊子面',   t: ['酸', '辣'],       ty: '粉面',   p: 2, w: ['雨'],       c: 0, k: [],       d: '酸辣鲜香，臊子喷香' },
+  { n: '苏州焖肉面',   t: ['咸鲜'],           ty: '粉面',   p: 3, w: ['雨'],       c: 0, k: [],       d: '焖肉酥烂，汤清面细' },
+  { n: '宜宾燃面',     t: ['辣', '咸鲜'],     ty: '粉面',   p: 2, w: ['晴'],       c: 0, k: [],       d: '干香劲辣，芽菜提味' },
+  { n: '担担面',       t: ['辣', '咸鲜'],     ty: '粉面',   p: 2, w: ['晴'],       c: 1, k: ['花生'], d: '麻辣鲜香，肉臊点睛' },
+  { n: '越南牛肉河粉', t: ['咸鲜', '清淡'],   ty: '粉面',   p: 3, w: ['雨'],       c: 0, k: ['牛'],   d: '汤清味鲜，九层塔香' },
+  /* 增补七：烧烤 / 卤味 */
+  { n: '烤五花肉',     t: ['咸鲜', '辣'],     ty: '烧烤',   p: 2, w: ['晴'],       c: 1, k: [],       d: '肥瘦相间，滋滋冒油' },
+  { n: '烤面包片',     t: ['甜', '咸鲜'],     ty: '烧烤',   p: 1, w: ['晴'],       c: 0, k: [],       d: '焦糖脆壳，炼奶香甜' },
+  { n: '烤羊排',       t: ['辣', '浓郁'],     ty: '烧烤',   p: 4, w: ['晴'],       c: 0, k: ['羊'],   d: '外焦里嫩，膻香浓郁' },
+  { n: '卤鸭锁骨',     t: ['咸鲜', '辣'],     ty: '卤味',   p: 2, w: ['晴'],       c: 0, k: [],       d: '啃骨吸髓，追剧标配' },
+  { n: '卤凤爪',       t: ['咸鲜', '辣'],     ty: '卤味',   p: 2, w: ['晴'],       c: 0, k: [],       d: '软糯脱骨，胶质满满' },
+  /* 增补七：轻食 / 炸物 */
+  { n: '鹰嘴豆沙拉碗', t: ['清淡'],           ty: '轻食',   p: 3, w: ['热'],       c: 0, k: [],       d: '豆香浓郁，蔬果清爽' },
+  { n: '蔬菜鸡肉卷',   t: ['清淡', '咸鲜'],   ty: '轻食',   p: 2, w: ['热'],       c: 1, k: ['鸡'],   d: '薄饼卷蔬，轻负担' },
+  { n: '薯角拼盘',     t: ['咸鲜'],           ty: '炸物小吃', p: 1, w: ['晴'],     c: 1, k: [],       d: '外脆里绵，蘸酱一绝' },
+  { n: '油炸臭豆腐',   t: ['辣', '咸鲜'],     ty: '炸物小吃', p: 2, w: ['晴'],     c: 1, k: [],       d: '闻着臭吃着香，外酥里嫩' },
+  /* 增补七：锅仔 / 甜品 */
+  { n: '老北京涮羊肉', t: ['咸鲜', '清淡'],   ty: '锅仔',   p: 4, w: ['雨'],       c: 0, k: ['羊'],   d: '铜锅清汤，羊肉鲜嫩' },
+  { n: '韩式部队锅',   t: ['辣', '咸鲜'],     ty: '锅仔',   p: 3, w: ['雨'],       c: 1, k: [],       d: '午餐肉拉面，芝士年糕' },
+  { n: '烧仙草',       t: ['甜'],             ty: '甜品',   p: 2, w: ['热'],       c: 1, k: ['牛奶'], d: '仙草滑嫩，配料满杯' },
+  { n: '芋圆糖水',     t: ['甜'],             ty: '甜品',   p: 2, w: ['热'],       c: 1, k: [],       d: '芋圆Q弹，糖水暖甜' },
+  /* 增补七：漂亮饭 */
+  { n: '惠灵顿牛排',   t: ['咸鲜', '浓郁'],   ty: '漂亮饭', p: 4, w: ['晴'],       c: 0, k: ['牛'],   d: '酥皮包裹，仪式感拉满' },
+  { n: '蟹粉狮子头',   t: ['咸鲜', '清淡'],   ty: '漂亮饭', p: 4, w: ['雨'],       c: 0, k: ['海鲜'], d: '蟹粉鲜香，狮子头嫩' },
+  { n: '波士顿龙虾饭', t: ['咸鲜'],           ty: '漂亮饭', p: 4, w: ['晴'],       c: 0, k: ['海鲜'], d: '龙虾弹嫩，一口贵气' }
+];
+
+/* 选项常量 */
+/* 栏一：味道（主/次/末） */
+const TASTES = ['辣', '酸', '甜', '咸鲜', '清淡', '浓郁'];
+const TASTE_EMOJI = {
+  辣: '<svg viewBox="0 0 24 24"><path d="M12 2.5c2.8 0 4 2.4 4 4.4 0 3.2-1.2 5.4-3.2 7.6L11 19l-1.6-3.6-2.6 1c-2.6-3-3.6-6.4-3.6-9.2C3.2 4.4 8 2.5 12 2.5Z" fill="url(#gR)"/><path d="M15.5 4.6c2-1 4.6-1.4 6.2-.8.4 1.6-.2 3.8-1.2 5.4l-1-1.6c.6-1 .6-2.2 0-2.7-1.2-.5-2.7 0-3.8.5Z" fill="url(#gR)" opacity=".85"/><path d="M7.5 9.5 9 13" stroke="rgba(255,255,255,.55)" stroke-width=".9"/></svg>',
+  酸: '<svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8.5" ry="10" fill="url(#gG)" transform="rotate(18 12 12)"/><circle cx="12" cy="12" r="3.2" fill="#fdf8ec"/><path d="M12 5.5v4M9.5 8l2.6 2M15 7.5l-2.3 3" stroke="#b8904f" stroke-width=".9" opacity=".6"/></svg>',
+  甜: '<svg viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="10" rx="2" fill="url(#gG)"/><path d="M5 11h14M5 15h14" stroke="#8a5a1e" stroke-width=".9" opacity=".55"/><path d="M8 3.5h3l1 3-1 1H8l-1-1Z" fill="#d9b25e"/><path d="M13.5 3.5h2.5l1 3-1 1h-2.5l-1-1Z" fill="#d9b25e"/></svg>',
+  咸鲜: '<svg viewBox="0 0 24 24"><rect x="8" y="9" width="8" height="11" rx="2" fill="url(#gP)" stroke="#c9a05e" stroke-width="1"/><path d="M9.5 9 11 3.5h2L14.5 9" fill="#efe7d6" stroke="#c9a05e" stroke-width=".8"/><circle cx="12" cy="14" r="2" fill="#fff"/><circle cx="10.5" cy="16.5" r="1" fill="#fff" opacity=".7"/></svg>',
+  清淡: '<svg viewBox="0 0 24 24"><path d="M12 3c6 0 9 4 9 9-5 0-9-3-9-9Z" fill="url(#gGr)"/><path d="M12 3c0 6-4 9-9 9 0-5 3-9 9-9Z" fill="url(#gGr)" opacity=".85"/><path d="M12 4v17M12 21l-2.5 1M12 21l2.5 1" stroke="#3f6b2e" stroke-width="1" stroke-linecap="round"/></svg>',
+  浓郁: '<svg viewBox="0 0 24 24"><path d="M12 2.5c1 3.5 4.5 5 4.5 9a4.5 4.5 0 0 1-9 0c0-1.6.6-2.8 1.4-4-.6 1-1.2 1.9-1.2 3a4 4 0 0 0 8 0c0-3.5-3.2-5.4-3.7-8Z" fill="url(#gR)"/><path d="M12 11c1.8 1.6 2.6 3 2.6 4.6a2.6 2.6 0 0 1-5.2 0c0-1.3.6-2.3 1.5-3.2.2 1.5.7 2 1.1 2.6.3-.4.4-1.4 0-2.6Z" fill="#f5b04a"/></svg>'
+};
+/* 栏二：主食类型（按人数限选 1~2 种，点两下=都吃这类） */
+const TYPES = [
+  { v: '米饭',   e: '<svg viewBox="0 0 24 24"><path d="M4 11h16l-1.5 8a2 2 0 0 1-2 1.5h-9A2 2 0 0 1 5.5 19Z" fill="url(#gP)" stroke="#c9a05e" stroke-width=".9"/><path d="M4 11a8 8 0 0 1 16 0Z" fill="#fffdf6" stroke="#d8c39a" stroke-width=".9"/><path d="M8 11a4 4 0 0 1 8 0Z" fill="#fff"/><circle cx="10" cy="13.5" r=".8" fill="#e8dcc0"/><circle cx="13" cy="13.8" r=".8" fill="#e8dcc0"/><circle cx="11.5" cy="15.5" r=".8" fill="#e8dcc0"/></svg>', name: '米饭类',   desc: '盖饭 · 炒饭 · 煲仔 · 烧腊' },
+  { v: '粉面',   e: '<svg viewBox="0 0 24 24"><path d="M4 13h16l-1.6 7.5a2 2 0 0 1-2 1.5h-8.8a2 2 0 0 1-2-1.5Z" fill="url(#gP)" stroke="#c9a05e" stroke-width=".9"/><path d="M4 13a8 8 0 0 1 16 0Z" fill="#fffdf6" stroke="#d8c39a" stroke-width=".9"/><path d="M6.5 10c1.5-1 3.5 1 5.5 0s4 1 5.5 0" stroke="#c9a05e" stroke-width="1.1" fill="none" stroke-linecap="round"/><path d="M7 3.5l1 1.2M12 2.8l.5 1.4M17 3.8l.9 1.1" stroke="#8a6a42" stroke-width="1.2" stroke-linecap="round"/></svg>', name: '粉面类',   desc: '面 · 粉 · 饺 · 粥' },
+  { v: '烧烤',   e: '<svg viewBox="0 0 24 24"><line x1="10" y1="3" x2="17" y2="21" stroke="#8a6a42" stroke-width="1.4" stroke-linecap="round"/><rect x="8.2" y="5.2" width="4.6" height="4.6" rx="1" fill="url(#gR)" transform="rotate(-22 10.5 7.5)"/><rect x="9.9" y="9.9" width="4.6" height="4.6" rx="1" fill="#f5b04a" transform="rotate(-22 12.2 12.2)"/><rect x="11.6" y="14.6" width="4.6" height="4.6" rx="1" fill="url(#gR)" transform="rotate(-22 13.9 16.9)"/><circle cx="10.8" cy="6.8" r=".9" fill="#fff" opacity=".5"/></svg>', name: '夜宵烧烤', desc: '撸串 · 烟火气' },
+  { v: '卤味',   e: '<svg viewBox="0 0 24 24"><path d="M4 12h16l-1.5 7a2 2 0 0 1-2 1.5h-9A2 2 0 0 1 5.5 19Z" fill="url(#gB)" opacity=".85"/><path d="M4 12a8 8 0 0 1 16 0Z" fill="#8a5a3a"/><path d="M7.5 11.5c1-1 2.5 1 4.5 0s3.5 1 4.5 0" stroke="#6d4527" stroke-width="1" fill="none"/><circle cx="9" cy="14.5" r="1.1" fill="#c9824a"/><circle cx="12" cy="15.5" r="1.1" fill="#c9824a"/><circle cx="15" cy="14.5" r="1.1" fill="#c9824a"/></svg>', name: '卤味类',   desc: '鸭脖 · 酱大骨' },
+  { v: '轻食',   e: '<svg viewBox="0 0 24 24"><path d="M4 13h16l-1.5 6.5a2 2 0 0 1-2 1.5h-9a2 2 0 0 1-2-1.5Z" fill="url(#gP)" stroke="#c9a05e" stroke-width=".9"/><path d="M4 13a8 8 0 0 1 16 0Z" fill="url(#gGr)" opacity=".85"/><path d="M12 7v4M10 8.5l4-1M10 10.5l4 1" stroke="#3f6b2e" stroke-width=".9" stroke-linecap="round"/></svg>', name: '轻食减脂', desc: '沙拉 · 糙米 · 关东煮' },
+  { v: '炸物小吃', e: '<svg viewBox="0 0 24 24"><path d="M3.5 8.5h17c.3 1.7-.5 3-2.5 3H6c-2 0-2.8-1.3-2.5-3Z" fill="url(#gG)"/><rect x="3.8" y="11.2" width="16.4" height="3" rx="1" fill="#c9824a"/><path d="M5.5 14.5h13l-.8 4a2 2 0 0 1-2 1.5h-7.4a2 2 0 0 1-2-1.5Z" fill="url(#gG)"/><circle cx="9" cy="12.7" r=".9" fill="#fff" opacity=".6"/><circle cx="14" cy="12.7" r=".9" fill="#fff" opacity=".6"/><path d="M9.5 16.5h.5M13.5 16.5h.5" stroke="#a87c3a" stroke-width="1" stroke-linecap="round"/></svg>', name: '炸物小吃', desc: '炸鸡 · 汉堡 · 薯条' },
+  { v: '锅仔',   e: '<svg viewBox="0 0 24 24"><path d="M5 10h14l-1.5 7.5a2.5 2.5 0 0 1-2.5 2H9a2.5 2.5 0 0 1-2.5-2Z" fill="url(#gR)" opacity=".85"/><path d="M5 10a7 7 0 0 1 14 0Z" fill="#fdf6ee" stroke="#c9824a" stroke-width=".9"/><path d="M12 10l.5 1M10.5 9l.5 1M13.5 9l.5 1" stroke="#c9824a" stroke-width=".8"/><path d="M8 3.5c1.5-1 6.5-1 8 0" stroke="#8a6a42" stroke-width=".9" fill="none"/></svg>', name: '锅仔烫煮', desc: '冒菜 · 串串 · 小火锅' },
+  { v: '甜品',   e: '<svg viewBox="0 0 24 24"><path d="M7 4h10l-1 15a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2Z" fill="url(#gP)" stroke="#c9a05e" stroke-width=".9"/><path d="M7 4h10l.6 3H6.4Z" fill="url(#gR)"/><path d="M12 8v8" stroke="#b8904f" stroke-width="1"/><circle cx="12" cy="12.5" r="2.6" fill="#8a5a3a" opacity=".8"/><path d="M5 20.5h14" stroke="#c9a05e" stroke-width="1.2" stroke-linecap="round"/></svg>', name: '甜品饮品', desc: '奶茶 · 糖水 · 甜点' },
+  { v: '漂亮饭', e: '<svg viewBox="0 0 24 24"><path d="M5 9h14l-1.3 7.5a2.5 2.5 0 0 1-2.5 2h-6.4a2.5 2.5 0 0 1-2.5-2Z" fill="url(#gQ)" opacity=".9"/><path d="M5 9a7 7 0 0 1 14 0Z" fill="#eef3f6" stroke="#8fa8b8" stroke-width=".9"/><path d="M12 3.5v2M8.5 4.5l1 1.6M15.5 4.5l-1 1.6" stroke="#8fa8b8" stroke-width=".8" stroke-linecap="round"/><circle cx="9.5" cy="13" r="1" fill="#f5b04a"/><circle cx="14.5" cy="13.5" r="1" fill="#7fb069"/><circle cx="12" cy="15.8" r="1" fill="#e87a6a"/></svg>', name: '漂亮饭',   desc: '牛排 · 精致一餐' }
+];/* 旧版口味迁移：9 类 → 新 6 味 */
+const TASTE_MIG = { 麻辣鲜香: '辣', 清淡素净: '清淡', 甜口: '甜', 酸辣开胃: '酸', 烧烤烟火: '辣', 面食汤面: '咸鲜', 油炸香酥: '浓郁', 健身减脂: '清淡', 营养均衡: '咸鲜' };
+/* 用餐场景：按人数联动分组，fx 为推荐倾向加成 */
+const SCENES = {
+  solo: [
+    { id: 'treat',  name: '犒劳自己', desc: '忙碌了一日，值得好好吃一顿', e: '<svg viewBox="0 0 24 24"><path d="M8 3h8l-1.2 6a3.4 3.4 0 0 1-5.6 0Z" fill="url(#gR)"/><path d="M6.5 10h11l1 3.5a2 2 0 0 1-2 2.5h-9a2 2 0 0 1-2-2.5Z" fill="url(#gG)"/><path d="M7.5 12.5l2 1M16.5 12.5l-2 1" stroke="#8a5a1e" stroke-width=".8"/></svg>', fx: { t: ['辣', '浓郁', '甜'], pUp: 1 } },
+    { id: 'quick',  name: '随便吃口', desc: '忙碌间隙，填饱肚子就好',     e: '<svg viewBox="0 0 24 24"><path d="M5 9h14l-1 11h-12Z" fill="url(#gP)" stroke="#c9a05e" stroke-width=".9"/><path d="M4.5 9h15L16 4.5 12 3.5 8 4.5Z" fill="#fffdf6" stroke="#d8c39a" stroke-width=".8"/><path d="M9 6l1 2M12 5.5l.5 2.5M15 6l.7 2" stroke="#c9a05e" stroke-width=".8"/></svg>', fx: { cheap: 1, pop: 1 } },
+    { id: 'alone',  name: '独享好味', desc: '一个人，也要认真吃饭',       e: '<svg viewBox="0 0 24 24"><path d="M6 5h12l-1.6 8.5a2.5 2.5 0 0 1-2.5 2H10a2.5 2.5 0 0 1-2.4-2Z" fill="url(#gQ)" opacity=".85"/><path d="M6 5a6 6 0 0 1 12 0Z" fill="#eef3f6" stroke="#8fa8b8" stroke-width=".9"/><path d="M9 3.5c1.5-1 4.5-1 6 0" stroke="#8fa8b8" stroke-width=".9" fill="none"/></svg>', fx: { t: ['清淡', '甜'], nice: 1 } },
+    { id: 'night',  name: '深夜治愈', desc: '夜色深沉，热乎的抚慰人心',   e: '<svg viewBox="0 0 24 24"><path d="M14.5 3a9 9 0 1 0 6.5 15A10 10 0 0 1 14.5 3Z" fill="url(#gG)"/><path d="M4.5 14.5h15l-1.4 5a2 2 0 0 1-2 1.5h-8.2a2 2 0 0 1-2-1.5Z" fill="url(#gQ)" opacity=".9"/></svg>', fx: { t: ['咸鲜', '清淡'], ty: ['粉面'] } },
+    { id: 'fresh',  name: '元气满满', desc: '新的一天，吃得精神',         e: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5.5" fill="url(#gG)"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8" stroke="#c9a05e" stroke-width="1.4" stroke-linecap="round"/><circle cx="9.5" cy="10.5" r="1.2" fill="#fff" opacity=".6"/></svg>', fx: { t: ['清淡', '咸鲜'], cheap: 1 } }
+  ],
+  pair: [
+    { id: 'buddy',  name: '好友闺蜜', desc: '小聚叙旧，吃个人气好味',     e: '<svg viewBox="0 0 24 24"><path d="M3.5 9.5h4.5l-.9 10H4.9Z" fill="url(#gP)" stroke="#c9a05e" stroke-width=".9"/><path d="M16 9.5h4.5l-.9 10h-2.2Z" fill="url(#gP)" stroke="#c9a05e" stroke-width=".9"/><path d="M5.5 4 5 6h1.5M5 6l.3 2M17.5 4 17 6h1.5M17 6l.3 2" stroke="#c9a05e" stroke-width=".8"/></svg>', fx: { pop: 1, share: 1 } },
+    { id: 'lover',  name: '情侣时光', desc: '二人世界，要浪漫一点',       e: '<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.5-7.5-9.3A3.7 3.7 0 0 1 12 8.6a3.7 3.7 0 0 1 7.5 2.6c0 4.8-7.5 9.3-7.5 9.3Z" fill="url(#gR)"/><path d="M4.2 14.2c-.9-1-1.1-2.2-.6-3.1.5.9 1.5 1.5 2.4 1.5M19.8 14.2c.9-1 1.1-2.2.6-3.1-.5.9-1.5 1.5-2.4 1.5" stroke="#8f2f20" stroke-width=".9" fill="none" opacity=".7"/></svg>', fx: { t: ['甜', '清淡'], nice: 1 } },
+    { id: 'family', name: '家人小聚', desc: '和至亲吃顿家常',             e: '<svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v9h-5v-5H9v5H4Z" fill="url(#gP)" stroke="#c9a05e" stroke-width="1"/><path d="M10.5 9h3v3.5h-3Z" fill="#8fa8b8"/><path d="M4.5 14.5h15l-1 4h-13Z" fill="url(#gR)" opacity=".8"/></svg>', fx: { t: ['清淡', '咸鲜'], share: 1 } },
+    { id: 'cowork', name: '同事拼单', desc: '效率第一，一起吃个午饭',     e: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="12" rx="1.5" fill="url(#gQ)" opacity=".85"/><path d="M4 9.5h16" stroke="#27435a" stroke-width="1"/><circle cx="8" cy="13" r="1" fill="#f5b04a"/><circle cx="12" cy="13" r="1" fill="#7fb069"/><circle cx="16" cy="13" r="1" fill="#e87a6a"/><rect x="8" y="17.5" width="8" height="2.5" rx="1" fill="#8a6a42"/></svg>', fx: { cheap: 1, pop: 1 } }
+  ],
+  group: [
+    { id: 'party',  name: '朋友聚会', desc: '志同道合，热闹一聚',         e: '<svg viewBox="0 0 24 24"><ellipse cx="12" cy="13.5" rx="8" ry="3" fill="url(#gP)" stroke="#c9a05e" stroke-width="1"/><path d="M6 13.5v3.5a4 4 0 0 0 12 0v-3.5" stroke="#c9a05e" stroke-width="1" fill="none"/><circle cx="12" cy="7" r="3.5" fill="url(#gR)"/><path d="M9 5.5 8 8h2M15 5.5 16 8h-2" stroke="#8f2f20" stroke-width=".8" fill="none"/></svg>', fx: { share: 1 } },
+    { id: 'client', name: '请客吃饭', desc: '招待贵客，体面周到',         e: '<svg viewBox="0 0 24 24"><ellipse cx="12" cy="13" rx="7.5" ry="2.8" fill="url(#gP)" stroke="#c9a05e" stroke-width="1"/><path d="M12 10.2 5 12.5v4a7 7 0 0 0 14 0v-4Z" fill="url(#gP)" stroke="#c9a05e" stroke-width="1"/><path d="M12 10.2 19 12.5" stroke="#c9a05e" stroke-width="1"/><rect x="9.5" y="3.5" width="5" height="3.5" rx="1" fill="url(#gG)"/></svg>', fx: { nice: 2 } },
+    { id: 'clan',   name: '家庭聚餐', desc: '一家老小，营养均衡',         e: '<svg viewBox="0 0 24 24"><ellipse cx="12" cy="14" rx="8.5" ry="3" fill="url(#gB)" opacity=".8"/><path d="M4.5 12.5v3.5a7.5 7.5 0 0 0 15 0v-3.5" stroke="#8a6a42" stroke-width="1" fill="none"/><circle cx="12" cy="9" r="2.6" fill="url(#gR)"/><circle cx="8" cy="10.5" r="1.6" fill="#7fb069"/><circle cx="16" cy="10.5" r="1.6" fill="#f5b04a"/></svg>', fx: { t: ['咸鲜', '清淡'], share: 1 } },
+    { id: 'team',   name: '团队庆功', desc: '一起庆祝，丰盛一点',         e: '<svg viewBox="0 0 24 24"><path d="M8 3.5h8v4.5a4 4 0 0 1-8 0Z" fill="url(#gG)"/><path d="M8 5H5a3 3 0 0 0 3 4M16 5h3a3 3 0 0 1-3 4" stroke="#c9a05e" stroke-width="1" fill="none"/><path d="M10 12.5h4l-.6 2.5h-2.8Z" fill="url(#gG)"/><rect x="9" y="15.5" width="6" height="2" rx=".8" fill="#a87c3a"/><rect x="10.5" y="18" width="3" height="2.5" rx=".8" fill="#a87c3a"/></svg>', fx: { share: 1, nice: 1 } }
+  ]
+};
+/* 天时：8 种，映射到品类的 晴/雨/热 */
+const WEATHERS = [
+  { v: '晴',   e: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5.5" fill="url(#gG)"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8" stroke="#c9a05e" stroke-width="1.4" stroke-linecap="round"/><circle cx="9.5" cy="10.5" r="1.2" fill="#fff" opacity=".6"/></svg>', label: '晴空万里', map: '晴', tip: '风和日丽，正好下馆子' },
+  { v: '凉',   e: '<svg viewBox="0 0 24 24"><path d="M4 7h9a2.5 2.5 0 1 0-2.5-2.5M4 12h13a2.5 2.5 0 1 1-2.5 2.5" stroke="url(#gQ)" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M4 17h7" stroke="url(#gQ)" stroke-width="1.6" stroke-linecap="round"/><path d="M17.5 5.5c1.5-1.2 3.5.2 3 1.6-.3 1-1.3 1.3-2.3.9" stroke="#7fb069" stroke-width="1" fill="none"/></svg>', label: '凉爽宜人', map: '晴', tip: '天高气爽，胃口大开' },
+  { v: '小雨', e: '<svg viewBox="0 0 24 24"><path d="M6 14a4.5 4.5 0 0 1 .6-8.9 6 6 0 0 1 11.6 1.4A3.8 3.8 0 0 1 18 14Z" fill="url(#gQ)" opacity=".9"/><path d="M9 17l-1 2.5M13 17l-1 2.5M17 17l-1 2.5" stroke="#5a7d94" stroke-width="1.3" stroke-linecap="round"/></svg>', label: '小雨微凉', map: '雨', tip: '微凉小雨，汤汤水水暖胃' },
+  { v: '大雨', e: '<svg viewBox="0 0 24 24"><path d="M5.5 13.5a4 4 0 0 1 .5-8 5.5 5.5 0 0 1 10.7 1.5 3.5 3.5 0 0 1 1.3 6.5Z" fill="#3d5a6e"/><path d="M7 17.5l-1.5 3M12 17.5l-1.5 3M17 17.5l-1.5 3" stroke="#27435a" stroke-width="1.6" stroke-linecap="round"/></svg>', label: '大雨磅礴', map: '雨', tip: '大雨倾盆，来点热乎的' },
+  { v: '雪',   e: '<svg viewBox="0 0 24 24"><path d="M12 3v18M4.5 7.5l15 9M4.5 16.5l15-9" stroke="url(#gQ)" stroke-width="1.4" stroke-linecap="round"/><path d="M12 3.5l1.5 1.5L12 6.5l-1.5-1.5ZM12 17.5l1.5 1.5L12 20.5l-1.5-1.5Z" fill="#8fa8b8"/></svg>', label: '瑞雪纷飞', map: '雨', tip: '雪天路滑，热汤最抚心' },
+  { v: '闷热', e: '<svg viewBox="0 0 24 24"><rect x="10" y="4" width="4" height="13" rx="2" fill="#fff" stroke="#8fa8b8" stroke-width="1"/><circle cx="12" cy="17.5" r="3.2" fill="url(#gR)"/><path d="M12 8.5v6" stroke="#8fa8b8" stroke-width="1"/><path d="M8 21h8" stroke="#e87a6a" stroke-width="1.4" stroke-linecap="round"/></svg>', label: '闷热难耐', map: '热', tip: '闷热没胃口，吃点清爽的' },
+  { v: '潮湿', e: '<svg viewBox="0 0 24 24"><path d="M12 3c4 5.5 6.5 9 6.5 12a6.5 6.5 0 0 1-13 0C5.5 12 8 8.5 12 3Z" fill="url(#gQ)"/><path d="M9.5 14.5a2.6 2.6 0 0 0 2.5 2.5" stroke="#fff" stroke-width="1.1" fill="none" stroke-linecap="round" opacity=".7"/></svg>', label: '潮湿黏腻', map: '热', tip: '湿气沉沉，清淡去湿最舒服' },
+  { v: '雾霾', e: '<svg viewBox="0 0 24 24"><path d="M4 8h13a2.5 2.5 0 1 0-2.5-2.5" stroke="#8a9aa8" stroke-width="1.5" fill="none" stroke-linecap="round"/><path d="M4 12.5h16M4 17h11" stroke="#8a9aa8" stroke-width="1.5" stroke-linecap="round" opacity=".7"/></svg>', label: '雾霾沉沉', map: '雨', tip: '雾霾天，热汤润肺正合适' }
+];
+const PRICE_NAME = { 1: '10-15元', 2: '15-25元', 3: '25-40元', 4: '40-60元' };const LS_KEYS = { form: 'wt_form', taboo: 'wt_taboo' };
+
+/* ================= 状态与本地存储 ================= */
+const state = { budget: '', people: '', customPpl: '', scene: '', tastes: {}, types: {}, weather: '晴', personIdx: 0 };
+/* 按人个性化：每人一套口味偏好（数组长度 = 人数） */
+let personTastes = [];
+let tabooList = [];
+
+const $ = id => document.getElementById(id);
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function lsGet(key, fb) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fb; } catch (e) { return fb; } }
+function lsSet(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) { } }
+function saveForm() { lsSet(LS_KEYS.form, Object.assign({}, state, { personTastes: personTastes })); }
+function saveTaboo() { lsSet(LS_KEYS.taboo, tabooList); }
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 1900);
+}
+function showModal(title, body, btn, fn, btn2, fn2) {
+  $('mTitle').textContent = title;
+  $('mBody').innerHTML = body;
+  $('mBtn').textContent = btn;
+  $('mBtn').onclick = () => { hideModal(); if (fn) fn(); };
+  const b2 = $('mBtn2');
+  if (btn2) {
+    b2.textContent = btn2;
+    b2.classList.remove('hidden');
+    b2.onclick = () => { hideModal(); if (fn2) fn2(); };
+  } else {
+    b2.classList.add('hidden');
+  }
+  $('overlay').classList.remove('hidden');
+}
+function hideModal() { $('overlay').classList.add('hidden'); }
+
+/* ================= 页面切换 + 启承转合 ================= */
+const PAGES = ['pageCover', 'pageForm', 'pageMode', 'pageResult', 'pageOrder'];
+const STEPS = ['启', '承', '转', '合'];
+function showPage(name) {
+  PAGES.forEach(p => $(p).classList.add('hidden'));
+  const el = $(name);
+  el.classList.remove('hidden');
+  el.classList.remove('reveal'); void el.offsetWidth; el.classList.add('reveal');
+  // 进度印章
+  const idx = PAGES.indexOf(name);
+  document.querySelectorAll('.progress').forEach(pg => {
+    pg.innerHTML = STEPS.map((s, i) =>
+      (i ? '<i class="link"></i>' : '') + '<span class="step' + (i <= idx ? ' on' : '') + '">' + s + '</span>'
+    ).join('');
+  });
+  window.scrollTo({ top: 0, behavior: 'auto' });
+}
+
+/* ================= 人数与餐资联动 ================= */
+/* 每人一套口味：数量 = 人数；旧版 tastes/types 迁移给第 1 人 */
+function ensurePersons() {
+  if (!personTastes || !personTastes.length) {
+    if (Array.isArray(state.personTastes) && state.personTastes.length) {
+      personTastes = state.personTastes.filter(p => p && typeof p === 'object' && typeof p.tastes === 'object' && typeof p.types === 'object');
+      personTastes.forEach(p => { if (!p.tastes) p.tastes = {}; if (!p.types) p.types = {}; });
+    } else {
+      personTastes = [];
+      if (state.tastes && Object.keys(state.tastes).length && (state.tastes[1] || state.tastes[2] || state.tastes[3])) {
+        personTastes.push({ tastes: state.tastes, types: Object.assign({}, state.types) });
+      }
+    }
+  }
+  /* 旧类型迁移：西式 → 炸物小吃 */
+  personTastes.forEach(p => {
+    if (p.types) {
+      Object.keys(p.types).forEach(k => {
+        if (k === '西式') { p.types['炸物小吃'] = p.types['西式']; delete p.types['西式']; }
+        else if (!TYPES.some(t => t.v === k)) delete p.types[k];
+      });
+    }
+  });
+  const n = pplCount();
+  while (personTastes.length < n) personTastes.push({ tastes: {}, types: {} });
+  while (personTastes.length > n) personTastes.pop();
+  if (state.personIdx >= personTastes.length) state.personIdx = Math.max(0, personTastes.length - 1);
+}
+function curPerson() { ensurePersons(); return personTastes[state.personIdx] || { tastes: {}, types: {} }; }
+function personDone(i) {
+  const p = personTastes[i] || {};
+  return !!(p.tastes && (p.tastes[1] || p.tastes[2] || p.tastes[3])) && !!(p.types && Object.keys(p.types).some(k => p.types[k] > 0));
+}
+/* 人序数：壹贰叁… */
+const WHO = ['壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖', '拾'];
+function pplCount() {
+  if (state.people === '双人') return 2;
+  if (state.people === '自定义') {
+    const n = parseInt(state.customPpl, 10);
+    return (n >= 1 && n <= 50) ? n : 1;
+  }
+  return 1;
+}
+/* 天时入画：封面叠加天气意象 */
+function updateCoverWeather() {
+  const cf = $('pageCover') ? $('pageCover').querySelector('.cover-frame') : null;
+  if (!cf) return;
+  cf.classList.remove('wx-sun', 'wx-rain', 'wx-hot', 'wx-snow', 'wx-fog');
+  const w = weatherMap();
+  cf.classList.add(w === '晴' ? 'wx-sun' : w === '雨' ? 'wx-rain' : w === '热' ? 'wx-hot' : w === '雪' ? 'wx-snow' : 'wx-fog');
+}
+function renderBudget() {
+  const n = pplCount();
+  const opt = [
+    { v: '1', label: n + ' 人 · 约 ' + (10 * n) + ' - ' + (15 * n) + ' 元' },
+    { v: '2', label: n + ' 人 · 约 ' + (15 * n) + ' - ' + (25 * n) + ' 元' },
+    { v: '3', label: n + ' 人 · 约 ' + (25 * n) + ' - ' + (40 * n) + ' 元' },
+    { v: '4', label: n + ' 人 · 约 ' + (40 * n) + ' 元以上' }
+  ];
+  $('budget').innerHTML = opt.map(o => '<option value="' + o.v + '">' + o.label + '</option>').join('');
+  if (!['1', '2', '3', '4'].includes(state.budget)) state.budget = '1'; saveForm();
+  $('budget').value = state.budget;
+}
+function peopleGroup() {
+  if (state.people === '双人') return 'pair';
+  if (state.people === '自定义') {
+    const n = parseInt(state.customPpl, 10);
+    if (n >= 3) return 'group';
+    if (n === 2) return 'pair';
+  }
+  return 'solo';
+}
+function isGroup() { return peopleGroup() === 'group'; }
+function curScene() {
+  const list = SCENES[peopleGroup()] || [];
+  return list.find(s => s.id === state.scene) || null;
+}
+
+/* 筷子图标 */
+/* 竹筷：等长成双；多人 = 一束筷子，不言自明 */
+const CHOP_SVG = {
+  '单人': '<svg viewBox="0 0 48 48"><defs><linearGradient id="cpB" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d4ab6a"/><stop offset=".5" stop-color="#e8c98f"/><stop offset="1" stop-color="#a87c3a"/></linearGradient></defs><rect x="7" y="35" width="34" height="5" rx="2.5" fill="#8a6a42" stroke="#6d4f2b" stroke-width=".8"/><g stroke="url(#cpB)" stroke-width="3.8" stroke-linecap="round"><line x1="10" y1="36" x2="36" y2="10"/><line x1="16" y1="36" x2="42" y2="10"/></g><g stroke="rgba(255,244,220,.55)" stroke-width="1.1"><line x1="12" y1="34" x2="34" y2="13"/><line x1="18" y1="34" x2="40" y2="13"/></g><g stroke="#c9a05e" stroke-width="1.4"><line x1="11" y1="35" x2="35" y2="11"/><line x1="17" y1="35" x2="41" y2="11"/></g></svg>',
+  '双人': '<svg viewBox="0 0 48 48"><defs><linearGradient id="cpB2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d4ab6a"/><stop offset=".5" stop-color="#e8c98f"/><stop offset="1" stop-color="#a87c3a"/></linearGradient></defs><rect x="7" y="35" width="34" height="5" rx="2.5" fill="#8a6a42" stroke="#6d4f2b" stroke-width=".8"/><g stroke="url(#cpB2)" stroke-width="3.5" stroke-linecap="round"><line x1="6" y1="36" x2="32" y2="10"/><line x1="12" y1="36" x2="38" y2="10"/><line x1="18" y1="36" x2="44" y2="10"/><line x1="24" y1="36" x2="50" y2="10"/></g><g stroke="rgba(255,244,220,.5)" stroke-width="1"><line x1="8" y1="34" x2="30" y2="13"/><line x1="14" y1="34" x2="36" y2="13"/><line x1="20" y1="34" x2="42" y2="13"/><line x1="26" y1="34" x2="48" y2="13"/></g><g stroke="#c9a05e" stroke-width="1.3"><line x1="7" y1="35" x2="31" y2="11"/><line x1="13" y1="35" x2="37" y2="11"/><line x1="19" y1="35" x2="43" y2="11"/><line x1="25" y1="35" x2="49" y2="11"/></g></svg>',
+  '自定义': '<svg viewBox="0 0 48 48"><defs><linearGradient id="cpB3" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d4ab6a"/><stop offset=".5" stop-color="#e8c98f"/><stop offset="1" stop-color="#a87c3a"/></linearGradient></defs><rect x="7" y="35" width="34" height="5" rx="2.5" fill="#8a6a42" stroke="#6d4f2b" stroke-width=".8"/><g stroke="url(#cpB3)" stroke-width="3.2" stroke-linecap="round"><line x1="3" y1="34" x2="27" y2="10"/><line x1="9" y1="35" x2="33" y2="11"/><line x1="15" y1="35" x2="39" y2="11"/><line x1="21" y1="35" x2="45" y2="11"/><line x1="27" y1="34" x2="51" y2="10"/><line x1="33" y1="34" x2="57" y2="10"/></g><g stroke="rgba(255,244,220,.5)" stroke-width="1"><line x1="5" y1="32" x2="25" y2="13"/><line x1="11" y1="33" x2="31" y2="14"/><line x1="17" y1="33" x2="37" y2="14"/><line x1="23" y1="33" x2="43" y2="14"/><line x1="29" y1="32" x2="49" y2="13"/><line x1="35" y1="32" x2="55" y2="13"/></g><g stroke="#c9a05e" stroke-width="1.2"><line x1="4" y1="33" x2="26" y2="11"/><line x1="10" y1="34" x2="32" y2="12"/><line x1="16" y1="34" x2="38" y2="12"/><line x1="22" y1="34" x2="44" y2="12"/><line x1="28" y1="33" x2="50" y2="11"/><line x1="34" y1="33" x2="56" y2="11"/></g></svg>'
+};
+
+/* ================= 初始化 ================= */
+function init() {
+  const f = lsGet(LS_KEYS.form, {});
+  if (f && typeof f === 'object' && !Array.isArray(f)) Object.assign(state, f);
+  tabooList = lsGet(LS_KEYS.taboo, []);
+  if (!Array.isArray(tabooList)) tabooList = [];
+  try {
+    const oldBlack = lsGet('wt_black', []);
+    if (Array.isArray(oldBlack)) tabooList = tabooList.concat(oldBlack);
+    if (f && typeof f.taboo === 'string' && f.taboo.trim()) {
+      f.taboo.split(/[、，,;；\s]+/).forEach(x => { if (x && tabooList.indexOf(x) < 0) tabooList.push(x); });
+    }
+  } catch (e) { }
+  tabooList = tabooList.filter((v, i) => tabooList.indexOf(v) === i);
+  saveTaboo();
+  localStorage.removeItem('wt_black');
+
+  if (typeof f.taste === 'string' && TASTES.indexOf(f.taste) >= 0 && !state.tastes) state.tastes = { 1: f.taste };
+  if (!state.tastes || typeof state.tastes !== 'object' || Array.isArray(state.tastes)) state.tastes = {};
+  ['1', '2', '3'].forEach(k => {
+    if (state.tastes[k]) {
+      if (TASTES.indexOf(state.tastes[k]) < 0) {
+        const mig = TASTE_MIG[state.tastes[k]];
+        if (mig) state.tastes[k] = mig; else delete state.tastes[k];
+      }
+    }
+  });
+  if (!state.types || typeof state.types !== 'object' || Array.isArray(state.types)) state.types = {};
+  Object.keys(state.types).forEach(k => { if (!TYPES.some(t => t.v === k) || state.types[k] < 1) delete state.types[k]; });
+  if (!WEATHERS.some(w => w.v === state.weather)) state.weather = '晴';
+  if (['单人', '双人', '自定义'].indexOf(state.people) < 0) state.people = '';
+
+  // 筷子人数
+  const g = $('chopGrid');
+  g.innerHTML = ['单人', '双人', '自定义'].map(v =>
+    '<button type="button" class="chop-btn' + (state.people === v ? ' active' : '') + '" data-v="' + v + '">' +
+    CHOP_SVG[v] + '<span class="ct">' + (v === '自定义' ? '多人' : v) + '</span></button>'
+  ).join('');
+  g.querySelectorAll('.chop-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      g.querySelectorAll('.chop-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      state.people = b.dataset.v; saveForm();
+      syncCustomPpl(); ensurePersons(); renderScenes(); renderTastes(); renderTypes(); renderBudget();
+    });
+  });
+
+  // 天气胶囊
+  const wBox = $('chipsWeather');
+  wBox.innerHTML = WEATHERS.map(w =>
+    '<button type="button" class="chip" data-set="weather" data-v="' + w.v + '">' + w.e + ' ' + w.label + '</button>'
+  ).join('');
+  wBox.querySelectorAll('.chip').forEach(c => {
+    if (c.dataset.v === state.weather) c.classList.add('active');
+    c.addEventListener('click', () => {
+      wBox.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+      state.weather = c.dataset.v; saveForm();
+      updateCoverWeather();
+    });
+  });
+
+  $('budget').addEventListener('change', e => { state.budget = e.target.value; saveForm(); });
+  $('customPpl').addEventListener('input', e => {
+    state.customPpl = e.target.value.trim(); saveForm();
+    renderBudget();                       // 输入中只更新预算标签，不碰已选数据
+  });
+  $('customPpl').addEventListener('blur', () => {
+    const old = personTastes.length;
+    ensurePersons();
+    if (personTastes.length < old) toast('人数减少，第 ' + (personTastes.length + 1) + ' 位以后的选择已舍弃');
+    renderScenes(); renderTastes(); renderTypes(); renderBudget();
+  });
+
+  $('btnTaboo').addEventListener('click', addTaboo);
+  $('tabooInput').addEventListener('keydown', e => { if (e.key === 'Enter') addTaboo(); });
+
+  $('btnStart').addEventListener('click', () => showPage('pageForm'));
+  $('btnNext').addEventListener('click', () => { if (validate()) {
+    const bn = $('btnNext'); bn.classList.remove('ink'); void bn.offsetWidth; bn.classList.add('ink');
+    usedDishes = []; showPage('pageMode');
+  } });
+  document.querySelectorAll('.back-btn').forEach(b =>
+    b.addEventListener('click', () => showPage(b.dataset.back))
+  );
+  $('btnRedo').addEventListener('click', () => { if (validate()) { setMode('smart'); smartRec(); } });   // 重择一餐 = 同一参数下重新生成三案
+  $('btnOrderHome').addEventListener('click', () => showPage('pageCover'));
+  $('btnHome').addEventListener('click', () => showPage('pageCover'));
+
+  $('btnSmart').addEventListener('click', () => { setMode('smart'); smartRec(); });
+  $('btnLot').addEventListener('click', () => { setMode('lot'); lotRec(); });
+  $('btnReset').addEventListener('click', resetAll);
+  $('btnNextPerson').addEventListener('click', () => {
+    if (!personDone(state.personIdx)) { toast('先给第 ' + (state.personIdx + 1) + ' 位选好主味和主食'); return; }
+    if (state.personIdx < pplCount() - 1) {
+      state.personIdx++; saveForm(); renderTastes(); renderTypes();
+      toast('轮到第 ' + (state.personIdx + 1) + ' 位');
+    } else {
+      toast('全部选好啦，落笔定案吧');
+    }
+  });
+  weakMark('budget', '今日餐资尚未落定');
+  weakMark('customPpl', '填下具体人数，好备餐');
+  if (state.mode) setMode(state.mode);
+  $('lotBox').addEventListener('click', e => {
+    const t = e.target;
+    if (t && t.id === 'btnShake') {
+      if (t.disabled) return;
+      if (t.textContent.indexOf('再摇') < 0) { shakeLot(); return; }
+      showModal('违抗命运？',
+        '一举一动，皆是命中注定。<br>你确定要违抗命运的抉择吗？',
+        '罢了，就它吧', null,
+        '违抗命运，重摇', () => shakeLot());
+      return;
+    }
+    if (t && t.classList.contains('scope-btn')) {
+      const s = t.dataset.s;
+      const cur = (state.lotScope !== 'free');
+      if ((s === 'budget') !== cur) {
+        state.lotScope = s; saveForm();
+        $('lotBox').querySelectorAll('.scope-btn').forEach(b => b.classList.toggle('on', b.dataset.s === s));
+        // 换范围即作废旧签，重新择签
+        $('lotSlips').innerHTML = '';
+        $('lotHint').textContent = '先择范围，再摇一签';
+        const b2 = $('btnShake');
+        if (b2) { b2.textContent = '摇 一 签'; b2.disabled = false; }
+      }
+    }
+  });
+
+  ensurePersons();
+  updateCoverWeather();
+  syncCustomPpl(); renderScenes(); renderTastes(); renderTypes(); renderTaboo(); renderTabooPresets(); renderBudget();
+  // 竖排文字：逐字拆分，flex 纵向排列（不依赖 writing-mode，兼容所有浏览器）
+  document.querySelectorAll('[data-text]').forEach(el => {
+    el.innerHTML = el.dataset.text.split('').map(c => '<span>' + esc(c) + '</span>').join('');
+  });
+  showPage('pageCover');
+}
+
+/* 场景渲染（竖排 + 盖"合"章） */
+function renderScenes() {
+  const box = $('scenesBox');
+  const list = SCENES[peopleGroup()] || [];
+  if (!list.some(s => s.id === state.scene)) state.scene = '';
+  box.innerHTML = list.map(s =>
+    '<button type="button" class="vopt' + (s.id === state.scene ? ' active' : '') + '" data-id="' + s.id + '">' +
+    '<span class="ve">' + s.e + '</span>' +
+    '<span class="vt">' + s.name + '<span class="vd">' + s.desc + '</span></span>' +
+    (s.id === state.scene ? '<span class="seal-mark stamp-now">合</span>' : '<span class="seal-mark" style="opacity:0">合</span>') +
+    '</button>'
+  ).join('');
+  box.querySelectorAll('.vopt').forEach(b =>
+    b.addEventListener('click', () => {
+      state.scene = b.dataset.id; saveForm(); renderScenes();
+    })
+  );
+}
+
+/* 口味渲染（竖排，主/次/末三章） */
+function tasteLevel(t) {
+  const pri = curPerson().tastes || {};
+  return pri[1] === t ? 1 : pri[2] === t ? 2 : pri[3] === t ? 3 : 0;
+}
+function setTasteLevel(t) {
+  const pri = curPerson().tastes || (curPerson().tastes = {});
+  const cur = tasteLevel(t);
+  if (cur) {
+    delete pri[cur];
+  } else {
+    const slot = !pri[1] ? 1 : !pri[2] ? 2 : !pri[3] ? 3 : 0;
+    if (!slot) { toast('最多选 3 个口味'); return; }
+    pri[slot] = t;
+  }
+  saveForm(); renderTastes();
+}
+function renderTastes() {
+  ensurePersons();
+  const box = $('tasteList');
+  const pt = $('personTitle');
+  if (pt) pt.textContent = '第 ' + (state.personIdx + 1) + ' 位食客';
+  renderPersonTabs();
+  box.innerHTML = TASTES.map(t => {
+    const lv = tasteLevel(t);
+    const mk = lv
+      ? '<span class="seal-mark k' + lv + ' stamp-now">' + ['', '主', '次', '末'][lv] + '</span>'
+      : '<span class="seal-mark wait">待</span>';
+    return '<button type="button" class="vopt' + (lv ? ' t' + lv : '') + '" data-v="' + t + '">' +
+      '<span class="ve">' + (TASTE_EMOJI[t] || '🍽️') + '</span>' +
+      '<span class="vt">' + t + '</span>' + mk + '</button>';
+  }).join('');
+  box.querySelectorAll('.vopt').forEach(b =>
+    b.addEventListener('click', () => setTasteLevel(b.dataset.v))
+  );
+}
+
+/* 主食栏：每位食客点 1 下选中自己的主食，再点取消（一人一种） */
+function typeCount(ty) { return (curPerson().types || {})[ty] || 0; }
+function setType(ty) {
+  const t = curPerson().types || (curPerson().types = {});
+  if (t[ty]) { delete t[ty]; }                               // 再点同一类 = 取消这位的主食
+  else { Object.keys(t).forEach(k => delete t[k]); t[ty] = 1; }  // 每位食客只能一种主食：换选时清掉旧的
+  saveForm(); renderTypes();
+}
+/* 人数变化后，把超限的主食份数自动截到人数内（从后往前减） *//* 人序号章：点几号 = 切到第几位食客 */
+function renderPersonTabs() {
+  const box = $('personTabs');
+  if (!box) return;
+  const n = pplCount();
+  box.innerHTML = Array.from({ length: n }, (_, i) =>
+    '<button type="button" class="ptab' + (i === state.personIdx ? ' on' : '') + (personDone(i) ? ' done' : '') + '" data-i="' + i + '" title="第 ' + (i + 1) + ' 位食客">' + (i + 1) + '</button>'
+  ).join('');
+  box.querySelectorAll('.ptab').forEach(b =>
+    b.addEventListener('click', () => {
+      state.personIdx = +b.dataset.i;
+      saveForm(); renderTastes(); renderTypes();
+    })
+  );
+  const np = $('btnNextPerson');
+  if (np) {
+    const last = state.personIdx >= pplCount() - 1;
+    np.textContent = personDone(state.personIdx) ? (last ? '✓ 全部选好' : '完成 · 下一位 →') : '先给第 ' + (state.personIdx + 1) + ' 位选好主味和主食';
+    np.disabled = !personDone(state.personIdx);
+  }
+}
+function renderTypes() {
+  ensurePersons();
+  renderPersonTabs();
+  const box = $('typeList');
+  const hint = $('typeHint');
+  if (hint) hint.innerHTML = '<b>主食</b> · 点 1 下选中这位的主食，再点取消';
+  box.innerHTML = TYPES.map(ty => {
+    const n = typeCount(ty.v);
+    const mark = n === 0 ? '<span class="vcheck"></span>'
+      : '<span class="type-badge">选</span>';
+    return '<button type="button" class="vopt' + (n ? ' active' : '') + '" data-v="' + ty.v + '">' +
+      '<span class="ve">' + ty.e + '</span>' +
+      '<span class="vt">' + ty.name + '<span class="vd">' + (n ? '第 ' + (state.personIdx + 1) + ' 位的主食' : ty.desc) + '</span></span>' +
+      mark + '</button>';
+  }).join('');
+  box.querySelectorAll('.vopt').forEach(b =>
+    b.addEventListener('click', () => setType(b.dataset.v))
+  );
+}
+function syncCustomPpl() {
+  $('customPpl').classList.toggle('hidden-inline', state.people !== '自定义');
+  if (state.people === '自定义') $('customPpl').value = state.customPpl || '';
+}
+
+/* 饮食避讳预设：常见不爱吃 + 常见过敏原，点选即避讳 */
+const TABOO_PRESETS = [
+  { g: '常见不爱吃', items: ['芹菜', '香菜', '葱', '姜', '蒜', '韭菜', '苦瓜', '肥肉', '内脏', '胡萝卜', '香菇', '洋葱'] },
+  { g: '常见过敏原', items: ['海鲜', '虾', '蟹', '花生', '鸡蛋', '牛奶', '大豆', '芒果', '坚果'] }
+];
+function renderTabooPresets() {
+  const box = $('tabooPresets');
+  if (!box) return;
+  box.innerHTML = TABOO_PRESETS.map(g =>
+    '<div class="tp-group"><span class="tp-label">' + g.g + '<em>点选即避讳 · 再点放行</em></span>' +
+    '<div class="tp-chips">' + g.items.map(it => {
+      const on = tabooList.indexOf(it) >= 0;
+      return '<button type="button" class="tp-chip' + (on ? ' on' : '') + '" data-v="' + it + '">' + it + '</button>';
+    }).join('') + '</div></div>'
+  ).join('');
+  box.querySelectorAll('.tp-chip').forEach(b =>
+    b.addEventListener('click', () => {
+      const v = b.dataset.v;
+      if (tabooList.indexOf(v) >= 0) { tabooList = tabooList.filter(x => x !== v); toast('已放行：' + v); }
+      else { tabooList.push(v); toast('已避讳：' + v); }
+      saveTaboo(); renderTaboo(); renderTabooPresets();
+    })
+  );
+}
+
+/* 饮食避讳（忌口 + 黑名单合并） */
+function addTaboo() {
+  const v = $('tabooInput').value.trim();
+  if (!v) { toast('先输入要避开的菜系或食材'); return; }
+  if (v.length < 2 && v !== '辣' && v !== '酸' && v !== '甜') { toast('关键词至少 2 个字（单字仅支持：辣/酸/甜）'); return; }
+  if (tabooList.indexOf(v) >= 0) { toast('已在避讳中'); return; }
+  tabooList.push(v); saveTaboo();
+  $('tabooInput').value = ''; renderTaboo();
+  toast('已添加避讳：' + v);
+}
+function renderTaboo() {
+  const box = $('tabooBox');
+  if (!tabooList.length) { box.innerHTML = '<span class="hist-empty">暂无避讳，不做任何回避</span>'; return; }
+  box.innerHTML = tabooList.map((b, i) =>
+    '<span class="chip-x">' + esc(b) + '<button type="button" data-i="' + i + '" title="移除">✕</button></span>'
+  ).join('');
+  box.querySelectorAll('button').forEach(btn =>
+    btn.addEventListener('click', () => {
+      tabooList.splice(+btn.dataset.i, 1); saveTaboo(); renderTaboo(); toast('已移除避讳');
+    })
+  );
+}
+
+/* ================= 过滤与评分 ================= */
+function banned(d) {
+  return tabooList.some(b => {
+    if (b.indexOf('辣') >= 0 && b.indexOf('微') < 0 && d.t.indexOf('辣') >= 0) return true;   // 不吃辣
+    if (b.indexOf('香菜') >= 0 && (d.k || []).indexOf('香菜') >= 0) return true;
+    if ((d.k || []).some(k => k.indexOf(b) >= 0 || b.indexOf(k) >= 0)) return true;
+    if (d.n.indexOf(b) >= 0) return true;   // 单字也按菜名匹配（如：鸡/鱼）
+    return false;
+  });
+}
+function sceneBonus(d) {
+  const s = curScene();
+  if (!s) return 0;
+  const f = s.fx; let add = 0;
+  if (f.t && d.t.some(t => f.t.indexOf(t) >= 0)) add += 10;
+  if (f.ty && f.ty.indexOf(d.ty) >= 0) add += 10;
+  if (f.pUp && Math.abs(d.p - (+state.budget)) === 1) add += 10;
+  if (f.cheap && d.p <= 2) add += 8;
+  if (f.pop && d.c === 1) add += 6;
+  if (f.share && d.p >= 2) add += 6;
+  if (f.nice && d.p >= 3) add += 12;
+  return add;
+}/* 主食命中：1 份 +30，2 份（都吃这类）+34 *//* 每人的候选池：该人的主味 + 主食类型硬过滤 */
+function poolFor(person) {
+  const pri = (person && person.tastes) || {};
+  const types = (person && person.types) || {};
+  const typeKeys = Object.keys(types).filter(k => types[k] > 0);
+  return DISHES.filter(d => {
+    if (banned(d)) return false;
+    const tasteOk = pri[1] ? d.t.indexOf(pri[1]) >= 0
+      : (pri[2] ? d.t.indexOf(pri[2]) >= 0 : (pri[3] ? d.t.indexOf(pri[3]) >= 0 : true));
+    const typeOk = typeKeys.length ? typeKeys.indexOf(d.ty) >= 0 : true;
+    return tasteOk && typeOk;
+  });
+}
+/* 按人评分：该人的主/次/末味 + 该人的主食 */
+function scoreFor(d, person, avoid) {
+  const pri = (person && person.tastes) || {};
+  const types = (person && person.types) || {};
+  let s = 0;
+  if (pri[1] && d.t.indexOf(pri[1]) >= 0) s += 45;
+  else if (pri[2] && d.t.indexOf(pri[2]) >= 0) s += 28;
+  else if (pri[3] && d.t.indexOf(pri[3]) >= 0) s += 12;
+  else s -= 8;
+  const typeKeys = Object.keys(types).filter(k => types[k] > 0);
+  if (typeKeys.length && typeKeys.indexOf(d.ty) >= 0) s += 30;
+  else if (typeKeys.length) s -= 10;
+  if (d.p === +state.budget) s += 26;
+  else if (Math.abs(d.p - (+state.budget)) === 1) s += 10;
+  if (d.w.indexOf(weatherMap()) >= 0) s += 18;
+  if (state.weather === '潮湿' && d.t.indexOf('清淡') >= 0) s += 6;
+  s += sceneBonus(d);
+  if (isGroup()) s += 4;
+  if (avoid && avoid.indexOf(d) >= 0) s -= 25;
+  return s;
+}function weatherMap() {
+  const w = WEATHERS.find(x => x.v === state.weather);
+  return w ? w.map : '晴';
+}
+/* 硬过滤：避讳 + 主味（或次/末）命中 + 所选主食类型命中 —— 保证三方案都在要求内 */function why(d, kind, person) {
+  const r = [];
+  const pri = (person && person.tastes) || state.tastes || {};
+  if (pri[1] && d.t.indexOf(pri[1]) >= 0) r.push('正中主味「' + pri[1] + '」');
+  else if (pri[2] && d.t.indexOf(pri[2]) >= 0) r.push('合次选「' + pri[2] + '」');
+  else if (pri[3] && d.t.indexOf(pri[3]) >= 0) r.push('兼得「' + pri[3] + '」');
+  const tyName = (TYPES.find(x => x.v === d.ty) || {}).name;
+  if (tyName) r.push('主食正是「' + tyName + '」');
+  if (d.p === +state.budget) r.push('价格正好在预算内');
+  else if (Math.abs(d.p - (+state.budget)) === 1) r.push('价格在预算附近');
+  const s = curScene();
+  if (s) r.push('正合「' + s.name + '」');
+  if (d.w.indexOf(weatherMap()) >= 0) r.push((WEATHERS.find(x => x.v === state.weather) || {}).tip);
+  if (state.weather === '潮湿' && d.t.indexOf('清淡素净') >= 0) r.push('清淡去湿正合适');
+  if (isGroup()) r.push('人多份量足，适合分享');
+  if (kind === 'safe' && d.c === 1) r.push('大众口碑稳，踩雷率低');
+  if (kind === 'niche' && d.c === 0) r.push('小众新鲜，换换口味');
+  return r.length ? r.join(' · ') : '大众好评，盲点基本不亏';
+}
+
+/* ================= 方案 = 一桌菜 ================= */
+function priceRange(p) {
+  return { 1: [10, 15], 2: [15, 25], 3: [25, 40], 4: [40, 60] }[p] || [10, 15];
+}function buildMenu(kind, avoid) {
+  ensurePersons();
+  const picks = [];   // { d, personIdx }
+  personTastes.forEach((p, i) => {
+    let cand = poolFor(p).filter(d => avoid.indexOf(d) < 0);
+    if (cand.length < 1) cand = poolFor(p);
+    let arr = cand.map(d => ({ d: d, s: scoreFor(d, p, avoid) })).sort((a, b) => b.s - a.s);
+    if (kind === 'safe') arr = arr.filter(x => x.d.c === 1).concat(arr.filter(x => x.d.c === 0));
+    if (kind === 'niche') arr = arr.filter(x => x.d.c === 0).concat(arr.filter(x => x.d.c === 1));
+    const x = arr.find(y => !picks.some(z => z.d === y.d)) || arr[0];
+    if (x) picks.push({ d: x.d, personIdx: i });
+  });
+  const dishes = picks.map(x => x.d);
+  const totalMin = dishes.reduce((a, d) => a + d.p * 10, 0);
+  const totalMax = dishes.reduce((a, d) => a + (d.p === 4 ? 65 : d.p === 3 ? 40 : d.p === 2 ? 25 : 15), 0);
+  const tags = [];
+  dishes.forEach(d => d.t.forEach(t => { if (tags.indexOf(t) < 0) tags.push(t); }));
+  return { dishes: dishes, who: picks.map(x => x.personIdx), totalMin: totalMin, totalMax: totalMax, tags: tags };
+}
+/* 方案卡片：首选 = 深墨描金大帖；备选 = 小帖 */
+function planHTML(menu, badge, kind, delay, key, person) {
+  const ds = menu.dishes;
+  const head = ds.length === 1 ? ds[0].n : ds[0].n + ' 等 ' + ds.length + ' 道';
+  const list = ds.map((d, i) => {
+    const wi = (menu.who && menu.who[i] !== undefined) ? menu.who[i] : 0;
+    return '<div class="pdish"><span class="pn"><em class="who who' + ((wi % 6) + 1) + '">' + (WHO[wi] || (wi + 1)) + '</em>· ' + d.n + '</span><span class="pp num">' + PRICE_NAME[d.p] + '</span></div>';
+  }).join('');
+  const tagHtml = menu.tags.slice(0, 3).map(t => '<span class="tag">' + t + '</span>').join('') +
+    (ds[0].w.indexOf(weatherMap()) >= 0 ? '<span class="tag">' + (WEATHERS.find(x => x.v === state.weather) || {}).label + '</span>' : '');
+  const balanced = menu.tags.length >= 3 ? ' · 荤素搭配' : '';
+  let html = '<div class="plan ' + (kind === 'top' ? 'top' : 'alt') + ' reveal" data-key="' + key + '" style="animation-delay:' + delay + 's">' +
+    '<span class="badge">' + badge + '</span>' +
+    (kind === 'top' ? '' : '<span class="alt-up">点此升顶 ⇪</span>') +
+    '<div class="plan-name">' + head + '</div>' +
+    '<div style="margin-top:8px">' + list + '</div>';
+  if (kind === 'top') html += '<div class="tags">' + tagHtml + '</div>';
+  html += '<div class="plan-why">' + why(ds[0], kind, person) + '</div>';
+  if (kind === 'top') html += '<div class="plan-desc">' + ds[0].d + '</div>';
+  html += '<div class="plan-total">共 ' + ds.length + ' 道 · 约 <span class="num">' + menu.totalMin + '-' + menu.totalMax + '</span> 元' + balanced + '</div>';
+  if (kind === 'top') html += '<div class="pick-row"><span class="pick-hint">（如果要前往对应平台下单，请点这里）→</span>' +
+    '<button type="button" class="pick-btn">择此一席 ✓</button></div>';
+  html += '</div>';
+  return html;
+}
+
+/* ================= 校验 ================= */
+function validate() {
+  const miss = [];
+  if (!state.people) miss.push({ l: '几客同食', id: 'chopGrid' });
+  if (state.people === '自定义') {
+    const n = parseInt(state.customPpl, 10);
+    if (!state.customPpl || !(Number.isInteger(n) && n >= 1 && n <= 50)) miss.push({ l: '自定义人数（需 1~50 的整数）', id: 'customPpl' });
+  }
+  if (!state.budget) miss.push({ l: '今日餐资', id: 'budget' });
+  if (!state.scene) miss.push({ l: '今日光景', id: 'scenesBox' });
+  ensurePersons();
+  personTastes.forEach((p, i) => {
+    if (!(p.tastes && (p.tastes[1] || p.tastes[2] || p.tastes[3]))) miss.push({ l: '第 ' + (i + 1) + ' 位的味道', id: 'tasteList' });
+    if (!(p.types && Object.keys(p.types).some(k => p.types[k] > 0))) miss.push({ l: '第 ' + (i + 1) + ' 位的主食', id: 'typeList' });
+  });
+  if (!miss.length) return true;
+  miss.forEach(m => {
+    const el = $(m.id);
+    if (!el) return;
+    el.classList.add('miss');
+    setTimeout(() => el.classList.remove('miss'), 1200);
+    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+  });
+  showModal('还差一点 🙈', '请先完成：<b>' + miss.map(m => m.l).join('、') + '</b>', '好的，去填写');
+  return false;
+}
+
+/* 模式互斥：当前激活高亮，另一个置灰 */
+function setMode(m) {
+  state.mode = m; saveForm();
+  $('btnSmart').classList.toggle('mode-on', m === 'smart');
+  $('btnLot').classList.toggle('mode-on', m === 'lot');
+  $('btnSmart').classList.toggle('mode-off', m !== 'smart');
+  $('btnLot').classList.toggle('mode-off', m !== 'lot');
+}
+/* 失焦局部校验：空值即标红，不等最后一步 */
+function weakMark(id, msg) {
+  const el = $(id);
+  if (!el) return;
+  const check = () => {
+    const leaf = el.closest('.leaf');
+    if (!leaf) return;
+    const val = id === 'budget' ? state.budget : id === 'customPpl' ? state.customPpl : el.value.trim();
+    if (!val) {
+      leaf.classList.add('miss-weak');
+      let tip = leaf.querySelector('.weak-tip');
+      if (!tip) { tip = document.createElement('div'); tip.className = 'weak-tip'; leaf.querySelector('h2').after(tip); }
+      tip.textContent = msg;
+    } else {
+      leaf.classList.remove('miss-weak');
+      const t = leaf.querySelector('.weak-tip'); if (t) t.remove();
+    }
+  };
+  el.addEventListener('blur', check);
+  el.addEventListener('change', check);
+  el.addEventListener('input', check);
+}
+/* 一键重置全部条件 */
+function resetAll() {
+  showModal('重置全部条件？',
+    '餐资、人数、口味、主食、避讳、天时将全部清空，已出的餐单结果也会一并清除。',
+    '取消', null,
+    '确认重置', () => {
+      state.budget = '1'; state.people = ''; state.customPpl = ''; state.scene = '';
+      state.tastes = {}; state.types = {}; state.weather = '晴'; state.mode = ''; state.personIdx = 0;
+      personTastes = []; tabooList = []; usedDishes = [];
+      window.__plans = null; window.__chosen = null;
+      localStorage.removeItem(LS_KEYS.form); localStorage.removeItem(LS_KEYS.taboo);
+      $('budget').value = '1'; $('tabooInput').value = '';
+      $('customPpl').value = '';
+      document.querySelectorAll('#chipsWeather .chip').forEach(c => c.classList.toggle('active', c.dataset.v === '晴'));
+      syncCustomPpl(); renderScenes(); renderTastes(); renderTypes();
+      renderTaboo(); renderTabooPresets(); renderBudget();
+      $('smartBox').innerHTML = ''; $('lotBox').innerHTML = '';
+      $('btnSmart').classList.remove('mode-on', 'mode-off');
+      $('btnLot').classList.remove('mode-on', 'mode-off');
+      document.querySelectorAll('.leaf.miss-weak').forEach(l => l.classList.remove('miss-weak'));
+      document.querySelectorAll('.weak-tip').forEach(t => t.remove());
+      toast('已重置全部条件');
+    });
+}
+
+/* ================= 精择三案 ================= */
+/* 本轮已推荐过的菜：重择一餐时排除，保证六案尽量不重样 */
+let usedDishes = [];
+function smartRec() {
+  if (!validate()) return;
+  clearTimeout(lotTimer); lotTimer = null;
+  ensurePersons();
+  for (let i = 0; i < personTastes.length; i++) {
+    if (!poolFor(personTastes[i]).length) {
+      showModal('第 ' + (i + 1) + ' 位没得选 😢', '这位食客的口味 + 主食组合没有合适的菜，回去调整一下吧', '去调整');
+      state.personIdx = i; saveForm(); renderTastes(); renderTypes();
+      return;
+    }
+  }
+
+  if (usedDishes.length > DISHES.length * 2 / 3) usedDishes = [];   // 候选池防耗尽：重择过多时重置
+  const topMenu = buildMenu('top', usedDishes);
+  usedDishes = usedDishes.concat(topMenu.dishes);
+  const safeMenu = buildMenu('safe', usedDishes);
+  usedDishes = usedDishes.concat(safeMenu.dishes);
+  const nicheMenu = buildMenu('niche', usedDishes);
+  usedDishes = usedDishes.concat(nicheMenu.dishes);
+
+  window.__plans = { top: topMenu, safe: safeMenu, niche: nicheMenu };
+  const sb = $('smartBox');
+  sb.style.transition = 'opacity .32s, filter .32s';
+  sb.style.opacity = '.35'; sb.style.filter = 'saturate(.25)';
+  renderSmart(['top', 'safe', 'niche']);
+  setTimeout(() => { sb.style.opacity = ''; sb.style.filter = ''; }, 400);
+  $('smartBox').classList.remove('hidden');
+  $('lotBox').classList.add('hidden');
+  showPage('pageResult');
+}
+
+/* 三案切换：点哪个方案，哪个升顶放大；大帖右下角「我就选这道」 */
+const PLAN_BADGE = { top: '⭐ 首选 · 主推', safe: '稳妥', niche: '尝鲜' };
+function renderSmart(order) {
+  const topK = order[0];
+  const alts = order.slice(1);
+  let html = '<div class="result-scroll"><svg class="seal-script" viewBox="0 0 40 40" aria-hidden="true"><rect x="1.5" y="1.5" width="37" height="37" rx="3" fill="rgba(166,58,42,.06)" stroke="#a63a2a" stroke-width="1.6" stroke-dasharray="152" stroke-dashoffset="152"/><text x="20" y="27" text-anchor="middle" font-size="21" font-family="Kaiti SC,STKaiti,KaiTi,楷体,serif" fill="#a63a2a" font-weight="700">缘</text></svg>';
+  html += planHTML(window.__plans[topK], PLAN_BADGE[topK], 'top', 0.05, topK, personTastes[(window.__plans[topK].who && window.__plans[topK].who[0]) || 0]);
+  html += '<div class="plans-alt">' + alts.map((k, i) =>
+    planHTML(window.__plans[k], PLAN_BADGE[k], k === 'top' ? 'alt' : k, 0.12 + i * .1, k, personTastes[(window.__plans[k].who && window.__plans[k].who[0]) || 0])
+  ).join('') + '</div></div>';
+  $('smartBox').innerHTML = html;
+  $('smartBox').querySelectorAll('.plan.alt').forEach(el => {
+    el.addEventListener('click', () => {
+      const k = el.dataset.key;
+      renderSmart([k].concat(order.filter(x => x !== k)));
+    });
+  });
+  const pk = $('smartBox').querySelector('.plan.top .pick-btn');
+  if (pk) pk.addEventListener('click', () => goOrder(topK));
+}
+
+/* 下单页：三平台直达 + 复制搜索词 */
+function goOrder(key) {
+  window.__chosen = (window.__plans[key] || {}).dishes || [];
+  showPage('pageOrder');
+  renderOrder();
+}
+function renderOrder() {
+  const box = $('orderList');
+  box.innerHTML = (window.__chosen || []).map((d, i) =>
+    '<div class="order-card reveal" style="animation-delay:' + (i * .08) + 's">' +
+    '<div class="oc-name">' + d.n + '</div>' +
+    '<div class="oc-meta">' + PRICE_NAME[d.p] + ' · ' + d.t.join(' / ') + ' · ' + ((TYPES.find(x => x.v === d.ty) || {}).name || d.ty) + '</div>' +
+    '<div class="oc-search">搜索词：<b>【' + d.n + '】</b>' +
+    '<button type="button" class="copy-btn" data-copy="' + esc(d.n) + '">复制</button></div>' +
+    '<div class="oc-links">' +
+    '<a class="mt" target="_self" rel="noopener" href="https://waimai.meituan.com/"><span class="oc-seal s-mt">美</span>美团外卖<span class="oc-go">→</span></a>' +
+    '<a class="tb" target="_self" rel="noopener" href="https://www.taobao.com/"><span class="oc-seal s-tb">淘</span>淘宝闪购<span class="oc-go">→</span></a>' +
+    '</div></div>'
+  ).join('');
+  box.querySelectorAll('.copy-btn').forEach(b =>
+    b.addEventListener('click', () => copyText(b.dataset.copy))
+  );
+}
+function copyText(t) {
+  const ta = document.createElement('textarea');
+  ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); toast('已复制「' + t + '」，去平台搜索即可'); }
+  catch (e) { toast('复制失败，请长按文字手动复制'); }
+  document.body.removeChild(ta);
+}
+
+/* ================= 随缘摇签：签筒 ================= */
+const TUBE_SVG = '<svg viewBox="0 0 90 120" aria-hidden="true">' +
+  '<defs>' +
+  '<linearGradient id="tubeBam" x1="0" y1="0" x2="1" y2="0">' +
+  '<stop offset="0" stop-color="#8a6a42"/><stop offset=".35" stop-color="#c9a05e"/>' +
+  '<stop offset=".65" stop-color="#a87c3a"/><stop offset="1" stop-color="#7d5c33"/></linearGradient>' +
+  '<linearGradient id="slipG" x1="0" y1="0" x2="0" y2="1">' +
+  '<stop offset="0" stop-color="#fdf8ec"/><stop offset="1" stop-color="#efe3c8"/></linearGradient>' +
+  '</defs>' +
+  '<ellipse cx="45" cy="114" rx="30" ry="4" fill="rgba(0,0,0,.18)"/>' +
+  /* 签先画：从筒口上方插到桶内深处（y92），筒身随后盖住下半段 */
+  '<g class="lot-sticks">' +
+  '<line x1="26" y1="26" x2="26" y2="92" stroke="url(#slipG)" stroke-width="5" stroke-linecap="round"/>' +
+  '<line x1="38" y1="20" x2="38" y2="92" stroke="url(#slipG)" stroke-width="5" stroke-linecap="round"/>' +
+  '<line x1="50" y1="26" x2="50" y2="92" stroke="url(#slipG)" stroke-width="5" stroke-linecap="round"/>' +
+  '<line x1="61" y1="30" x2="61" y2="92" stroke="url(#slipG)" stroke-width="5" stroke-linecap="round"/>' +
+  '<line x1="17" y1="32" x2="17" y2="92" stroke="url(#slipG)" stroke-width="5" stroke-linecap="round"/>' +
+  '<circle cx="26" cy="23" r="2.7" fill="#a63a2a"/><circle cx="38" cy="17" r="2.7" fill="#a63a2a"/>' +
+  '<circle cx="50" cy="23" r="2.7" fill="#a63a2a"/><circle cx="61" cy="27" r="2.7" fill="#a63a2a"/>' +
+  '<circle cx="17" cy="29" r="2.7" fill="#a63a2a"/></g>' +
+  /* 筒身：盖住签的 44~92 段，签看起来插在桶里 */
+  '<path d="M14 44 L76 44 L68 112 L22 112 Z" fill="url(#tubeBam)" stroke="#6d4f2b" stroke-width="1.5"/>' +
+  '<path d="M17 62 L73 62" stroke="#6d4f2b" stroke-width="1.4" opacity=".7"/>' +
+  '<path d="M19 84 L71 84" stroke="#6d4f2b" stroke-width="1.4" opacity=".5"/>' +
+  '<path d="M22 50 L27 106" stroke="rgba(255,236,200,.35)" stroke-width="3" stroke-linecap="round"/>' +
+  '<path d="M22 112 L68 112 L67 118 L23 118 Z" fill="#5a4126"/>' +
+  /* 筒口最后画：盖住签穿过筒口的交界，形成「从桶里插出」 */
+  '<ellipse cx="45" cy="44" rx="31" ry="7" fill="#5a4126" stroke="#6d4f2b" stroke-width="1.5"/>' +
+  '<ellipse cx="45" cy="44" rx="25" ry="5" fill="#3f2d1a"/></svg>';
+/* 签语与吉签 */
+const VERSE = {
+  '辣': '烟火人间，快意一餐',
+  '酸': '酸甜苦辣，皆是人生',
+  '甜': '人间至味是清甜',
+  '咸鲜': '一箸咸鲜，最抚凡心',
+  '清淡': '清欢有味，淡泊是真',
+  '浓郁': '浓香满口，快乐加倍'
+};function lotGrade() { const r = Math.random(); return r < .38 ? '上上签' : r < .72 ? '上签' : '中签'; }
+function slipVerse(d, g) {
+  const base = VERSE[d.t[0]] || '一餐一饭，皆是缘分';
+  const TYPE_WORD = { 米饭: '人间烟火', 粉面: '一碗江湖', 烧烤: '烟火人间', 卤味: '卤香岁月', 轻食: '清淡从容', 炸物小吃: '酥脆欢喜', 锅仔: '一锅乾坤', 甜品: '甜意绵长', 漂亮饭: '不负良辰' };
+  const t2 = TYPE_WORD[d.ty] ? base + '，' + TYPE_WORD[d.ty] : base;
+  return g === '上上签' ? t2 + '，缘起一餐' : t2;
+}
+/* 祥云暗纹（仅上上签配得上的排面） */function slipGradeClass(g) { return g === '上上签' ? 'grade-gold' : g === '上签' ? 'grade-red' : 'grade-plain'; }
+
+let lotTimer = null;
+/* 进入签台：先择范围，再摇一签 */
+function lotRec() {
+  clearTimeout(lotTimer); lotTimer = null;   // 切页竞态：旧签定时器作废
+  $('smartBox').classList.add('hidden');
+  $('lotBox').classList.remove('hidden');
+  $('lotBox').innerHTML =
+    '<div class="result-scroll"><div class="lot-stage reveal">' +
+    '<div class="lot-scope">' +
+    '<button type="button" class="scope-btn' + (state.lotScope !== 'free' ? ' on' : '') + '" data-s="budget">在预算内摇</button>' +
+    '<button type="button" class="scope-btn' + (state.lotScope === 'free' ? ' on' : '') + '" data-s="free">随心摇</button>' +
+    '</div>' +
+    '<div class="lot-tube-wrap" id="lotTubeWrap">' + TUBE_SVG + '</div>' +
+    '<div class="lot-hint" id="lotHint">先择范围，再摇一签</div>' +
+    '<button type="button" id="btnShake" class="lot-shake-btn">摇 一 签</button>' +
+    '<div class="lot-slips" id="lotSlips"></div>' +
+    '</div></div>';
+  showPage('pageResult');
+}
+/* 摇签：避讳必过滤；预算内/随心由范围决定；人数决定几根签 */
+function shakeLot() {
+  ensurePersons();
+  const picks = [];   // { d, personIdx }
+  for (let i = 0; i < personTastes.length; i++) {
+    let pool = poolFor(personTastes[i]);
+    if (!pool.length) {
+      showModal('第 ' + (i + 1) + ' 位没得抽 😢', '这位食客的口味 + 主食组合没有合适的菜，去调整一下吧', '去调整');
+      state.personIdx = i; saveForm(); renderTastes(); renderTypes();
+      return;
+    }
+    if (state.lotScope !== 'free') {
+      const within = pool.filter(d => d.p <= +state.budget);
+      if (within.length) pool = within;
+    }
+    const d = pool[Math.floor(Math.random() * pool.length)];
+    picks.push({ d: d, personIdx: i });
+  }
+
+  $('lotSlips').innerHTML = '';
+  $('lotHint').textContent = '';
+  const btn = $('btnShake');
+  btn.textContent = '再摇一签'; btn.disabled = true;
+  const wrap = $('lotTubeWrap');
+  wrap.classList.remove('tube-shake'); void wrap.offsetWidth; wrap.classList.add('tube-shake');
+  clearTimeout(lotTimer);
+  // 慢摇：筒晃 1.2s → 签逐根弹出落案 → 命运弹窗
+  lotTimer = setTimeout(() => {
+    if ($('lotBox').classList.contains('hidden')) return;
+    $('lotSlips').innerHTML = picks.map((p, i) => {
+      const g = lotGrade();
+      const ch = s => s.split('').map(c => '<span>' + esc(c) + '</span>').join('');
+      return '<div class="lot-slip slip-pop ' + slipGradeClass(g) + '" style="animation-delay:' + (i * .15) + 's;--d:' + (i * .15) + 's" data-p="' + (p.personIdx % 3) + '">' +
+        '<span class="slip-who kai">第 ' + (p.personIdx + 1) + ' 人</span>' +
+        '<span class="slip-grade">' + g + '</span>' +
+        '<span class="slip-name">' + ch(p.d.n) + '</span>' +
+        '<span class="slip-verse">' + ch(slipVerse(p.d, g)) + '</span>' +
+        '<span class="slip-meta">' + PRICE_NAME[p.d.p] + '</span>' +
+        '</div>';
+    }).join('');
+    lotTimer = setTimeout(() => {
+      if ($('lotBox').classList.contains('hidden')) return;
+      btn.disabled = false;
+      showModal('签落 · 缘分已定',
+        picks.length === 1
+          ? '抽中的是：<span class="big">' + picks[0].d.n + '</span><br>第 1 人 · ' + PRICE_NAME[picks[0].d.p] + ' · ' + picks[0].d.t.join(' / ') + '<br>决定了就不能反悔，就吃它！'
+          : '每人一签，这一桌共 ' + picks.length + ' 道：<br>' + picks.map(x => '<b>第 ' + (x.personIdx + 1) + ' 人</b> · ' + x.d.n).join('<br>') + '<br>决定了就不能反悔，就吃它！',
+        '认命，就吃这个！');
+    }, 900);
+  }, 1200);
+}
+
+/* ================= 启动 ================= */
+init();
+</script>
+</body>
+</html>
