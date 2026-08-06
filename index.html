@@ -1984,6 +1984,16 @@ function goOrder(key) {
   showPage('pageOrder');
   renderOrder();
 }
+/* 手机端优先唤起 App；失败或桌面端回退网页 */
+function isMobile() { return /Android|iPhone|iPad|iPod|HarmonyOS/i.test(navigator.userAgent); }
+function goPlatform(kind, kw) {
+  const web = kind === 'mt' ? 'https://waimai.meituan.com/search/' + encodeURIComponent(kw) : 'https://www.ele.me/';
+  if (!isMobile()) { location.href = web; return; }
+  const scheme = kind === 'mt' ? 'imeituan://' : 'eleme://';
+  const timer = setTimeout(() => { location.href = web; }, 1300);   // 1.3s 没唤起 → 回退网页
+  window.addEventListener('visibilitychange', () => { if (document.hidden) clearTimeout(timer); }, { once: true });
+  try { location.href = scheme; } catch (e) { clearTimeout(timer); location.href = web; }
+}
 function renderOrder() {
   const box = $('orderList');
   box.innerHTML = (window.__chosen || []).map((d, i) =>
@@ -1991,10 +2001,16 @@ function renderOrder() {
     '<div class="oc-name">' + d.n + '</div>' +
     '<div class="oc-meta">' + PRICE_NAME[d.p] + ' · ' + d.t.join(' / ') + ' · ' + ((TYPES.find(x => x.v === d.ty) || {}).name || d.ty) + '</div>' +
     '<div class="oc-links">' +
-    '<a class="mt" target="_self" rel="noopener" href="https://waimai.meituan.com/search/' + encodeURIComponent(d.n) + '"><span class="oc-seal s-mt">美</span>美团外卖<span class="oc-go">→</span></a>' +
-    '<a class="elm" target="_self" rel="noopener" href="https://www.ele.me/"><span class="oc-seal s-elm">饿</span>饿了么<span class="oc-go">→</span></a>' +
+    '<a class="mt" href="https://waimai.meituan.com/search/' + encodeURIComponent(d.n) + '" data-go="mt" data-kw="' + esc(d.n) + '"><span class="oc-seal s-mt">美</span>美团外卖<span class="oc-go">→</span></a>' +
+    '<a class="elm" href="https://www.ele.me/" data-go="elm" data-kw="' + esc(d.n) + '"><span class="oc-seal s-elm">饿</span>饿了么<span class="oc-go">→</span></a>' +
     '</div></div>'
   ).join('');
+  box.querySelectorAll('.oc-links a').forEach(a =>
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      goPlatform(a.dataset.go, a.dataset.kw);
+    })
+  );
 }
 /* ================= 随缘摇签：签筒 ================= */
 const TUBE_SVG = '<svg viewBox="0 0 90 120" aria-hidden="true">' +
