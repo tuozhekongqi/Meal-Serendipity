@@ -463,6 +463,16 @@ input::placeholder { color: #c8b8a2; }
 }
 .copy-btn:hover { background: rgba(201, 160, 94, .1); }
 .copy-btn:active { transform: scale(.93); }
+.back-tip {
+  font-size: 11px; color: #b8a888; text-align: center; margin-top: 6px;
+  font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif; line-height: 1.7;
+}
+.back-reload {
+  display: block; margin: 8px auto 0; border: 1px dashed rgba(201, 160, 94, .6);
+  background: transparent; color: var(--gold); padding: 6px 18px; border-radius: 99px;
+  font-size: 12px; cursor: pointer; font-family: inherit; min-height: 36px;
+}
+.back-reload:hover { background: rgba(201, 160, 94, .1); }
 .go-overlay {
   position: fixed; inset: 0; z-index: 1000; background: var(--paper);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
@@ -993,6 +1003,8 @@ footer { text-align: center; color: #c4b29a; font-size: 11.5px; margin-top: 22px
       <div>
         <div class="ph-title">缘定 · 双站寻味</div>
         <div class="ph-sub">选定即达 美团外卖 / 淘宝闪购 搜索下单</div>
+        <div class="back-tip">从外卖页想直接回到本页：点下方「↻ 回到本页」即可（自动回到「缘定 · 双站寻味」）</div>
+        <button type="button" class="back-reload" id="btnReloadOrder">↻ 回到本页</button>
       </div>
     </div>
     <div class="order-list" id="orderList"></div>
@@ -1364,6 +1376,7 @@ function hideModal() { $('overlay').classList.add('hidden'); }
 const PAGES = ['pageCover', 'pageForm', 'pageMode', 'pageResult', 'pageOrder'];
 const STEPS = ['启', '承', '转', '合'];
 function showPage(name) {
+  try { sessionStorage.setItem('wt_last', name); } catch (e) {}
   PAGES.forEach(p => $(p).classList.add('hidden'));
   const el = $(name);
   el.classList.remove('hidden');
@@ -1601,7 +1614,16 @@ function init() {
   document.querySelectorAll('[data-text]').forEach(el => {
     el.innerHTML = el.dataset.text.split('').map(c => '<span>' + esc(c) + '</span>').join('');
   });
+  let wantOrder = false;
+  try { wantOrder = sessionStorage.getItem('wt_last') === 'pageOrder'; } catch (e) {}
   showPage('pageCover');
+  try {
+    const saved = JSON.parse(localStorage.getItem('wt_chosen') || '[]');
+    if (saved.length && wantOrder) {
+      window.__chosen = saved;
+      showPage('pageOrder'); renderOrder();
+    }
+  } catch (e) {}
 }
 
 /* 场景渲染（竖排 + 盖"合"章） */
@@ -2038,7 +2060,7 @@ const IS_WX = /MicroMessenger/i.test(navigator.userAgent);
 function goPlatform(kind, kw) {
   const enc = encodeURIComponent(kw);
   const web = kind === 'mt'
-    ? (IS_WX ? 'https://h5.waimai.meituan.com/waimai/mindex/search?keyword=' + enc : 'https://waimai.meituan.com/search/' + enc)
+    ? ((IS_WX || isMobile()) ? 'https://h5.waimai.meituan.com/waimai/mindex/search?keyword=' + enc : 'https://waimai.meituan.com/search/' + enc)
     : 'https://h5.ele.me/search/?keyword=' + enc;
   const nm = kind === 'mt' ? '美团外卖' : '淘宝闪购';
   const ov = $('goOverlay');
@@ -2058,6 +2080,7 @@ function copyText(t) {
   document.body.removeChild(ta);
 }
 function renderOrder() {
+  try { localStorage.setItem('wt_chosen', JSON.stringify(window.__chosen || [])); } catch (e) {}
   const box = $('orderList');
   const wx = IS_WX;
   box.innerHTML = (window.__chosen || []).map((d, i) => {
@@ -2093,6 +2116,7 @@ function renderOrder() {
       })
     );
   }
+  $('btnReloadOrder').onclick = () => location.reload();
 }
 /* ================= 随缘摇签：签筒 ================= */
 const TUBE_SVG = '<svg viewBox="0 0 90 120" aria-hidden="true">' +
