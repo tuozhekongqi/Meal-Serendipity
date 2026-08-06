@@ -463,6 +463,28 @@ input::placeholder { color: #c8b8a2; }
 }
 .copy-btn:hover { background: rgba(201, 160, 94, .1); }
 .copy-btn:active { transform: scale(.93); }
+.go-overlay {
+  position: fixed; inset: 0; z-index: 1000; background: var(--paper);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+}
+.go-overlay .go-ink {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(166, 58, 42, .85) 0 30%, rgba(166, 58, 42, .35) 45%, transparent 70%);
+  animation: inkPulse 1.1s ease-in-out infinite;
+}
+@keyframes inkPulse {
+  0%, 100% { transform: scale(.85); opacity: .75; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+.go-overlay .go-text { font-size: 15px; color: var(--ink); text-align: center; line-height: 2; font-weight: 600; }
+.go-overlay .go-name { color: var(--zhu); font-weight: 700; }
+.go-overlay .go-kw { color: var(--zhu); letter-spacing: 1px; }
+.go-overlay .go-sub { font-size: 11.5px; color: #b8a888; font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif; }
+.oc-copy-mini {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-top: 8px; padding: 5px 8px 5px 10px; border-radius: 8px; flex-wrap: wrap;
+  background: rgba(240, 236, 224, .25); border: 1px dashed rgba(201, 160, 94, .25);
+}
 .wx-tip {
   font-size: 11.5px; color: #a08a6a; background: rgba(240, 236, 224, .6);
   border: 1px dashed rgba(201, 160, 94, .5); border-radius: 8px;
@@ -1016,6 +1038,12 @@ footer { text-align: center; color: #c4b29a; font-size: 11.5px; margin-top: 22px
 </div>
 
 <div class="toast" id="toast"></div>
+
+<div class="go-overlay hidden" id="goOverlay">
+  <div class="go-ink"></div>
+  <div class="go-text">正在前往 <span class="go-name"></span> 搜索<br><span class="go-kw"></span></div>
+  <div class="go-sub">马上就好…</div>
+</div>
 
 <script>
 'use strict';
@@ -2006,13 +2034,18 @@ function goOrder(key) {
 /* 环境识别：桌面 / 微信 / 普通手机浏览器 */
 function isMobile() { return /Android|iPhone|iPad|iPod|HarmonyOS/i.test(navigator.userAgent); }
 const IS_WX = /MicroMessenger/i.test(navigator.userAgent);
-/* 统一直达搜索结果页：美团用 H5 版（微信也能打开）；淘宝闪购 = www.ele.me */
+/* 统一直达搜索结果页：美团/淘宝闪购都用 H5 搜索（微信也能打开） */
 function goPlatform(kind, kw) {
   const enc = encodeURIComponent(kw);
   const web = kind === 'mt'
     ? 'https://h5.waimai.meituan.com/waimai/mindex/search?keyword=' + enc
-    : 'https://www.ele.me/';
-  location.href = web;
+    : 'https://h5.ele.me/search/?keyword=' + enc;
+  const nm = kind === 'mt' ? '美团' : '淘宝闪购';
+  const ov = $('goOverlay');
+  ov.querySelector('.go-name').textContent = nm;
+  ov.querySelector('.go-kw').textContent = '「' + kw + '」';
+  ov.classList.remove('hidden');
+  setTimeout(() => { location.href = web; }, 300);
 }
 /* 复制关键词（微信场景） */
 function copyText(t) {
@@ -2032,25 +2065,26 @@ function renderOrder() {
       ? '<div class="wx-tip">微信内已为你备好直达链接与复制关键词；想唤起 App 请点右上角「···」→「在浏览器打开」</div>' +
         '<div class="oc-links">' +
         '<a class="mt" href="https://h5.waimai.meituan.com/waimai/mindex/search?keyword=' + enc + '" target="_blank" rel="noopener"><span class="oc-seal s-mt">美</span>美团搜索<span class="oc-go">→</span></a>' +
-        '<a class="elm" href="https://www.ele.me/" target="_blank" rel="noopener"><span class="oc-seal s-elm">饿</span>淘宝闪购<span class="oc-go">→</span></a>' +
+        '<a class="elm" href="https://h5.ele.me/search/?keyword=' + enc + '" target="_blank" rel="noopener"><span class="oc-seal s-elm">饿</span>淘宝闪购<span class="oc-go">→</span></a>' +
         '</div>' +
         '<div class="oc-copy"><span class="oc-copy-t">复制关键词：<b>【' + esc(d.n) + '】</b></span>' +
         '<button type="button" class="copy-btn" data-copy="' + esc(d.n) + '">复制</button></div>'
       : '<div class="oc-links">' +
         '<a class="mt" href="https://h5.waimai.meituan.com/waimai/mindex/search?keyword=' + enc + '" data-go="mt" data-kw="' + esc(d.n) + '"><span class="oc-seal s-mt">美</span>美团外卖<span class="oc-go">→</span></a>' +
-        '<a class="elm" href="https://www.ele.me/" data-go="elm" data-kw="' + esc(d.n) + '"><span class="oc-seal s-elm">饿</span>淘宝闪购<span class="oc-go">→</span></a>' +
+        '<a class="elm" href="https://h5.ele.me/search/?keyword=' + enc + '" data-go="elm" data-kw="' + esc(d.n) + '"><span class="oc-seal s-elm">饿</span>淘宝闪购<span class="oc-go">→</span></a>' +
         '</div>' +
-        '<div class="oc-tip">点按钮直达搜索结果，不用自己找</div>';
+        '<div class="oc-copy-mini"><span class="oc-copy-t">复制关键词：<b>【' + esc(d.n) + '】</b></span>' +
+        '<button type="button" class="copy-btn" data-copy="' + esc(d.n) + '">复制</button></div>' +
+        '<div class="oc-tip">直达搜索结果 · 首次打开请允许定位，才能看到附近商家</div>';
     return '<div class="order-card reveal" style="animation-delay:' + (i * .08) + 's">' +
       '<div class="oc-name">' + d.n + '</div>' +
       '<div class="oc-meta">' + PRICE_NAME[d.p] + ' · ' + d.t.join(' / ') + ' · ' + ((TYPES.find(x => x.v === d.ty) || {}).name || d.ty) + '</div>' +
       links + '</div>';
   }).join('');
-  if (wx) {
-    box.querySelectorAll('.copy-btn').forEach(b =>
-      b.addEventListener('click', () => copyText(b.dataset.copy))
-    );
-  } else {
+  box.querySelectorAll('.copy-btn').forEach(b =>
+    b.addEventListener('click', () => copyText(b.dataset.copy))
+  );
+  if (!wx) {
     box.querySelectorAll('.oc-links a').forEach(a =>
       a.addEventListener('click', e => {
         e.preventDefault();
