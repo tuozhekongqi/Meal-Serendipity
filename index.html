@@ -463,6 +463,25 @@ input::placeholder { color: #c8b8a2; }
 }
 .copy-btn:hover { background: rgba(201, 160, 94, .1); }
 .copy-btn:active { transform: scale(.93); }
+.wx-tip {
+  font-size: 11.5px; color: #a08a6a; background: rgba(240, 236, 224, .6);
+  border: 1px dashed rgba(201, 160, 94, .5); border-radius: 8px;
+  padding: 7px 10px; margin-bottom: 10px; line-height: 1.7;
+}
+.oc-copy {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-top: 10px; padding: 8px 10px; background: rgba(240, 236, 224, .4);
+  border-radius: 8px; flex-wrap: wrap;
+}
+.oc-copy-t { font-size: 12px; color: #6f5f4d; }
+.oc-copy-t b { color: var(--zhu); letter-spacing: .5px; }
+.copy-btn {
+  border: 1px solid var(--gold); background: transparent; color: var(--gold);
+  padding: 7px 16px; border-radius: 99px; font-size: 12.5px; cursor: pointer;
+  font-family: inherit; transition: all .15s; min-height: 36px;
+}
+.copy-btn:hover { background: rgba(201, 160, 94, .1); }
+.oc-tip { font-size: 11px; color: #b8a888; margin-top: 7px; text-align: right; font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif; }
 .oc-links { display: flex; gap: 10px; }
 .oc-links a {
   flex: 1; text-align: center; padding: 12px 6px; border-radius: 10px;
@@ -1984,33 +2003,65 @@ function goOrder(key) {
   showPage('pageOrder');
   renderOrder();
 }
-/* 手机端优先唤起 App；失败或桌面端回退网页 */
+/* 环境识别：桌面 / 微信 / 普通手机浏览器 */
 function isMobile() { return /Android|iPhone|iPad|iPod|HarmonyOS/i.test(navigator.userAgent); }
+const IS_WX = /MicroMessenger/i.test(navigator.userAgent);
+/* 非微信手机：唤起 App 直达搜索；桌面 / 微信：直接开网页 */
 function goPlatform(kind, kw) {
-  const web = kind === 'mt' ? 'https://waimai.meituan.com/search/' + encodeURIComponent(kw) : 'https://www.ele.me/';
-  if (!isMobile()) { location.href = web; return; }
-  const scheme = kind === 'mt' ? 'imeituan://' : 'eleme://';
-  const timer = setTimeout(() => { location.href = web; }, 1300);   // 1.3s 没唤起 → 回退网页
+  const enc = encodeURIComponent(kw);
+  const web = kind === 'mt' ? 'https://waimai.meituan.com/search/' + enc : 'https://www.ele.me/';
+  if (!isMobile() || IS_WX) { location.href = web; return; }
+  const scheme = kind === 'mt'
+    ? 'imeituan://www.meituan.com/waimai/search?keyword=' + enc
+    : 'eleme://search?keyword=' + enc;
+  const timer = setTimeout(() => { location.href = web; }, 1300);
   window.addEventListener('visibilitychange', () => { if (document.hidden) clearTimeout(timer); }, { once: true });
   try { location.href = scheme; } catch (e) { clearTimeout(timer); location.href = web; }
 }
+/* 复制关键词（微信场景） */
+function copyText(t) {
+  const ta = document.createElement('textarea');
+  ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); toast('已复制「' + t + '」，去美团/饿了么 App 粘贴搜索'); }
+  catch (e) { toast('复制失败，请长按手动复制'); }
+  document.body.removeChild(ta);
+}
 function renderOrder() {
   const box = $('orderList');
-  box.innerHTML = (window.__chosen || []).map((d, i) =>
-    '<div class="order-card reveal" style="animation-delay:' + (i * .08) + 's">' +
-    '<div class="oc-name">' + d.n + '</div>' +
-    '<div class="oc-meta">' + PRICE_NAME[d.p] + ' · ' + d.t.join(' / ') + ' · ' + ((TYPES.find(x => x.v === d.ty) || {}).name || d.ty) + '</div>' +
-    '<div class="oc-links">' +
-    '<a class="mt" href="https://waimai.meituan.com/search/' + encodeURIComponent(d.n) + '" data-go="mt" data-kw="' + esc(d.n) + '"><span class="oc-seal s-mt">美</span>美团外卖<span class="oc-go">→</span></a>' +
-    '<a class="elm" href="https://www.ele.me/" data-go="elm" data-kw="' + esc(d.n) + '"><span class="oc-seal s-elm">饿</span>饿了么<span class="oc-go">→</span></a>' +
-    '</div></div>'
-  ).join('');
-  box.querySelectorAll('.oc-links a').forEach(a =>
-    a.addEventListener('click', e => {
-      e.preventDefault();
-      goPlatform(a.dataset.go, a.dataset.kw);
-    })
-  );
+  const wx = IS_WX;
+  box.innerHTML = (window.__chosen || []).map((d, i) => {
+    const enc = encodeURIComponent(d.n);
+    const links = wx
+      ? '<div class="wx-tip">微信内不能直接唤起 App——已备好网页链接与复制关键词；想唤起 App 请点右上角「···」→「在浏览器打开」</div>' +
+        '<div class="oc-links">' +
+        '<a class="mt" href="https://waimai.meituan.com/search/' + enc + '" target="_blank" rel="noopener"><span class="oc-seal s-mt">美</span>美团搜索<span class="oc-go">→</span></a>' +
+        '<a class="elm" href="https://www.ele.me/" target="_blank" rel="noopener"><span class="oc-seal s-elm">饿</span>饿了么<span class="oc-go">→</span></a>' +
+        '</div>' +
+        '<div class="oc-copy"><span class="oc-copy-t">复制关键词：<b>【' + esc(d.n) + '】</b></span>' +
+        '<button type="button" class="copy-btn" data-copy="' + esc(d.n) + '">复制</button></div>'
+      : '<div class="oc-links">' +
+        '<a class="mt" href="https://waimai.meituan.com/search/' + enc + '" data-go="mt" data-kw="' + esc(d.n) + '"><span class="oc-seal s-mt">美</span>美团外卖<span class="oc-go">→</span></a>' +
+        '<a class="elm" href="https://www.ele.me/" data-go="elm" data-kw="' + esc(d.n) + '"><span class="oc-seal s-elm">饿</span>饿了么<span class="oc-go">→</span></a>' +
+        '</div>' +
+        '<div class="oc-tip">点按钮将唤起手机 App 直达搜索</div>';
+    return '<div class="order-card reveal" style="animation-delay:' + (i * .08) + 's">' +
+      '<div class="oc-name">' + d.n + '</div>' +
+      '<div class="oc-meta">' + PRICE_NAME[d.p] + ' · ' + d.t.join(' / ') + ' · ' + ((TYPES.find(x => x.v === d.ty) || {}).name || d.ty) + '</div>' +
+      links + '</div>';
+  }).join('');
+  if (wx) {
+    box.querySelectorAll('.copy-btn').forEach(b =>
+      b.addEventListener('click', () => copyText(b.dataset.copy))
+    );
+  } else {
+    box.querySelectorAll('.oc-links a').forEach(a =>
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        goPlatform(a.dataset.go, a.dataset.kw);
+      })
+    );
+  }
 }
 /* ================= 随缘摇签：签筒 ================= */
 const TUBE_SVG = '<svg viewBox="0 0 90 120" aria-hidden="true">' +
