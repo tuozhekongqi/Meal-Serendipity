@@ -951,7 +951,7 @@ footer { text-align: center; color: #c4b29a; font-size: 11.5px; margin-top: 22px
       <button type="button" class="back-btn" data-back="pageResult">‹</button>
       <div>
         <div class="ph-title">缘定 · 双站寻味</div>
-        <div class="ph-sub">复制搜索词，直达美团 / 淘宝闪购 搜索下单</div>
+        <div class="ph-sub">选定即达美团外卖 / 饿了么 搜索下单</div>
       </div>
     </div>
     <div class="order-list" id="orderList"></div>
@@ -1992,7 +1992,7 @@ function renderOrder() {
     '<div class="oc-meta">' + PRICE_NAME[d.p] + ' · ' + d.t.join(' / ') + ' · ' + ((TYPES.find(x => x.v === d.ty) || {}).name || d.ty) + '</div>' +
     '<div class="oc-links">' +
     '<a class="mt" target="_self" rel="noopener" href="https://waimai.meituan.com/search/' + encodeURIComponent(d.n) + '"><span class="oc-seal s-mt">美</span>美团外卖<span class="oc-go">→</span></a>' +
-    '<a class="tb" target="_self" rel="noopener" href="https://s.taobao.com/search?q=' + encodeURIComponent(d.n) + '"><span class="oc-seal s-tb">淘</span>淘宝闪购<span class="oc-go">→</span></a>' +
+    '<a class="elm" target="_self" rel="noopener" href="https://www.ele.me/"><span class="oc-seal s-elm">饿</span>饿了么<span class="oc-go">→</span></a>' +
     '</div></div>'
   ).join('');
 }
