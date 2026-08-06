@@ -513,6 +513,7 @@ input::placeholder { color: #c8b8a2; }
   0%, 100% { transform: scale(.85); opacity: .75; }
   50% { transform: scale(1.15); opacity: 1; }
 }
+.go-overlay.go-mode-reload .go-text { font-size: 16.5px; letter-spacing: 4px; }
 .go-overlay .go-text { font-size: 15.5px; color: var(--ink); text-align: center; line-height: 2.1; font-weight: 600; }
 .go-overlay .go-kw { color: var(--zhu); letter-spacing: 1.5px; font-size: 14px; }
 .go-overlay .go-sub { font-size: 11.5px; color: #b8a888; font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif; line-height: 1.9; margin-top: 10px; }
@@ -524,13 +525,13 @@ input::placeholder { color: #c8b8a2; }
   font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif; font-weight: 700;
 }
 .oc-stamp.s-a { color: var(--zhu); border: 1.5px solid rgba(166, 58, 42, .65); }
-.oc-stamp.s-b { color: var(--dai); border: 1.5px solid rgba(61, 90, 110, .55); }
+.oc-stamp.s-b { color: var(--qing); border: 1.5px solid rgba(61, 90, 110, .55); }
 .oc-colophon {
   margin-top: 18px; text-align: center; font-size: 12px; color: #a08a6a;
   font-family: "Kaiti SC", STKaiti, KaiTi, "楷体", serif; letter-spacing: 3px;
 }
 .oc-who {
-  display: inline-block; font-size: 10.5px; color: #fff; background: var(--dai);
+  display: inline-block; font-size: 10.5px; color: #fff; background: var(--qing);
   border-radius: 99px; padding: 1px 9px; margin-bottom: 5px; letter-spacing: 1px;
 }
 .oc-copy-mini {
@@ -1046,7 +1047,7 @@ footer { text-align: center; color: #c4b29a; font-size: 11.5px; margin-top: 22px
       <div>
         <div class="ph-title">缘定 · 双站寻味</div>
         <div class="ph-sub">欲往何处 · 一文两驿皆通</div>
-        <div class="back-tip">从外卖页想直接回到本页：点下方「↻ 回到本页」即可（自动回到「缘定 · 双站寻味」）</div>
+        <div class="back-tip">从平台页想直接回到本页：点下方「归」印即可（自动回到「缘定 · 双站寻味」）</div>
         <button type="button" class="back-reload" id="btnReloadOrder"><span class="seal-return">归</span><span class="return-txt">回到本页 · 缘定双站</span></button>
       </div>
     </div>
@@ -1672,6 +1673,9 @@ function init() {
         window.__plans = JSON.parse(localStorage.getItem('wt_plans') || 'null');
         window.__chosenWho = JSON.parse(localStorage.getItem('wt_chosen_who') || '[]');
       } catch (e2) {}
+      if (window.__plans && window.__plans['top']) {
+        try { renderSmart(['top', 'safe', 'niche']); } catch (e3) {}
+      }
       showPage('pageOrder'); renderOrder();
     }
   } catch (e) {}
@@ -2119,8 +2123,10 @@ function goPlatform(kind, kw) {
     : 'https://h5.ele.me/search/?keyword=' + enc;
   const nm = kind === 'mt' ? '美团外卖' : '淘宝闪购';
   const ov = $('goOverlay');
+  ov.classList.remove('go-mode-reload');
   ov.querySelector('.go-name').textContent = nm;
   ov.querySelector('.go-kw').textContent = '「' + kw + '」';
+  ov.querySelector('.go-sub').innerHTML = '正在前往 <span class="go-name">' + nm + '</span> 直达搜索<br>首次打开请允许定位，才能看到附近商家';
   ov.classList.remove('hidden');
   setTimeout(() => { location.href = web; }, 300);
 }
@@ -2147,13 +2153,13 @@ function renderOrder() {
       ? '<div class="wx-tip">微信内已备好直达链接与复制关键词；若美团搜索框未自动填词，点「复制」去 App 粘贴即可。安卓在右上角「···」找「在浏览器打开」，苹果在「···」→「在 Safari 中打开」</div>' +
         '<div class="oc-links">' +
         '<a class="mt" href="https://h5.waimai.meituan.com/waimai/mindex/search?keyword=' + enc + '" target="_blank" rel="noopener"><span class="oc-seal s-mt">美</span>美团外卖<span class="oc-go">→</span></a>' +
-        '<a class="elm" href="https://h5.ele.me/search/?keyword=' + enc + '" target="_blank" rel="noopener"><span class="oc-seal s-elm">饿</span>淘宝闪购<span class="oc-go">→</span></a>' +
+        '<a class="elm" href="https://h5.ele.me/search/?keyword=' + enc + '" target="_blank" rel="noopener"><span class="oc-seal s-elm">闪</span>淘宝闪购<span class="oc-go">→</span></a>' +
         '</div>' +
         '<div class="oc-copy"><span class="oc-copy-t">复制关键词：<b>【' + esc(d.n) + '】</b></span>' +
         '<button type="button" class="copy-btn" data-copy="' + esc(d.n) + '">复制</button></div>'
       : '<div class="oc-links">' +
         '<a class="mt" href="https://waimai.meituan.com/search/' + enc + '" data-go="mt" data-kw="' + esc(d.n) + '"><span class="oc-seal s-mt">美</span>美团外卖<span class="oc-go">→</span></a>' +
-        '<a class="elm" href="https://h5.ele.me/search/?keyword=' + enc + '" data-go="elm" data-kw="' + esc(d.n) + '"><span class="oc-seal s-elm">饿</span>淘宝闪购<span class="oc-go">→</span></a>' +
+        '<a class="elm" href="https://h5.ele.me/search/?keyword=' + enc + '" data-go="elm" data-kw="' + esc(d.n) + '"><span class="oc-seal s-elm">闪</span>淘宝闪购<span class="oc-go">→</span></a>' +
         '</div>' +
         '<div class="oc-copy-mini"><span class="oc-copy-t">复制关键词：<b>【' + esc(d.n) + '】</b></span>' +
         '<button type="button" class="copy-btn" data-copy="' + esc(d.n) + '">复制</button></div>' +
@@ -2178,10 +2184,18 @@ function renderOrder() {
       })
     );
   }
+  const bb = document.querySelector('#pageOrder .back-btn');
+  if (bb) bb.addEventListener('click', e => {
+    if (!window.__plans || !window.__plans['top']) {
+      e.preventDefault();
+      showModal('签已散去', '摇签的结果没有保留，请重新摇一签', '好，去重摇', () => showPage('pageMode'));
+    }
+  });
   $('btnReloadOrder').onclick = () => {
     const ov = $('goOverlay');
-    ov.querySelector('.go-name').textContent = '一餐之缘';
+    ov.classList.add('go-mode-reload');
     ov.querySelector('.go-kw').textContent = '';
+    ov.querySelector('.go-sub').innerHTML = '归 · 正在回到本页，食单仍在';
     ov.classList.remove('hidden');
     setTimeout(() => location.reload(), 300);
   };
