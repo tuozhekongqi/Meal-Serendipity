@@ -2038,7 +2038,7 @@ const IS_WX = /MicroMessenger/i.test(navigator.userAgent);
 function goPlatform(kind, kw) {
   const enc = encodeURIComponent(kw);
   const web = kind === 'mt'
-    ? 'https://h5.waimai.meituan.com/waimai/mindex/search?keyword=' + enc
+    ? (IS_WX ? 'https://h5.waimai.meituan.com/waimai/mindex/search?keyword=' + enc : 'https://waimai.meituan.com/search/' + enc)
     : 'https://h5.ele.me/search/?keyword=' + enc;
   const nm = kind === 'mt' ? '美团' : '淘宝闪购';
   const ov = $('goOverlay');
@@ -2070,7 +2070,7 @@ function renderOrder() {
         '<div class="oc-copy"><span class="oc-copy-t">复制关键词：<b>【' + esc(d.n) + '】</b></span>' +
         '<button type="button" class="copy-btn" data-copy="' + esc(d.n) + '">复制</button></div>'
       : '<div class="oc-links">' +
-        '<a class="mt" href="https://h5.waimai.meituan.com/waimai/mindex/search?keyword=' + enc + '" data-go="mt" data-kw="' + esc(d.n) + '"><span class="oc-seal s-mt">美</span>美团外卖<span class="oc-go">→</span></a>' +
+        '<a class="mt" href="https://waimai.meituan.com/search/' + enc + '" data-go="mt" data-kw="' + esc(d.n) + '"><span class="oc-seal s-mt">美</span>美团外卖<span class="oc-go">→</span></a>' +
         '<a class="elm" href="https://h5.ele.me/search/?keyword=' + enc + '" data-go="elm" data-kw="' + esc(d.n) + '"><span class="oc-seal s-elm">饿</span>淘宝闪购<span class="oc-go">→</span></a>' +
         '</div>' +
         '<div class="oc-copy-mini"><span class="oc-copy-t">复制关键词：<b>【' + esc(d.n) + '】</b></span>' +
