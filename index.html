@@ -1990,26 +1990,12 @@ function renderOrder() {
     '<div class="order-card reveal" style="animation-delay:' + (i * .08) + 's">' +
     '<div class="oc-name">' + d.n + '</div>' +
     '<div class="oc-meta">' + PRICE_NAME[d.p] + ' · ' + d.t.join(' / ') + ' · ' + ((TYPES.find(x => x.v === d.ty) || {}).name || d.ty) + '</div>' +
-    '<div class="oc-search">搜索词：<b>【' + d.n + '】</b>' +
-    '<button type="button" class="copy-btn" data-copy="' + esc(d.n) + '">复制</button></div>' +
     '<div class="oc-links">' +
-    '<a class="mt" target="_self" rel="noopener" href="https://waimai.meituan.com/"><span class="oc-seal s-mt">美</span>美团外卖<span class="oc-go">→</span></a>' +
-    '<a class="tb" target="_self" rel="noopener" href="https://www.taobao.com/"><span class="oc-seal s-tb">淘</span>淘宝闪购<span class="oc-go">→</span></a>' +
+    '<a class="mt" target="_self" rel="noopener" href="https://waimai.meituan.com/search/' + encodeURIComponent(d.n) + '"><span class="oc-seal s-mt">美</span>美团外卖<span class="oc-go">→</span></a>' +
+    '<a class="tb" target="_self" rel="noopener" href="https://s.taobao.com/search?q=' + encodeURIComponent(d.n) + '"><span class="oc-seal s-tb">淘</span>淘宝闪购<span class="oc-go">→</span></a>' +
     '</div></div>'
   ).join('');
-  box.querySelectorAll('.copy-btn').forEach(b =>
-    b.addEventListener('click', () => copyText(b.dataset.copy))
-  );
 }
-function copyText(t) {
-  const ta = document.createElement('textarea');
-  ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
-  document.body.appendChild(ta); ta.select();
-  try { document.execCommand('copy'); toast('已复制「' + t + '」，去平台搜索即可'); }
-  catch (e) { toast('复制失败，请长按文字手动复制'); }
-  document.body.removeChild(ta);
-}
-
 /* ================= 随缘摇签：签筒 ================= */
 const TUBE_SVG = '<svg viewBox="0 0 90 120" aria-hidden="true">' +
   '<defs>' +
