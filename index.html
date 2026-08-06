@@ -2006,24 +2006,20 @@ function goOrder(key) {
 /* 环境识别：桌面 / 微信 / 普通手机浏览器 */
 function isMobile() { return /Android|iPhone|iPad|iPod|HarmonyOS/i.test(navigator.userAgent); }
 const IS_WX = /MicroMessenger/i.test(navigator.userAgent);
-/* 非微信手机：唤起 App 直达搜索；桌面 / 微信：直接开网页 */
+/* 统一直达搜索结果页：美团用 H5 版（微信也能打开）；淘宝闪购 = www.ele.me */
 function goPlatform(kind, kw) {
   const enc = encodeURIComponent(kw);
-  const web = kind === 'mt' ? 'https://waimai.meituan.com/search/' + enc : 'https://www.ele.me/';
-  if (!isMobile() || IS_WX) { location.href = web; return; }
-  const scheme = kind === 'mt'
-    ? 'imeituan://www.meituan.com/waimai/search?keyword=' + enc
-    : 'eleme://search?keyword=' + enc;
-  const timer = setTimeout(() => { location.href = web; }, 1300);
-  window.addEventListener('visibilitychange', () => { if (document.hidden) clearTimeout(timer); }, { once: true });
-  try { location.href = scheme; } catch (e) { clearTimeout(timer); location.href = web; }
+  const web = kind === 'mt'
+    ? 'https://h5.waimai.meituan.com/waimai/mindex/search?keyword=' + enc
+    : 'https://www.ele.me/';
+  location.href = web;
 }
 /* 复制关键词（微信场景） */
 function copyText(t) {
   const ta = document.createElement('textarea');
   ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
   document.body.appendChild(ta); ta.select();
-  try { document.execCommand('copy'); toast('已复制「' + t + '」，去美团/饿了么 App 粘贴搜索'); }
+  try { document.execCommand('copy'); toast('已复制「' + t + '」，去美团/淘宝闪购搜索'); }
   catch (e) { toast('复制失败，请长按手动复制'); }
   document.body.removeChild(ta);
 }
@@ -2033,18 +2029,18 @@ function renderOrder() {
   box.innerHTML = (window.__chosen || []).map((d, i) => {
     const enc = encodeURIComponent(d.n);
     const links = wx
-      ? '<div class="wx-tip">微信内不能直接唤起 App——已备好网页链接与复制关键词；想唤起 App 请点右上角「···」→「在浏览器打开」</div>' +
+      ? '<div class="wx-tip">微信内已为你备好直达链接与复制关键词；想唤起 App 请点右上角「···」→「在浏览器打开」</div>' +
         '<div class="oc-links">' +
-        '<a class="mt" href="https://waimai.meituan.com/search/' + enc + '" target="_blank" rel="noopener"><span class="oc-seal s-mt">美</span>美团搜索<span class="oc-go">→</span></a>' +
-        '<a class="elm" href="https://www.ele.me/" target="_blank" rel="noopener"><span class="oc-seal s-elm">饿</span>饿了么<span class="oc-go">→</span></a>' +
+        '<a class="mt" href="https://h5.waimai.meituan.com/waimai/mindex/search?keyword=' + enc + '" target="_blank" rel="noopener"><span class="oc-seal s-mt">美</span>美团搜索<span class="oc-go">→</span></a>' +
+        '<a class="elm" href="https://www.ele.me/" target="_blank" rel="noopener"><span class="oc-seal s-elm">饿</span>淘宝闪购<span class="oc-go">→</span></a>' +
         '</div>' +
         '<div class="oc-copy"><span class="oc-copy-t">复制关键词：<b>【' + esc(d.n) + '】</b></span>' +
         '<button type="button" class="copy-btn" data-copy="' + esc(d.n) + '">复制</button></div>'
       : '<div class="oc-links">' +
-        '<a class="mt" href="https://waimai.meituan.com/search/' + enc + '" data-go="mt" data-kw="' + esc(d.n) + '"><span class="oc-seal s-mt">美</span>美团外卖<span class="oc-go">→</span></a>' +
-        '<a class="elm" href="https://www.ele.me/" data-go="elm" data-kw="' + esc(d.n) + '"><span class="oc-seal s-elm">饿</span>饿了么<span class="oc-go">→</span></a>' +
+        '<a class="mt" href="https://h5.waimai.meituan.com/waimai/mindex/search?keyword=' + enc + '" data-go="mt" data-kw="' + esc(d.n) + '"><span class="oc-seal s-mt">美</span>美团外卖<span class="oc-go">→</span></a>' +
+        '<a class="elm" href="https://www.ele.me/" data-go="elm" data-kw="' + esc(d.n) + '"><span class="oc-seal s-elm">饿</span>淘宝闪购<span class="oc-go">→</span></a>' +
         '</div>' +
-        '<div class="oc-tip">点按钮将唤起手机 App 直达搜索</div>';
+        '<div class="oc-tip">点按钮直达搜索结果，不用自己找</div>';
     return '<div class="order-card reveal" style="animation-delay:' + (i * .08) + 's">' +
       '<div class="oc-name">' + d.n + '</div>' +
       '<div class="oc-meta">' + PRICE_NAME[d.p] + ' · ' + d.t.join(' / ') + ' · ' + ((TYPES.find(x => x.v === d.ty) || {}).name || d.ty) + '</div>' +
