@@ -2018,7 +2018,7 @@ function goPlatform(kind, kw) {
 function copyText(t) {
   const ta = document.createElement('textarea');
   ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
-  document.body.appendChild(ta); ta.select();
+  document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, ta.value.length);
   try { document.execCommand('copy'); toast('已复制「' + t + '」，去美团/淘宝闪购搜索'); }
   catch (e) { toast('复制失败，请长按手动复制'); }
   document.body.removeChild(ta);
