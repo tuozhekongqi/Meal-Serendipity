@@ -1,0 +1,10 @@
+{
+  "name": "meal-serendipity",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "test:recommendation": "node --test tests/recommendation/*.test.js"
+  }
+}

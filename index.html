@@ -1931,6 +1931,13 @@ function sceneBonus(d) {
   return add;
 }/* 主食命中：1 份 +30，2 份（都吃这类）+34 *//* 每人的候选池：该人的主味 + 主食类型硬过滤 */
 function poolFor(person) {
+  if (window.MealRecommendation) {
+    return window.MealRecommendation.filterLegacyDishes(DISHES, {
+      person: person,
+      tabooList: tabooList,
+      history: getHist()
+    });
+  }
   const pri = (person && person.tastes) || {};
   const types = (person && person.types) || {};
   const typeKeys = Object.keys(types).filter(k => types[k] > 0);
@@ -1951,6 +1958,9 @@ function poolFor(person) {
 }
 /* 按人评分：该人的主/次/末味 + 该人的主食 */
 function scoreFor(d, person, avoid) {
+  if (window.MealRecommendation) {
+    return window.MealRecommendation.scoreLegacyDish(d, legacyRecommendationContext(person), avoid);
+  }
   const pri = (person && person.tastes) || {};
   const types = (person && person.types) || {};
   let s = 0;
@@ -1973,7 +1983,22 @@ function scoreFor(d, person, avoid) {
   const w = WEATHERS.find(x => x.v === state.weather);
   return w ? w.map : '晴';
 }
+function legacyRecommendationContext(person) {
+  const weather = WEATHERS.find(x => x.v === state.weather) || {};
+  return {
+    person: person,
+    state: { budget: state.budget, weather: state.weather },
+    scene: curScene(),
+    isGroup: isGroup(),
+    weatherMap: weatherMap(),
+    weatherTip: weather.tip || '',
+    typeNames: Object.fromEntries(TYPES.map(x => [x.v, x.name]))
+  };
+}
 /* 硬过滤：避讳 + 主味（或次/末）命中 + 所选主食类型命中 —— 保证三方案都在要求内 */function why(d, kind, person) {
+  if (window.MealRecommendation) {
+    return window.MealRecommendation.explainLegacyDish(d, kind, legacyRecommendationContext(person));
+  }
   const r = [];
   const pri = (person && person.tastes) || state.tastes || {};
   if (pri[1] && d.t.indexOf(pri[1]) >= 0) r.push('正中主味「' + pri[1] + '」');
@@ -2002,7 +2027,9 @@ function priceRange(p) {
   personTastes.forEach((p, i) => {
     let cand = poolFor(p).filter(d => avoid.indexOf(d) < 0);
     if (cand.length < 1) cand = poolFor(p);
-    let arr = cand.map(d => ({ d: d, s: scoreFor(d, p, avoid) })).sort((a, b) => b.s - a.s);
+    let arr = window.MealRecommendation
+      ? window.MealRecommendation.rankLegacyDishes(cand, legacyRecommendationContext(p), avoid, 'top')
+      : cand.map(d => ({ d: d, s: scoreFor(d, p, avoid) })).sort((a, b) => b.s - a.s);
     if (kind === 'safe') arr = arr.filter(x => x.d.c === 1).concat(arr.filter(x => x.d.c === 0));
     if (kind === 'niche') arr = arr.filter(x => x.d.c === 0).concat(arr.filter(x => x.d.c === 1));
     const x = arr.find(y => !picks.some(z => z.d === y.d)) || arr[0];
@@ -2405,6 +2432,13 @@ function shakeLot() {
 
 /* ================= 启动 ================= */
 init();
+</script>
+<script>
+if (location.protocol !== 'file:') {
+  import('./src/recommendation/legacy-adapter.js')
+    .then(module => { window.MealRecommendation = module.createLegacyRecommendationApi(); })
+    .catch(() => { /* 保留原有内联推荐作为兼容回退 */ });
+}
 </script>
 </body>
 </html>

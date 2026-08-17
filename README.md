@@ -26,7 +26,7 @@ Meal-Serendipity 是一个面向“今天吃什么”决策疲劳的中文外卖
 
 ## 本地运行
 
-当前仓库没有 `package.json`、构建步骤或自动化测试。
+当前仓库无需安装运行时依赖或执行构建；`package.json` 仅提供 Node.js 推荐逻辑测试命令。
 
 最简单的方式是直接打开根目录 `index.html`。为获得与 GitHub Pages 更接近的 HTTP 环境，建议使用静态服务器：
 
@@ -41,9 +41,9 @@ py -m http.server 8000
 ## 当前技术栈
 
 - HTML5、CSS3、原生 JavaScript
-- 单个根入口 `index.html`，CSS、SVG、数据和逻辑全部内联
+- 根入口仍为 `index.html`，布局、样式和旧页面兼容逻辑保持内联；纯推荐领域模块位于 `src/`
 - `localStorage` / `sessionStorage` 保存浏览器本地状态
-- 无运行时依赖、无构建工具、无后端、无遥测
+- 无运行时依赖、无构建工具、无后端、无遥测；测试使用 Node.js 内置测试运行器
 - GitHub Pages 静态托管
 
 ## 项目结构
@@ -86,7 +86,13 @@ Meal-Serendipity/
 4. 检查控制台和失败资源。
 5. 运行 `git diff --check`，确认只有计划内文件变化。
 
-阶段 0 不引入测试框架。自动化测试、模块拆分和 GitHub Actions 会在后续获批阶段分别实施。
+推荐领域测试可直接运行：
+
+```powershell
+npm test
+```
+
+阶段 1 已建立推荐领域模块和确定性测试；端到端测试、构建流程和 GitHub Actions 仍留在后续获批阶段。
 
 ## 产品与实施路线
 
