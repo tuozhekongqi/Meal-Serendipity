@@ -1,0 +1,128 @@
+:root {
+  color-scheme: light;
+  --color-text: #171717;
+  --color-text-secondary: #666666;
+  --color-text-tertiary: #929292;
+  --color-action: #202020;
+  --color-action-hover: #000000;
+  --color-focus: #6b4a2f;
+  --color-success: #477a62;
+  --color-success-soft: #f3f7f5;
+  --color-warning: #9b7740;
+  --color-warning-soft: #faf7f1;
+  --color-error: #b34d4d;
+  --color-error-soft: #faf2f2;
+
+  --font-display: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", serif;
+  --font-body: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", "DM Mono", "SFMono-Regular", "Cascadia Code", Menlo, Consolas, monospace;
+
+  --text-display: clamp(2.5rem, 5vw, 4rem);
+  --text-page: clamp(2rem, 4vw, 2.75rem);
+  --text-recommendation: clamp(1.875rem, 4vw, 2.25rem);
+  --text-title: 1.375rem;
+  --text-subtitle: 1.125rem;
+  --text-body: .96875rem;
+  --text-label: .875rem;
+  --text-caption: .75rem;
+
+  --space-1: .25rem;
+  --space-2: .5rem;
+  --space-3: .75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  --radius-control: .5rem;
+  --radius-card: .625rem;
+  --radius-dialog: .75rem;
+  --radius-meta: .25rem;
+  --content-max: 73.75rem;
+  --control-min-height: 2.75rem;
+  --ease-standard: cubic-bezier(.2, .7, .25, 1);
+
+  --color-bg: var(--color-page-bg);
+  --color-surface: var(--color-card-surface);
+  --color-surface-raised: var(--color-hover-surface);
+  --color-surface-selected: var(--color-selected-surface);
+  --color-border: var(--color-theme-border);
+  --color-border-strong: var(--color-theme-border-strong);
+  --shadow-surface: 0 1px 2px var(--theme-shadow-color);
+  --shadow-dialog: 0 1.5rem 4rem var(--theme-shadow-color);
+}
+
+[data-theme="neutral"] {
+  --color-page-bg: #ffffff;
+  --color-soft-bg: #f8f8f7;
+  --color-card-surface: #ffffff;
+  --color-input-surface: #ffffff;
+  --color-secondary-surface: #f2f2f0;
+  --color-hover-surface: #f6f6f4;
+  --color-selected-surface: #f2f2f0;
+  --color-theme-border: #e3e3e0;
+  --color-theme-border-strong: #c9c9c5;
+  --theme-shadow-color: rgba(23, 23, 23, .1);
+  --background-gradient: none;
+}
+
+[data-theme="mint"] {
+  --color-page-bg: #eef8f1;
+  --color-soft-bg: #f6fbf7;
+  --color-card-surface: #ffffff;
+  --color-input-surface: #ffffff;
+  --color-secondary-surface: #e5f1e8;
+  --color-hover-surface: #f0f7f2;
+  --color-selected-surface: #e5f1e8;
+  --color-theme-border: #d7e7db;
+  --color-theme-border-strong: #b8cdbd;
+  --theme-shadow-color: rgba(23, 23, 23, .08);
+  --background-gradient: none;
+  --background-gradient-option: linear-gradient(135deg, #f5fbf6 0%, #eaf6ee 100%);
+}
+
+[data-theme="cream"] {
+  --color-page-bg: #fff8e9;
+  --color-soft-bg: #fffcf5;
+  --color-card-surface: #ffffff;
+  --color-input-surface: #ffffff;
+  --color-secondary-surface: #f8efd9;
+  --color-hover-surface: #fbf4e5;
+  --color-selected-surface: #f8efd9;
+  --color-theme-border: #e8ddc5;
+  --color-theme-border-strong: #cfc1a3;
+  --theme-shadow-color: rgba(23, 23, 23, .08);
+  --background-gradient: none;
+  --background-gradient-option: linear-gradient(135deg, #fffdf7 0%, #fff4d9 100%);
+}
+
+[data-theme="fog"] {
+  --color-page-bg: #f4f5f5;
+  --color-soft-bg: #fafafa;
+  --color-card-surface: #ffffff;
+  --color-input-surface: #ffffff;
+  --color-secondary-surface: #edeeee;
+  --color-hover-surface: #f4f5f5;
+  --color-selected-surface: #edeeee;
+  --color-theme-border: #dddfdf;
+  --color-theme-border-strong: #c2c5c5;
+  --theme-shadow-color: rgba(23, 23, 23, .09);
+  --background-gradient: none;
+}
+
+[data-theme="air"] {
+  --color-page-bg: #f2f7fa;
+  --color-soft-bg: #fafcfd;
+  --color-card-surface: #ffffff;
+  --color-input-surface: #ffffff;
+  --color-secondary-surface: #e7f0f4;
+  --color-hover-surface: #f0f5f7;
+  --color-selected-surface: #e7f0f4;
+  --color-theme-border: #d9e5ea;
+  --color-theme-border-strong: #bacdd6;
+  --theme-shadow-color: rgba(23, 23, 23, .08);
+  --background-gradient: none;
+}

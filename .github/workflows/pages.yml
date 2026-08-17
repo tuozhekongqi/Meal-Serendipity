@@ -1,0 +1,58 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Check JavaScript syntax
+        run: npm run check:js
+      - name: Run unit and contract tests
+        run: npm test
+      - name: Build production artifact
+        run: npm run build
+      - name: Check production artifact
+        run: npm run check:dist
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run recommendation flow E2E
+        run: npm run test:e2e
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

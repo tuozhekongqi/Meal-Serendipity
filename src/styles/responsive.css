@@ -1,0 +1,68 @@
+@media (max-width:23.5rem) {
+  .brand > span:last-child { font-size:.75rem; }
+  .mode-pill { display:none; }
+  .app-main { padding-right:var(--space-3); padding-left:var(--space-3); }
+  .decision-panel { padding:var(--space-5) var(--space-3); }
+  .result-panel { padding:0 var(--space-3); }
+  .result-wrap { padding-top:var(--space-5); }
+  .scene-grid { gap:var(--space-2); }
+  .scene-card { min-height:6.15rem; padding:var(--space-3); }
+  .scene-icon { margin-bottom:var(--space-2); }
+  .scene-card strong { padding-right:.8rem; font-size:.9rem; line-height:1.3; }
+  .scene-card span:last-child { padding-right:0; font-size:.7rem; line-height:1.4; }
+  .decision-runway { grid-template-columns:none; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); }
+  .runway-item { min-width:0; padding:var(--space-3) var(--space-2); }
+  .runway-item:first-child { padding-left:0; }
+  .runway-item span, .runway-item strong { overflow-wrap:anywhere; font-size:.6875rem; line-height:1.35; }
+  .metric-grid { grid-template-columns:1fr; }
+  .metric { border-top:1px solid var(--color-border); border-left:0; }
+  .metric:first-child { border-top:0; }
+}
+
+@media (max-width:56.24rem) {
+  .form-actions { display:none; }
+  .result-actions { display:none; }
+}
+
+@media (min-width:30rem) {
+  .header-inner, .app-main { padding-right:var(--space-6); padding-left:var(--space-6); }
+}
+
+@media (min-width:48rem) {
+  .app-main { padding-top:var(--space-12); }
+  .hero { margin-bottom:var(--space-12); }
+}
+
+@media (min-width:56.25rem) {
+  .mobile-action-bar { display:none; }
+  .app-main { padding-bottom:var(--space-16); }
+  .toast-region { bottom:var(--space-6); }
+}
+
+@media (min-width:64rem) {
+  .header-inner { min-height:4.75rem; }
+  .app-main { padding-top:var(--space-16); }
+  .hero { grid-template-columns:8rem minmax(22rem,1fr) minmax(18rem,.7fr); align-items:start; max-width:none; gap:var(--space-8); padding-bottom:var(--space-12); margin-bottom:var(--space-12); }
+  .hero .eyebrow, .hero h1, .hero-copy { margin-bottom:0; }
+  .hero h1 { grid-column:2; }
+  .hero-copy { grid-column:3; padding-top:.45rem; }
+  .decision-layout { grid-template-columns:minmax(20rem,22rem) minmax(0,1fr); align-items:start; column-gap:var(--space-12); }
+  .decision-panel { position:sticky; top:var(--space-4); padding:var(--space-6); }
+  .result-panel { min-height:30rem; padding:0 var(--space-8); }
+  .result-wrap { padding:var(--space-6) 0; }
+  .state-card { min-height:30rem; padding:var(--space-6) 0; }
+}
+
+@media (min-width:75rem) {
+  .reason-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .alternatives-list { grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:var(--space-6); }
+}
+
+@media (min-width:90rem) {
+  .header-inner, .app-main { padding-right:0; padding-left:0; }
+}
+
+@media (forced-colors:active) {
+  .brand-mark, .scene-card[aria-pressed="true"], .choice-chip[aria-pressed="true"] { border:2px solid CanvasText; }
+  .runway-item strong::before { background:Highlight; }
+}

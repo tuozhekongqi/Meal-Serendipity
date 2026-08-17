@@ -1,83 +1,127 @@
-<div align="center">
+# Meal-Serendipity
 
-# 🏮 Kismet Kitchen · 一餐之缘
+Meal-Serendipity 是一个帮助用户快速决定“今天吃什么”的中文外卖推荐项目。目标是在约 30 秒内，根据预算、口味、距离、配送时间和当前状态给出一个首选，并具体说明推荐理由与取舍。
 
-### *"What should I eat?" — Never ask again.*
+当前没有获批的实时外卖 Provider，页面使用仓库内 175 条静态菜品作为灵感。静态灵感不会展示或暗示真实商家、实时价格、距离、ETA、营业或库存状态。
 
-食无定味，适口者珍 — *Taste has no fixed rule; what suits you is the treasure.*
+## 在线访问与发布现状
 
-**A zero-dependency, single-file fortune-telling meal picker.**
-Open it. Answer 4 questions. Let destiny serve dinner. 🎋
+- 线上地址：<https://tuozhekongqi.github.io/Meal-Serendipity/>
+- 当前 GitHub Pages 设置：`main` 分支根目录的 legacy branch deployment
+- 阶段 5 目标：经 Pull Request 合并后，由仓库所有者手动将 Pages Source 切换为 `GitHub Actions`，之后只发布经过检查的 `dist/`
 
-![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
-![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
-![Zero Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)
-![Language](https://img.shields.io/badge/UI-中文%20%2F%20Chinese-red)
+仅把本功能分支合并到 `main` 不等于已经切换发布来源。首次 Actions 部署前，根目录入口会继续保留，因此原有发布方式仍可回滚。
 
-</div>
+## 当前体验
 
----
+- 首页提供“马上推荐”和“精准筛选”两条路径。
+- 精准筛选以三步流程收集当前状态、口味、忌口和用餐人数。
+- 结果突出单一首选、硬约束、推荐理由、取舍和替代候选。
+- 支持换一个、反馈、重置、刷新恢复非敏感偏好和数据说明对话框。
+- Provider 不可用时安全回退到静态灵感，不请求精确位置，也不保存忌口原文。
 
-## ✨ Why You'll Love It
+## 本地运行
 
-> 😩 "麻辣烫 or 黄焖鸡 or 酸辣粉…" — **175 dishes** later, you still don't know.
->
-> Kismet Kitchen turns dinner into a little ceremony: **every guest gets their own flavor profile**, fate draws your menu, and one tap sends you straight to the delivery app.
+需要 Node.js 22 或兼容版本。
 
-## 🎯 Features
-
-| | |
-|---|---|
-| 🥢 **Per-Person Customization** | Each guest picks their own taste + staple — the algorithm builds *everyone's* menu, not one-size-fits-all |
-| 🎯 **Three Fates** | *Best Pick* · *Safe Bet* · *Dare to Try* — three menus, swap with one click |
-| 🎋 **Fortune-Slip Roulette** | Shake the bamboo tube — Gold / Silver / Plain slips, each with a poetic fortune verse |
-| 🚫 **Allergy & Aversion Safe** | "No spice" or "shellfish allergy"? 21 one-tap presets + custom keywords, hard-filtered |
-| 🌦️ **Weather-Wise** | Rainy? Snowy? Sweltering? The menu (and the cover art) adapts to the sky |
-| 🛵 **Straight to Order** | Pick a meal → jump to **Meituan / Taobao Flash** search results in one tap |
-| 🎨 **Full Chinese Aesthetic** | Moon-gate cover, vermilion seals, gold-leaf scrolls, hand-drawn SVG icons — zero emoji shortcuts |
-| 💾 **Zero Backend, Zero Tracking** | Single HTML file, all data stays in your browser. Double-click and it just works |
-
-## 🚀 Quick Start
-
-```bash
-# Option 1: Just open it
-git clone <repo-url>
-# then double-click index.html — that's it.
-
-# Option 2: Share it anywhere
-# Drag the folder to app.netlify.com/drop → get a public URL → send to friends
+```powershell
+npm install
+npm run build
+node scripts/serve-static.mjs --root=dist --base-path=/Meal-Serendipity/ --port=4174
 ```
 
-## 🎲 How It Works
+访问 <http://127.0.0.1:4174/Meal-Serendipity/>。
 
+开发时也可使用任意静态服务器直接提供仓库根目录；生产与端到端检查始终以 `dist/` 为准。
+
+## 验证命令
+
+```powershell
+npm run check:js
+npm test
+npm run build
+npm run check:dist
+npx playwright install chromium
+npm run test:e2e
 ```
-① How many at the table?  →  ② Who likes what? (per person!)
-③ Budget & weather       →  ④ Fate: 三案呈上 or 摇一签?
-⑤ "择此一席"             →  ⑥ Order on Meituan / Taobao Flash
+
+- `check:js`：对项目 JavaScript 和 MJS 文件运行 Node 语法检查。
+- `npm test`：运行推荐、Provider、服务、展示、构建及工作流契约测试。
+- `build`：打包浏览器 JavaScript，合并样式并生成干净的 `dist/`。
+- `check:dist`：确认生产目录只含允许的运行时文件。
+- `test:e2e`：在 `/Meal-Serendipity/` 子路径下用 Chromium 走通推荐和关键交互。
+
+## 技术栈
+
+- HTML5、CSS3、原生 JavaScript ES Modules
+- Node.js 内置测试运行器
+- esbuild，仅用于生成浏览器生产包
+- Playwright，用于构建产物端到端检查
+- `localStorage` / `sessionStorage`，仅保存契约允许的非敏感状态
+- GitHub Actions 与 GitHub Pages 静态托管
+
+项目无后端、无账号、无遥测，也没有生产运行时 npm 依赖。
+
+## 项目结构
+
+```text
+Meal-Serendipity/
+├── .github/workflows/
+│   ├── ci.yml                       # PR 自动检查
+│   └── pages.yml                    # dist 构建与 Pages 部署
+├── docs/                            # 产品、设计、契约和实施文档
+├── scripts/
+│   ├── build-pages.mjs              # 确定性 Pages 构建
+│   ├── check-dist.mjs               # 生产产物白名单检查
+│   ├── check-js.mjs                 # JavaScript 语法检查
+│   └── serve-static.mjs             # 子路径静态测试服务器
+├── src/
+│   ├── components/                  # 页面组件与状态呈现
+│   ├── data/                        # 175 条静态菜品
+│   ├── domain/                      # 推荐领域模型
+│   ├── presentation/                # 推荐展示模型
+│   ├── providers/                   # live / inspiration Provider 边界
+│   ├── recommendation/              # 过滤、评分、解释与推荐编排
+│   ├── services/                    # 上下文、定位、存储与隐私清理
+│   ├── styles/                      # token、基础、组件与响应式样式
+│   └── main.js                      # 浏览器入口
+├── tests/
+│   ├── build/                       # 构建和工作流契约
+│   ├── e2e/                         # Playwright 推荐流程
+│   └── ...                          # 领域、Provider、服务与展示测试
+├── 404.html                         # GitHub Pages 自定义 404
+├── favicon.svg                      # 页面图标源文件
+├── index.html                       # 开发入口与回滚基线
+├── package.json
+└── playwright.config.js
 ```
 
-## 🗂️ Project Structure
+`dist/` 是生成目录，不是手工编辑的源码，也不应提交。其允许内容只有：`index.html`、`404.html`、`favicon.svg`、`favicon.ico` 和 `assets/app.css`、`assets/app.js`。
 
-```
-kismet-kitchen/
-├── index.html       ← the entire app (175 dishes, 9 categories, ~40KB)
-└── README.md        ← you are here
-```
+## CI 与 GitHub Pages 切换
 
-## 🧪 Tech Notes
+Pull Request 会自动执行语法检查、全部 Node 测试、生产构建、产物检查和 Chromium E2E。任何一步失败，检查不会通过。
 
-- **Vanilla HTML/CSS/JS** — no frameworks, no CDN, no build step, no telemetry
-- **175 dishes** across 9 categories (rice / noodles / BBQ / braised / light / fried snacks / hot pot / dessert / fine dining)
-- **localStorage** persistence — refresh-proof, private-mode-proof
-- Fully responsive (320px → desktop), touch targets ≥ 44px
+`pages.yml` 只在 `main` 更新或手动触发时运行。部署任务依赖成功的构建任务，并通过 `actions/upload-pages-artifact` 仅上传 `./dist`。
 
-## 📜 Philosophy
+首次启用步骤：
 
-> 食无定味，适口者珍。
-> *There is no absolute taste; the right one is the one that pleases you.*
-> — 袁枚 Yuan Mei, 《随园食单》Suiyuan Shidan
+1. 通过 Pull Request 合并，并确认 CI 成功。
+2. 打开仓库 `Settings → Pages`。
+3. 将 `Build and deployment → Source` 从 branch deployment 改为 `GitHub Actions`。
+4. 运行 `Deploy GitHub Pages`，确认线上首页、资源、favicon 和 404 正常。
 
----
+回滚步骤：
 
-**Made with 🍵 and too many late-night hunger crises.**
+1. 将 Pages Source 改回 `Deploy from a branch`。
+2. 选择 `main` 和 `/ (root)`。
+3. 重新检查线上入口。根目录入口被保留，可继续承担旧发布方式。
+
+## 数据、隐私与协作规则
+
+- `live` 只能显示合法数据服务实际提供且未过期的真实字段。
+- `inspiration` 只提供菜品灵感，不伪造实时信息。
+- 精确位置只允许在用户主动发起并明确同意的实时请求内存中使用，不能持久化。
+- 忌口原文不能写入本地存储、日志、仓库或分析系统。
+- 修改前阅读 [AGENTS.md](AGENTS.md)；不要直接修改 `main`。
+- 数据边界见 [docs/data-source-contract.md](docs/data-source-contract.md)，现有行为基线见 [docs/current-behavior-checklist.md](docs/current-behavior-checklist.md)。
