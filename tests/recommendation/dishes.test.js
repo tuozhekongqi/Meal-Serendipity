@@ -6,9 +6,9 @@ import vm from 'node:vm';
 import { DISHES } from '../../src/data/dishes.js';
 
 async function readLegacyDishes() {
-  const html = await readFile(new URL('../../index.html', import.meta.url), 'utf8');
+  const html = await readFile(new URL('../../一餐之缘_分享版/index.html', import.meta.url), 'utf8');
   const match = html.match(/const DISHES = (\[[\s\S]*?\n\]);/);
-  assert.ok(match, 'index.html should still expose the legacy dish array during phase 1');
+  assert.ok(match, 'the preserved historical page should expose the legacy dish array');
   return vm.runInNewContext(`(${match[1]})`);
 }
 

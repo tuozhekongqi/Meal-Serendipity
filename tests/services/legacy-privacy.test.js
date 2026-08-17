@@ -1,12 +1,27 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-test('legacy page keeps taboo text in memory and removes historical storage keys', async () => {
-  const source = await readFile(new URL('../../index.html', import.meta.url), 'utf8');
+import { clearLegacySensitiveStorage } from '../../src/services/legacy-storage.js';
 
-  assert.doesNotMatch(source, /lsSet\(LS_KEYS\.taboo/);
-  assert.doesNotMatch(source, /Object\.assign\(state, f\)/);
-  assert.match(source, /localStorage\.removeItem\(LS_KEYS\.taboo\)/);
-  assert.match(source, /localStorage\.removeItem\('wt_black'\)/);
+test('modern page removes historical taboo and blacklist values without touching unrelated storage', () => {
+  const values = new Map([
+    ['wt_taboo', '花生'],
+    ['wt_black', '["香菜"]'],
+    ['unrelated', 'keep']
+  ]);
+  const storage = { removeItem(key) { values.delete(key); } };
+
+  const result = clearLegacySensitiveStorage(storage);
+
+  assert.deepEqual(result, { ok: true, removed: ['wt_taboo', 'wt_black'] });
+  assert.equal(values.has('wt_taboo'), false);
+  assert.equal(values.has('wt_black'), false);
+  assert.equal(values.get('unrelated'), 'keep');
+});
+test('legacy cleanup contains unavailable storage instead of crashing startup', () => {
+  const result = clearLegacySensitiveStorage({
+    removeItem() { throw new Error('blocked'); }
+  });
+
+  assert.deepEqual(result, { ok: false, removed: [], reason: 'storage_unavailable' });
 });

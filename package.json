@@ -4,7 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "node scripts/build-pages.mjs",
+    "check:dist": "node scripts/check-dist.mjs",
+    "check:js": "node scripts/check-js.mjs",
     "test": "node --test",
-    "test:recommendation": "node --test tests/recommendation/*.test.js"
+    "test:recommendation": "node --test tests/recommendation/*.test.js",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "esbuild": "0.28.2",
+    "yaml": "2.9.0"
   }
 }

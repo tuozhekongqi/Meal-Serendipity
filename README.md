@@ -1,110 +1,127 @@
-# Meal-Serendipity · 一餐之缘
+# Meal-Serendipity
 
-Meal-Serendipity 是一个面向“今天吃什么”决策疲劳的中文外卖推荐项目。
+Meal-Serendipity 是一个帮助用户快速决定“今天吃什么”的中文外卖推荐项目。目标是在约 30 秒内，根据预算、口味、距离、配送时间和当前状态给出一个首选，并具体说明推荐理由与取舍。
 
-项目已确认的目标是：用户打开网页后，在约 30 秒内得到一个符合预算、口味、距离、配送时间和当前状态的推荐，并知道为什么推荐这个结果。
+当前没有获批的实时外卖 Provider，页面使用仓库内 175 条静态菜品作为灵感。静态灵感不会展示或暗示真实商家、实时价格、距离、ETA、营业或库存状态。
 
-> 当前状态：仓库仍运行原有的单文件菜品灵感版本。现代化 UI、解耦推荐引擎和实时外卖候选尚未实施，不能把当前结果理解为真实商家、库存、距离或 ETA。
+## 在线访问与发布现状
 
-## 在线访问
+- 线上地址：<https://tuozhekongqi.github.io/Meal-Serendipity/>
+- 当前 GitHub Pages 设置：`main` 分支根目录的 legacy branch deployment
+- 阶段 5 目标：经 Pull Request 合并后，由仓库所有者手动将 Pages Source 切换为 `GitHub Actions`，之后只发布经过检查的 `dist/`
 
-- GitHub Pages：<https://tuozhekongqi.github.io/Meal-Serendipity/>
-- 当前页面标题：`一餐之缘 · 今日何食`
-- 当前发布方式：`main` 分支根目录的 legacy branch deployment
+仅把本功能分支合并到 `main` 不等于已经切换发布来源。首次 Actions 部署前，根目录入口会继续保留，因此原有发布方式仍可回滚。
 
-## 当前可用功能
+## 当前体验
 
-- 从 175 条本地静态菜品数据中生成结果；无需后端或第三方 API。
-- “开启今日一餐”进入完整表单，收集人数、总预算档、场景、逐人口味、逐人主食类型、饮食避讳和天气。
-- “随便 · 不问口味”默认按 1 人、自由预算直接摇签。
-- 完整流程可选择“精择 · 三案呈上”或“随缘 · 摇一签”。
-- 三案分别提供首选、稳妥和尝鲜；摇签可在预算内或随心抽取。
-- 选定后生成美团外卖与淘宝闪购的关键词搜索入口，也可复制菜名。
-- 表单、避讳、最近菜品和最后下单页保存在浏览器本地。
-
-当前推荐是“菜品灵感”，不是实时外卖候选。更完整的现状和已知限制见 [当前行为检查清单](docs/current-behavior-checklist.md)。
+- 首页提供“马上推荐”和“精准筛选”两条路径。
+- 精准筛选以三步流程收集当前状态、口味、忌口和用餐人数。
+- 结果突出单一首选、硬约束、推荐理由、取舍和替代候选。
+- 支持换一个、反馈、重置、刷新恢复非敏感偏好和数据说明对话框。
+- Provider 不可用时安全回退到静态灵感，不请求精确位置，也不保存忌口原文。
 
 ## 本地运行
 
-当前仓库无需安装运行时依赖或执行构建；`package.json` 仅提供 Node.js 推荐逻辑测试命令。
-
-最简单的方式是直接打开根目录 `index.html`。为获得与 GitHub Pages 更接近的 HTTP 环境，建议使用静态服务器：
+需要 Node.js 22 或兼容版本。
 
 ```powershell
-git clone https://github.com/tuozhekongqi/Meal-Serendipity.git
-cd Meal-Serendipity
-py -m http.server 8000
+npm install
+npm run build
+node scripts/serve-static.mjs --root=dist --base-path=/Meal-Serendipity/ --port=4174
 ```
 
-然后访问 <http://127.0.0.1:8000/>。macOS/Linux 可使用 `python3 -m http.server 8000`。
+访问 <http://127.0.0.1:4174/Meal-Serendipity/>。
 
-## 当前技术栈
+开发时也可使用任意静态服务器直接提供仓库根目录；生产与端到端检查始终以 `dist/` 为准。
 
-- HTML5、CSS3、原生 JavaScript
-- 根入口仍为 `index.html`，布局、样式和旧页面兼容逻辑保持内联；纯推荐领域模块位于 `src/`
-- `localStorage` / `sessionStorage` 保存浏览器本地状态
-- 无运行时依赖、无构建工具、无后端、无遥测；测试使用 Node.js 内置测试运行器
-- GitHub Pages 静态托管
+## 验证命令
+
+```powershell
+npm run check:js
+npm test
+npm run build
+npm run check:dist
+npx playwright install chromium
+npm run test:e2e
+```
+
+- `check:js`：对项目 JavaScript 和 MJS 文件运行 Node 语法检查。
+- `npm test`：运行推荐、Provider、服务、展示、构建及工作流契约测试。
+- `build`：打包浏览器 JavaScript，合并样式并生成干净的 `dist/`。
+- `check:dist`：确认生产目录只含允许的运行时文件。
+- `test:e2e`：在 `/Meal-Serendipity/` 子路径下用 Chromium 走通推荐和关键交互。
+
+## 技术栈
+
+- HTML5、CSS3、原生 JavaScript ES Modules
+- Node.js 内置测试运行器
+- esbuild，仅用于生成浏览器生产包
+- Playwright，用于构建产物端到端检查
+- `localStorage` / `sessionStorage`，仅保存契约允许的非敏感状态
+- GitHub Actions 与 GitHub Pages 静态托管
+
+项目无后端、无账号、无遥测，也没有生产运行时 npm 依赖。
 
 ## 项目结构
 
 ```text
 Meal-Serendipity/
-├── AGENTS.md                         # 长期协作与质量规则
-├── README.md                         # 项目入口说明
-├── index.html                        # 当前生产入口与完整单文件应用
-├── docs/
-│   ├── product-brief.md              # 已确认的产品定位与范围
-│   ├── design-system.md              # 已确认的极简智能型设计方向
-│   ├── implementation-plan.md        # 7 个阶段的实施计划
-│   ├── current-behavior-checklist.md # 当前行为与回滚基线
-│   └── data-source-contract.md       # 实时/灵感候选数据契约
-└── 一餐之缘_分享版/
-    └── index.html                    # 独立历史分享副本，非生产权威源
+├── .github/workflows/
+│   ├── ci.yml                       # PR 自动检查
+│   └── pages.yml                    # dist 构建与 Pages 部署
+├── docs/                            # 产品、设计、契约和实施文档
+├── scripts/
+│   ├── build-pages.mjs              # 确定性 Pages 构建
+│   ├── check-dist.mjs               # 生产产物白名单检查
+│   ├── check-js.mjs                 # JavaScript 语法检查
+│   └── serve-static.mjs             # 子路径静态测试服务器
+├── src/
+│   ├── components/                  # 页面组件与状态呈现
+│   ├── data/                        # 175 条静态菜品
+│   ├── domain/                      # 推荐领域模型
+│   ├── presentation/                # 推荐展示模型
+│   ├── providers/                   # live / inspiration Provider 边界
+│   ├── recommendation/              # 过滤、评分、解释与推荐编排
+│   ├── services/                    # 上下文、定位、存储与隐私清理
+│   ├── styles/                      # token、基础、组件与响应式样式
+│   └── main.js                      # 浏览器入口
+├── tests/
+│   ├── build/                       # 构建和工作流契约
+│   ├── e2e/                         # Playwright 推荐流程
+│   └── ...                          # 领域、Provider、服务与展示测试
+├── 404.html                         # GitHub Pages 自定义 404
+├── favicon.svg                      # 页面图标源文件
+├── index.html                       # 开发入口与回滚基线
+├── package.json
+└── playwright.config.js
 ```
 
-根目录 `index.html` 是当前生产权威源。不要默认同步或从 `一餐之缘_分享版/index.html` 覆盖它。
+`dist/` 是生成目录，不是手工编辑的源码，也不应提交。其允许内容只有：`index.html`、`404.html`、`favicon.svg`、`favicon.ico` 和 `assets/app.css`、`assets/app.js`。
 
-## 数据与推荐边界
+## CI 与 GitHub Pages 切换
 
-当前菜品记录包含名称、口味、类型、价格档、天气倾向、大众/小众标记、食材关键词和一句描述。推荐先按避讳、主味与主食类型过滤，再按口味优先级、主食、预算、天气、场景、多人状态和历史结果评分。
+Pull Request 会自动执行语法检查、全部 Node 测试、生产构建、产物检查和 Chromium E2E。任何一步失败，检查不会通过。
 
-未来将支持两种明确模式：
+`pages.yml` 只在 `main` 更新或手动触发时运行。部署任务依赖成功的构建任务，并通过 `actions/upload-pages-artifact` 仅上传 `./dist`。
 
-- `live`：只展示合法数据服务提供且未过期的真实商家、价格、距离、ETA 与可售状态。
-- `inspiration`：使用本地菜品库提供灵感，不展示或暗示不存在的实时字段。
+首次启用步骤：
 
-具体请求、响应、超时、缓存、错误和隐私要求见 [数据源契约](docs/data-source-contract.md)。
+1. 通过 Pull Request 合并，并确认 CI 成功。
+2. 打开仓库 `Settings → Pages`。
+3. 将 `Build and deployment → Source` 从 branch deployment 改为 `GitHub Actions`。
+4. 运行 `Deploy GitHub Pages`，确认线上首页、资源、favicon 和 404 正常。
 
-## 开发与验证
+回滚步骤：
 
-开始修改前先阅读 [AGENTS.md](AGENTS.md) 和本次阶段对应的实施计划。当前基线可按以下方式复核：
+1. 将 Pages Source 改回 `Deploy from a branch`。
+2. 选择 `main` 和 `/ (root)`。
+3. 重新检查线上入口。根目录入口被保留，可继续承担旧发布方式。
 
-1. 启动静态服务器并确认首页返回 200。
-2. 按 [当前行为检查清单](docs/current-behavior-checklist.md) 走通快速摇签、完整表单、多人、避讳、三案、刷新恢复和下单入口。
-3. 检查 320px、390px、768px、1440px 四档视口。
-4. 检查控制台和失败资源。
-5. 运行 `git diff --check`，确认只有计划内文件变化。
+## 数据、隐私与协作规则
 
-推荐领域测试可直接运行：
-
-```powershell
-npm test
-```
-
-阶段 1 已建立推荐领域模块和确定性测试；端到端测试、构建流程和 GitHub Actions 仍留在后续获批阶段。
-
-## 产品与实施路线
-
-- [产品简报](docs/product-brief.md)
-- [设计系统](docs/design-system.md)
-- [实施计划](docs/implementation-plan.md)
-
-实施共 7 个阶段，阶段之间必须独立审查和回滚。不要直接修改 `main`；默认从最新 `main` 创建 `codex/` 分支并通过 Pull Request 合并。
-
-## 隐私与安全
-
-- 当前版本没有账号、后端或遥测，数据保存在用户浏览器。
-- 当前版本不请求或保存精确位置；下单平台可能在跳转后自行请求定位。
-- 未来精确位置只能用于用户主动发起的当前实时请求，不能写入本地持久化、仓库或分析日志。
-- 任何第三方私密凭证都不得进入前端或 GitHub Pages 构建产物。
+- `live` 只能显示合法数据服务实际提供且未过期的真实字段。
+- `inspiration` 只提供菜品灵感，不伪造实时信息。
+- 精确位置只允许在用户主动发起并明确同意的实时请求内存中使用，不能持久化。
+- 忌口原文不能写入本地存储、日志、仓库或分析系统。
+- 修改前阅读 [AGENTS.md](AGENTS.md)；不要直接修改 `main`。
+- 数据边界见 [docs/data-source-contract.md](docs/data-source-contract.md)，现有行为基线见 [docs/current-behavior-checklist.md](docs/current-behavior-checklist.md)。

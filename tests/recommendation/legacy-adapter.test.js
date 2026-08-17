@@ -12,7 +12,7 @@ import {
 } from '../../src/recommendation/legacy-adapter.js';
 
 async function readLegacyDishes() {
-  const html = await readFile(new URL('../../index.html', import.meta.url), 'utf8');
+  const html = await readFile(new URL('../../一餐之缘_分享版/index.html', import.meta.url), 'utf8');
   const match = html.match(/const DISHES = (\[[\s\S]*?\n\]);/);
   assert.ok(match);
   return vm.runInNewContext(`(${match[1]})`);

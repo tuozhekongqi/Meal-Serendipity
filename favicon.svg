@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Meal-Serendipity">
+  <rect x="7" y="7" width="50" height="50" rx="9" fill="#fff" stroke="#202020" stroke-width="4"/>
+  <path d="M25 19v26M19 19v10c0 4 3 7 6 7M31 19v10c0 4-3 7-6 7M42 19v26" fill="none" stroke="#202020" stroke-width="4" stroke-linecap="square" stroke-linejoin="round"/>
+</svg>
