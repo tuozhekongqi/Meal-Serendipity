@@ -1419,7 +1419,7 @@ function addHist(names) {
 function getHist() {
   try { return JSON.parse(localStorage.getItem('wt_hist') || '[]'); } catch (e) { return []; }
 }
-function saveTaboo() { lsSet(LS_KEYS.taboo, tabooList); }
+function saveTaboo() { try { localStorage.removeItem(LS_KEYS.taboo); } catch (e) { } }
 
 function toast(msg) {
   const t = $('toast');
@@ -1553,19 +1553,15 @@ const CHOP_SVG = {
 /* ================= 初始化 ================= */
 function init() {
   const f = lsGet(LS_KEYS.form, {});
-  if (f && typeof f === 'object' && !Array.isArray(f)) Object.assign(state, f);
-  tabooList = lsGet(LS_KEYS.taboo, []);
-  if (!Array.isArray(tabooList)) tabooList = [];
+  if (f && typeof f === 'object' && !Array.isArray(f)) {
+    ['budget', 'people', 'customPpl', 'scene', 'tastes', 'types', 'weather', 'personIdx', 'mode', 'lotScope', 'personTastes']
+      .forEach(key => { if (Object.prototype.hasOwnProperty.call(f, key)) state[key] = f[key]; });
+  }
+  tabooList = [];
   try {
-    const oldBlack = lsGet('wt_black', []);
-    if (Array.isArray(oldBlack)) tabooList = tabooList.concat(oldBlack);
-    if (f && typeof f.taboo === 'string' && f.taboo.trim()) {
-      f.taboo.split(/[、，,;；\s]+/).forEach(x => { if (x && tabooList.indexOf(x) < 0) tabooList.push(x); });
-    }
+    localStorage.removeItem(LS_KEYS.taboo);
+    localStorage.removeItem('wt_black');
   } catch (e) { }
-  tabooList = tabooList.filter((v, i) => tabooList.indexOf(v) === i);
-  saveTaboo();
-  localStorage.removeItem('wt_black');
 
   if (typeof f.taste === 'string' && TASTES.indexOf(f.taste) >= 0 && !state.tastes) state.tastes = { 1: f.taste };
   if (!state.tastes || typeof state.tastes !== 'object' || Array.isArray(state.tastes)) state.tastes = {};
@@ -1722,7 +1718,7 @@ function init() {
     }
   });
 
-  ensurePersons();
+  ensurePersons(); saveForm();
   updateCoverWeather();
   syncCustomPpl(); renderScenes(); renderTastes(); renderTypes(); renderTaboo(); renderTabooPresets(); renderBudget();
   // 竖排文字：逐字拆分，flex 纵向排列（不依赖 writing-mode，兼容所有浏览器）

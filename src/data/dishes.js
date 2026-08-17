@@ -240,6 +240,7 @@ function toInspirationCandidate(dish) {
     pricing: null,
     delivery: null,
     availability: null,
+    orderUrl: null,
     dataUpdatedAt: null,
     metadata: Object.freeze({
       priceTier: dish.p,

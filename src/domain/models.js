@@ -28,6 +28,7 @@
  * @property {{totalCents: number, isEstimate?: boolean, unknownFeeLabels?: string[]} | null} pricing
  * @property {{distanceMeters: number, etaMinutes: number} | null} delivery
  * @property {{isOrderable: boolean, reason?: string | null} | null} availability
+ * @property {string | null} orderUrl
  * @property {string | null} dataUpdatedAt
  * @property {Record<string, unknown>} metadata
  */
