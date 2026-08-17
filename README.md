@@ -7,10 +7,11 @@ Meal-Serendipity 是一个帮助用户快速决定“今天吃什么”的中文
 ## 在线访问与发布现状
 
 - 线上地址：<https://tuozhekongqi.github.io/Meal-Serendipity/>
-- 当前 GitHub Pages 设置：`main` 分支根目录的 legacy branch deployment
-- 阶段 5 目标：经 Pull Request 合并后，由仓库所有者手动将 Pages Source 切换为 `GitHub Actions`，之后只发布经过检查的 `dist/`
+- GitHub Pages API 当前报告 Source 为 `GitHub Actions`
+- `main` 更新后，`.github/workflows/pages.yml` 会运行语法、单元/契约、构建、产物和 Chromium E2E 检查；全部成功后声明只上传生成的 `dist/`
+- 最近一次配置核验见 [现代 UI 当前行为清单](docs/current-modern-ui-checklist.md)
 
-仅把本功能分支合并到 `main` 不等于已经切换发布来源。首次 Actions 部署前，根目录入口会继续保留，因此原有发布方式仍可回滚。
+根目录 `index.html` 仍是开发源入口和 branch deployment 回滚来源。2026-08-17 的 smoke test 发现线上 HTML 仍引用 `src/` 而不是构建后的 `assets/`，与预期 `dist/` artifact 不一致；在完成部署一致性复核前，不能声称线上只发布 `dist/`。
 
 ## 当前体验
 
@@ -98,18 +99,15 @@ Meal-Serendipity/
 
 `dist/` 是生成目录，不是手工编辑的源码，也不应提交。其允许内容只有：`index.html`、`404.html`、`favicon.svg`、`favicon.ico` 和 `assets/app.css`、`assets/app.js`。
 
-## CI 与 GitHub Pages 切换
+## CI 与 GitHub Pages 发布
 
 Pull Request 会自动执行语法检查、全部 Node 测试、生产构建、产物检查和 Chromium E2E。任何一步失败，检查不会通过。
 
+`main` 已配置 branch protection：变更必须通过 Pull Request，`validate` 检查必须成功且分支保持最新，管理员也不能绕过；当前单维护者配置暂不要求批准 review。
+
 `pages.yml` 只在 `main` 更新或手动触发时运行。部署任务依赖成功的构建任务，并通过 `actions/upload-pages-artifact` 仅上传 `./dist`。
 
-首次启用步骤：
-
-1. 通过 Pull Request 合并，并确认 CI 成功。
-2. 打开仓库 `Settings → Pages`。
-3. 将 `Build and deployment → Source` 从 branch deployment 改为 `GitHub Actions`。
-4. 运行 `Deploy GitHub Pages`，确认线上首页、资源、favicon 和 404 正常。
+Pages API 当前报告 Source 为 `GitHub Actions`。每次部署后仍需确认线上首页、资源、favicon、404 和关键流程；Actions 成功不能替代目标网络环境的线上 smoke test，也不能单独证明 CDN 正在提供预期 artifact。
 
 回滚步骤：
 

@@ -8,7 +8,7 @@
 - `docs/product-brief.md` 是产品目标来源，`docs/design-system.md` 是视觉与交互来源，`docs/implementation-plan.md` 是阶段边界来源。
 - `docs/current-behavior-checklist.md` 记录当前可运行基线；它描述“现在是什么”，不代表所有现状都应长期保留。
 - `docs/data-source-contract.md` 定义实时数据与灵感数据的边界；涉及 provider、位置、价格、距离或 ETA 的实现必须符合该契约。
-- 当前生产版本仍是根目录 `index.html` 的零依赖单文件应用。现代化目标将按实施计划逐阶段完成，不能把目标能力写成已经上线的能力。
+- GitHub Pages API 当前报告由 `.github/workflows/pages.yml` 从 `main` 构建并部署 `dist/`。根目录 `index.html` 是开发源入口和 branch deployment 回滚来源；必须用线上 HTML 和资源路径复核 CDN 是否确实提供预期 artifact，不能只依据 Actions 成功下结论，也不能把尚未接入的实时 Provider 或遥测能力写成已经上线的能力。
 
 ## 项目定位与核心目标
 
@@ -43,7 +43,7 @@
 - 核心推荐函数应尽量是可重复、可测试的纯函数；不得直接依赖 DOM、`window`、`localStorage`、网络跳转或系统时间。
 - 随机逻辑应允许注入随机源；时间相关逻辑应允许注入当前时间，便于确定性测试。
 - 数据结构和权重变更必须说明字段含义、迁移方式和对结果的影响，并补充相应测试。
-- 根目录 `index.html` 是当前 GitHub Pages 的生产入口。`一餐之缘_分享版/index.html` 是独立历史副本，除非任务明确要求，不得手工双向同步。
+- 根目录 `index.html` 是构建输入和 branch deployment 回滚入口；预期 GitHub Pages 生产内容是 Actions 生成的 `dist/` artifact，实际状态以线上资源核验为准。`一餐之缘_分享版/index.html` 是独立历史副本，除非任务明确要求，不得手工双向同步。
 - 在对应阶段获批前，不得提前引入框架、账号体系、遥测、服务端依赖或私密第三方凭证。
 
 ## 修改流程
@@ -78,7 +78,7 @@
 - 每个阶段从最新 `main` 创建短期分支，默认使用 `codex/` 前缀；通过 Pull Request 审查后再合并。
 - 不要强推共享分支、改写他人历史或在未获授权时合并 Pull Request。
 - 每阶段保持独立提交和可识别回滚点；提交信息应描述意图，Pull Request 应包含验证证据和风险说明。
-- 当前 GitHub Pages 从 `main` 根目录以 legacy branch deployment 发布。迁移到 Actions 只能在实施计划指定阶段进行，不能在普通功能变更中顺手调整。
+- 当前 GitHub Pages Source 为 `GitHub Actions`；`.github/workflows/pages.yml` 只在检查和构建成功后发布 `dist/`。若需要回滚到 branch deployment，必须单独批准并验证 `main` 根入口、项目子路径、静态资源和 404。
 
 ## 已解决的治理冲突
 

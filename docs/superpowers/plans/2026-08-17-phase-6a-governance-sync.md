@@ -29,11 +29,11 @@
 - Consumes: approved Phase 6A event and retention design
 - Produces: unambiguous default retention, approval boundary, and a complete seven-event design contract
 
-- [ ] State explicitly that 30 days is the default maximum raw-event retention.
-- [ ] State explicitly that retaining de-identified aggregates for up to 90 days is optional and requires separate approval before collection starts.
-- [ ] Audit all seven event rows for trigger, required fields, prohibited fields, purpose, and future-pilot necessity.
-- [ ] Confirm the document forbids interpreting static inspiration actions as real order conversion.
-- [ ] Run a focused text scan for all event names, retention values, prohibited analytics implementation, and conversion-boundary language.
+- [x] State explicitly that 30 days is the default maximum raw-event retention.
+- [x] State explicitly that retaining de-identified aggregates for up to 90 days is optional and requires separate approval before collection starts.
+- [x] Audit all seven event rows for trigger, required fields, prohibited fields, purpose, and future-pilot necessity.
+- [x] Confirm the document forbids interpreting static inspiration actions as real order conversion.
+- [x] Run a focused text scan for all event names, retention values, prohibited analytics implementation, and conversion-boundary language.
 
 ### Task 2: Current deployment and collaboration documentation
 
@@ -45,10 +45,10 @@
 - Consumes: GitHub Pages API `build_type: workflow`, `.github/workflows/pages.yml`, and successful deployment evidence for `a87db1c`
 - Produces: current deployment wording with an explicit branch-deployment rollback path
 
-- [ ] Replace legacy-current wording with GitHub Actions deployment from generated `dist/`.
-- [ ] Keep root `index.html` documented as a development source and branch-deployment rollback source, not the current published artifact.
-- [ ] Preserve the no-secret, inspiration/live, PR, and rollback rules.
-- [ ] Check all changed Markdown links resolve to repository files or approved web URLs.
+- [x] Replace legacy-current wording with the current GitHub Actions configuration and record the observed online artifact mismatch.
+- [x] Keep root `index.html` documented as a development source and branch-deployment rollback source without overstating the current CDN artifact.
+- [x] Preserve the no-secret, inspiration/live, PR, and rollback rules.
+- [x] Check all changed Markdown links resolve to repository files or approved web URLs.
 
 ### Task 3: Modern UI current behavior checklist
 
@@ -64,10 +64,10 @@
 - Consumes: current `main` behavior at `a87db1c`, current tests, and fresh smoke-test results
 - Produces: a current operational baseline that does not replace the Phase 0 historical checklist
 
-- [ ] Record the modern UI entry points, three-step precise flow, recommendation states, copy/swap/feedback/reset behavior, storage behavior, and privacy dialog.
-- [ ] Record the current inspiration-only boundary, disabled live Provider, simplified party-size behavior, and missing real location/budget/ETA/distance/order capabilities.
-- [ ] Separate source/test evidence, GitHub deployment evidence, local built-site evidence, and online reachability evidence.
-- [ ] Add a repeatable smoke-test checklist for users testing from mobile data or another network.
+- [x] Record the modern UI entry points, three-step precise flow, recommendation states, copy/swap/feedback/reset behavior, storage behavior, and privacy dialog.
+- [x] Record the current inspiration-only boundary, disabled live Provider, simplified party-size behavior, and missing real location/budget/ETA/distance/order capabilities.
+- [x] Separate source/test evidence, GitHub deployment evidence, local built-site evidence, and online reachability evidence.
+- [x] Add a repeatable smoke-test checklist for users testing from mobile data or another network.
 
 ### Task 4: Evidence-backed phase status synchronization
 
@@ -78,11 +78,11 @@
 - Consumes: files on `main`, 76 passing Node tests, current E2E coverage, GitHub Actions state, and the approved Phase 6A document
 - Produces: checkboxes and status notes that distinguish completed, partial, blocked, and not-started work
 
-- [ ] Add an evidence date and source commit for the status synchronization.
-- [ ] Mark only Phase 0/1/2/3/5 actions that have direct evidence; leave missing UI fields, incomplete scenarios, performance budgets, and independent-PR actions unchecked.
-- [ ] Keep every Phase 4 action unchecked and state the external Provider gate is unmet.
-- [ ] Mark Phase 6A design complete only after the privacy document audit passes; state analytics implementation and telemetry collection remain absent.
-- [ ] Avoid rewriting historical plans under `docs/superpowers/plans/` as if their original execution records were current status ledgers.
+- [x] Add an evidence date and source commit for the status synchronization.
+- [x] Mark only Phase 0/1/2/3/5 actions that have direct evidence; leave missing UI fields, incomplete scenarios, performance budgets, and independent-PR actions unchecked.
+- [x] Keep every Phase 4 action unchecked and state the external Provider gate is unmet.
+- [x] Mark Phase 6A design complete only after the privacy document audit passes; state analytics implementation and telemetry collection remain absent.
+- [x] Avoid rewriting historical plans under `docs/superpowers/plans/` as if their original execution records were current status ledgers.
 
 ### Task 5: GitHub and online smoke verification
 
@@ -93,12 +93,12 @@
 - Consumes: GitHub CLI/API, the production URL, favicon, assets, custom 404, and browser automation
 - Produces: dated verification results and explicit unresolved items
 
-- [ ] Re-fetch `origin/main` and verify it is still `a87db1c38a164793af9793f28db22b1fb7d1d622` before finalizing status claims.
-- [ ] Query Pages configuration, latest CI/deployment conclusions, branch protection, repository rulesets, and repository permissions.
-- [ ] Attempt HTTP and real Chromium access to the production home page, assets, favicon, and a missing route.
+- [x] Re-fetch `origin/main` and verify it is still `a87db1c38a164793af9793f28db22b1fb7d1d622` before finalizing status claims.
+- [x] Query Pages configuration, latest CI/deployment conclusions, branch protection, repository rulesets, and repository permissions.
+- [x] Attempt HTTP and real Chromium access to the production home page, assets, favicon, and a missing route.
 - [ ] If production is reachable, exercise quick recommendation, precise filtering, and a small mobile viewport.
-- [ ] If production is unreachable, record the exact error and leave end-user reachability unverified.
-- [ ] Document recommended branch protection: require PRs, require the exact CI check discovered from Actions, block direct pushes, and disallow bypass where supported.
+- [x] If production is unreachable in Chromium, record the exact error and leave online interaction reachability unverified.
+- [x] Document and apply branch protection: require PRs, require the exact CI check discovered from Actions, block direct pushes, and disallow bypass where supported.
 
 ### Task 6: Full validation and implementation commit
 
@@ -110,13 +110,13 @@
 - Consumes: completed documentation diff
 - Produces: reproducible validation evidence and an isolated governance commit
 
-- [ ] Run `npm run check:js`.
-- [ ] Run `npm test`.
-- [ ] Run `npm run build` and `npm run check:dist`.
-- [ ] Run `npm run test:e2e` with Chromium if the local browser environment permits it.
-- [ ] Run Markdown link/structure checks without adding a dependency.
-- [ ] Run `git diff --check`, inspect `git diff --stat`, and verify no runtime or dependency files changed.
-- [ ] Commit the governance synchronization separately from the approved Phase 6A specification commit.
+- [x] Run `npm run check:js`.
+- [x] Run `npm test`.
+- [x] Run `npm run build` and `npm run check:dist`.
+- [x] Run `npm run test:e2e` with Chromium if the local browser environment permits it.
+- [x] Run Markdown link/structure checks without adding a dependency.
+- [x] Run `git diff --check`, inspect `git diff --stat`, and verify no runtime or dependency files changed.
+- [x] Commit the governance synchronization separately from the approved Phase 6A specification commit.
 
 ## Plan Self-review
 
