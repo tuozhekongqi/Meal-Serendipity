@@ -81,6 +81,8 @@
 - Pages API 报告 `build_type: workflow`、`status: built`、HTTPS 强制开启且识别自定义 404。
 - `Deploy GitHub Pages` 和 `CI` 在提交 `a87db1c` 上均报告成功。
 - Pages workflow 的构建步骤声明只上传 `./dist`。
+- 2026-08-17 手动运行 `Deploy GitHub Pages` workflow：`32035363958`，目标 `main` 提交为 `a87db1c38a164793af9793f28db22b1fb7d1d622`。
+- 该运行生成 Pages artifact `9290461158`，最终成功 deployment 为 `5945925813`；deployment 状态的 `log_url` 指向同一运行的 deploy job。
 
 ### 2026-08-17 HTTP 实测
 
@@ -88,12 +90,14 @@
 | --- | --- |
 | 首页 | HTTP 200，标题为 `Meal-Serendipity · 今天吃什么` |
 | 首页主要文案 | HTML 包含“30 秒做决定”“今天吃什么？”和菜品灵感提示 |
-| favicon | `/favicon.svg` 返回 HTTP 200，`image/svg+xml` |
 | 自定义 404 | 不存在路径返回 HTTP 404，页面标题和“返回首页”链接正确 |
-| 首页实际样式与脚本 | 首页引用的 `src/styles/*.css` 和 `src/main.js` 均返回 HTTP 200 |
-| 预期构建资源 | `/assets/app.css` 和 `/assets/app.js` 返回 HTTP 404 |
+| 首页实际引用 | `/assets/app.css` 和 `/assets/app.js` |
+| 构建资源 | `/assets/app.css` 与 `/assets/app.js` 均返回 HTTP 200 |
+| favicon | `/favicon.svg` 与 `/favicon.ico` 均返回 HTTP 200 |
+| 非生产目录 | `/src/`、`/docs/`、`/tests/` 及抽查文件均返回 HTTP 404 |
+| 随机不存在路径 | 返回 HTTP 404，并显示自定义 404 页面 |
 
-线上首页 HTML 仍引用 `src/...`，与构建后应引用 `assets/app.css` 和 `assets/app.js` 的 `dist/` 不一致。虽然 GitHub API 和 Actions 显示 workflow 部署成功，当前 CDN 实际内容更像根目录源码发布。**因此不能确认“线上只发布 dist”已经成立。** 需要在仓库 Pages 设置和 deployment 历史中排查 workflow 与 branch deployment 是否发生覆盖，并在修复后重新核对首页 HTML 和资源路径。
+早期 smoke test 曾发现线上首页引用 `src/...` 且 `/assets/app.css`、`/assets/app.js` 返回 404。通过手动 `workflow_dispatch` 重新运行 GitHub Actions 部署后，已使用唯一查询参数和 `Cache-Control: no-cache, no-store` 重新核验：**当前线上内容符合 `dist/` artifact 边界。** 本次恢复不修改构建代码或 Pages workflow；后续每次部署仍应重复资源边界检查。
 
 ### 真实 Chromium 结果
 
@@ -138,9 +142,9 @@ net::ERR_CONNECTION_CLOSED at https://tuozhekongqi.github.io/Meal-Serendipity/
 - 阶段 6A 只完成指标、隐私与离线评估设计；没有 analytics 代码，也没有遥测数据。
 - 静态灵感的复制、换一个或反馈不能解释为真实订单接受或转化。
 - 当前多人能力没有逐人偏好和结果归属，不能据此证明多人决策效果。
-- 当前线上发布内容与预期 `dist/` artifact 不一致，需修复部署一致性后复测。
+- artifact 不一致问题已通过手动 GitHub Actions 部署重新发布并完成线上核验，当前线上内容符合 `dist/` artifact 边界。
 - 当前环境无法用 Chromium 完成线上交互与移动端 smoke test。
-- `main` 已配置 PR 和 `validate` 必需检查，但当前不要求批准 review；实际 PR 合并门槛仍待本分支创建 PR 后验证。
+- `main` 已配置 PR 和 `validate` 必需检查，但当前不要求批准 review；PR #2 已证明 `validate` 会运行并通过，真实移动网络 smoke test 仍未完成。
 
 ## 重复验收清单
 

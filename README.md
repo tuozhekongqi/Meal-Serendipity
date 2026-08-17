@@ -11,7 +11,7 @@ Meal-Serendipity 是一个帮助用户快速决定“今天吃什么”的中文
 - `main` 更新后，`.github/workflows/pages.yml` 会运行语法、单元/契约、构建、产物和 Chromium E2E 检查；全部成功后声明只上传生成的 `dist/`
 - 最近一次配置核验见 [现代 UI 当前行为清单](docs/current-modern-ui-checklist.md)
 
-根目录 `index.html` 仍是开发源入口和 branch deployment 回滚来源。2026-08-17 的 smoke test 发现线上 HTML 仍引用 `src/` 而不是构建后的 `assets/`，与预期 `dist/` artifact 不一致；在完成部署一致性复核前，不能声称线上只发布 `dist/`。
+根目录 `index.html` 仍是开发源入口和 branch deployment 回滚来源。2026-08-17 通过 [手动 GitHub Actions 部署](https://github.com/tuozhekongqi/Meal-Serendipity/actions/runs/32035363958) 重新发布 `main` 提交 `a87db1c38a164793af9793f28db22b1fb7d1d622` 后，线上首页已引用 `assets/app.css` 和 `assets/app.js`，源码目录返回 404。当前线上内容符合 `dist/` artifact 边界；真实移动网络 smoke test 仍未完成。
 
 ## 当前体验
 
@@ -107,7 +107,7 @@ Pull Request 会自动执行语法检查、全部 Node 测试、生产构建、�
 
 `pages.yml` 只在 `main` 更新或手动触发时运行。部署任务依赖成功的构建任务，并通过 `actions/upload-pages-artifact` 仅上传 `./dist`。
 
-Pages API 当前报告 Source 为 `GitHub Actions`。每次部署后仍需确认线上首页、资源、favicon、404 和关键流程；Actions 成功不能替代目标网络环境的线上 smoke test，也不能单独证明 CDN 正在提供预期 artifact。
+Pages API 当前报告 Source 为 `GitHub Actions`。手动部署运行 `32035363958`、deployment `5945925813` 和 Pages artifact `9290461158` 已完成线上资源核验。每次后续部署仍需确认首页、资源、favicon、404 和关键流程；Actions 成功不能替代目标网络环境的线上 smoke test。
 
 回滚步骤：
 

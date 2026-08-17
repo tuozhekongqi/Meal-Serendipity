@@ -21,7 +21,7 @@
 | 2 | 已交付接口，生产 live 未启用 | Provider、位置、存储和降级模块有测试；生产 endpoint 为空 |
 | 3（含 3.5/3.6） | 部分达到目标 | 现代 UI、灵感推荐和响应式已交付；位置、预算、ETA、距离及逐人多人流程尚未进入当前 UI |
 | 4 | 未完成 | 合法实时数据服务、公开 endpoint 和生产集成均不存在 |
-| 5 | 部分达到目标 | CI、构建、E2E、Pages workflow 和 `main` 保护已存在；线上 CDN 内容仍与预期 `dist/` 不一致 |
+| 5 | 部分达到目标 | CI、构建、E2E、Pages workflow 和 `main` 保护已存在；手动运行 `32035363958` 重新部署后，线上内容已核验符合 `dist/` 边界，真实移动网络 smoke test 仍待完成 |
 | 6A | 设计完成 | 指标、隐私和离线评估已定义；未实现 analytics，未收集数据 |
 | 6B | 未开始 | 需先通过阶段 6A 的后续决策门和额外批准 |
 
@@ -39,11 +39,13 @@
 
 ---
 
-## 当前基线
+## 计划编写时的历史基线
+
+以下条目记录实施计划最初编写时的起点，不代表 2026-08-17 的当前状态；当前状态以上方“状态同步说明”为准。
 
 - 根目录 `index.html` 为 2,410 行单文件应用，内联 CSS、SVG、175 条菜品和全部 JavaScript。
 - 无 `package.json`、模块、自动化测试或 GitHub Actions。
-- GitHub Pages 当前从 `main` 根目录以 legacy branch deployment 发布。
+- GitHub Pages 当时从 `main` 根目录以 legacy branch deployment 发布；当前已改为 `.github/workflows/pages.yml` 构建并发布 `dist/`，且运行 `32035363958` 的线上核验已确认 artifact 边界正确。
 - `一餐之缘_分享版/index.html` 是未定义同步规则的独立副本。
 - 现有 `AGENTS.md` 的古风视觉与离线优先规则和已确认方案冲突；阶段 0 必须先修正治理文档。
 
