@@ -1,7 +1,15 @@
 import { PROVIDER_SCHEMA_VERSION } from '../config.js';
 import { CURRENT_PRIORITY } from '../domain/models.js';
+import {
+  DINING_MODE,
+  INSPIRATION_BUDGET_TIER,
+  PARTY_SIZE_BUCKET,
+  getDiningModesForScene,
+  getScenesForPartySize
+} from '../domain/scenarios.js';
 
 const PRIORITIES = new Set(Object.values(CURRENT_PRIORITY));
+const INSPIRATION_BUDGET_TIERS = new Set(Object.values(INSPIRATION_BUDGET_TIER));
 
 function finiteInteger(value, fallback, { min = 0, max = Number.MAX_SAFE_INTEGER } = {}) {
   if (value === '' || value === null || value === undefined) return fallback;
@@ -36,14 +44,52 @@ function normalizeLocation(location) {
   };
 }
 
+function partySizeBucketFor(partySize) {
+  if (partySize === 1) return PARTY_SIZE_BUCKET.ONE;
+  if (partySize === 2) return PARTY_SIZE_BUCKET.TWO;
+  if (partySize === 3) return PARTY_SIZE_BUCKET.THREE;
+  return PARTY_SIZE_BUCKET.FOUR_PLUS;
+}
+
+function normalizeMealScene(value, partySize) {
+  const availableScenes = getScenesForPartySize(partySize);
+  return availableScenes.some(({ value: scene }) => scene === value) ? value : null;
+}
+
+function normalizeDiningMode(value, partySize, mealScene) {
+  if (partySize === 1 || mealScene === null || !Object.values(DINING_MODE).includes(value)) {
+    return null;
+  }
+  return getDiningModesForScene(mealScene).some(({ value: mode }) => mode === value) ? value : null;
+}
+
+function normalizeDinerProfiles(value) {
+  if (!Array.isArray(value)) return [];
+  return value.slice(0, 50).map((profile, index) => ({
+    id: `diner-${index + 1}`,
+    tastePreferences: normalizedList(profile?.tastePreferences ?? profile?.tastes, 3),
+    exclusions: normalizedList(profile?.exclusions, 30)
+  }));
+}
+
 export function createUserContext(input = {}) {
   const priority = PRIORITIES.has(input.currentPriority)
     ? input.currentPriority
     : CURRENT_PRIORITY.BALANCED;
+  const partySize = finiteInteger(input.partySize, 1, { min: 1, max: 50 });
+  const partySizeBucket = partySizeBucketFor(partySize);
+  const mealScene = normalizeMealScene(input.mealScene, partySize);
   return {
     locale: typeof input.locale === 'string' ? input.locale : 'zh-CN',
     location: normalizeLocation(input.location),
-    partySize: finiteInteger(input.partySize, 1, { min: 1, max: 50 }),
+    partySize,
+    partySizeBucket,
+    mealScene,
+    diningMode: normalizeDiningMode(input.diningMode, partySize, mealScene),
+    inspirationBudgetTier: INSPIRATION_BUDGET_TIERS.has(input.inspirationBudgetTier)
+      ? input.inspirationBudgetTier
+      : null,
+    dinerProfiles: normalizeDinerProfiles(input.dinerProfiles),
     totalBudgetCents: finiteInteger(input.totalBudgetCents, null),
     maxDistanceMeters: finiteInteger(input.maxDistanceMeters, null, { min: 1 }),
     maxDeliveryMinutes: finiteInteger(input.maxDeliveryMinutes, null, { min: 1 }),

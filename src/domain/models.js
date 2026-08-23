@@ -17,6 +17,11 @@
  * @property {CurrentPriority} currentPriority
  * @property {string[]} recentHistory
  * @property {string[]} contextTags
+ * @property {'1' | '2' | '3' | '4_plus'} partySizeBucket
+ * @property {'solo_quick' | 'solo_focus' | 'solo_treat' | 'solo_late_night' | 'solo_lighter' | 'solo_save' | 'group_gathering' | 'group_individual' | 'group_mixed_taste' | 'group_family' | 'group_celebration' | null} mealScene
+ * @property {'shared' | 'individual' | 'shared_main_personal' | 'undecided' | null} diningMode
+ * @property {'economy' | 'everyday' | 'generous' | 'open' | null} inspirationBudgetTier
+ * @property {{id: string, tastePreferences: string[], exclusions: string[]}[]} dinerProfiles
  */
 
 /**
