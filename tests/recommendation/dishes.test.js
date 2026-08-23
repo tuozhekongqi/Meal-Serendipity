@@ -34,6 +34,18 @@ test('exports all 175 unique dishes with valid domain fields', () => {
   }
 });
 
+test('all static dishes expose bounded discovery metadata and a local image contract', () => {
+  for (const dish of DISHES) {
+    assert.ok(dish.item.image === null || dish.item.image.src.startsWith('./assets/dishes/'));
+    assert.ok(dish.metadata.cuisineTags.length >= 1);
+    assert.ok(dish.metadata.servingRoles.length >= 1);
+    assert.ok(dish.metadata.supportedDiningModes.length >= 1);
+    for (const value of Object.values(dish.metadata.discoveryTraits)) {
+      assert.ok(Number.isFinite(value) && value >= 0 && value <= 1);
+    }
+  }
+});
+
 test('matches every legacy dish without losing recommendation fields', async () => {
   const legacy = await readLegacyDishes();
   assert.equal(legacy.length, DISHES.length);

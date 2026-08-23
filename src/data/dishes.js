@@ -1,4 +1,5 @@
 import { SOURCE_MODE } from '../domain/models.js';
+import { DISH_IMAGE_MANIFEST, getDishDiscoveryMetadata } from './dish-discovery-metadata.js';
 
 const LEGACY_DISHES = [
   /* 🍚 米饭类 */
@@ -222,6 +223,8 @@ const PRICE_RANGE_CENTS = Object.freeze({
 });
 
 function toInspirationCandidate(dish) {
+  const discovery = getDishDiscoveryMetadata(dish);
+
   return Object.freeze({
     id: `inspiration:${dish.n}`,
     sourceMode: SOURCE_MODE.INSPIRATION,
@@ -235,7 +238,12 @@ function toInspirationCandidate(dish) {
       categoryTags: Object.freeze([dish.ty]),
       allergenTags: Object.freeze([]),
       ingredientTags: Object.freeze([...dish.k]),
-      isAvailable: null
+      isAvailable: null,
+      image: discovery.imageKey ? Object.freeze({
+        src: `./assets/dishes/${DISH_IMAGE_MANIFEST[discovery.imageKey]}`,
+        alt: `${dish.n}菜品灵感示意图`,
+        kind: 'dish-inspiration'
+      }) : null
     }),
     pricing: null,
     delivery: null,
@@ -246,7 +254,8 @@ function toInspirationCandidate(dish) {
       priceTier: dish.p,
       estimatedPriceRangeCents: PRICE_RANGE_CENTS[dish.p],
       weatherTags: Object.freeze([...dish.w]),
-      popularity: dish.c === 1 ? 'mainstream' : 'niche'
+      popularity: dish.c === 1 ? 'mainstream' : 'niche',
+      ...discovery
     })
   });
 }
