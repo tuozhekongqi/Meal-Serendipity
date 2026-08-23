@@ -100,6 +100,37 @@ test('shared mode never selects a duplicate candidate id through a different ser
   );
 });
 
+test('shared mode degrades honestly when three safe candidates have only one serving role', () => {
+  const context = makeContext({
+    partySize: 3,
+    tastePreferences: ['辣', '清淡', '咸鲜'],
+    mealScene: null,
+    diningMode: 'shared',
+    dinerProfiles
+  });
+  const candidates = makeMealPlanCandidates().slice(0, 3).map((candidate) => ({
+    ...candidate,
+    metadata: { ...candidate.metadata, servingRoles: ['shared-main'] }
+  }));
+
+  const plan = composeMealPlan(context, candidates, { now: NOW });
+
+  assert.equal(plan.kind, 'compromise');
+  assert.deepEqual(plan.items.map(({ role, recommendation }) => ({
+    role,
+    id: recommendation.candidate.id
+  })), [
+    { role: 'shared-main', id: 'inspiration:spicy-hotpot' },
+    { role: 'shared-main', id: 'inspiration:mild-tofu' },
+    { role: 'shared-main', id: 'inspiration:savory-rice' }
+  ]);
+  assert.deepEqual(plan.diagnostics, {
+    missingDinerIds: [],
+    degradedFrom: 'shared_bundle',
+    reason: 'insufficient_complementary_roles'
+  });
+});
+
 test('individual mode preserves diner ownership and removes candidates between literal assignments', () => {
   const context = makeContext({
     partySize: 3,

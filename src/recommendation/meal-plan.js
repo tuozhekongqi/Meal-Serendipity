@@ -139,7 +139,9 @@ function selectComplementaryItems(result, partySize) {
 function composeShared(context, candidates, options) {
   const result = recommendationResult(withUnionExclusions(context), candidates, options);
   const items = selectComplementaryItems(result, context.partySize);
-  const hasBundle = items.length >= Math.min(2, context.partySize);
+  const hasEnoughItems = items.length >= Math.min(2, context.partySize);
+  const hasComplementaryRoles = new Set(items.map(({ role }) => role)).size === items.length;
+  const hasBundle = hasEnoughItems && hasComplementaryRoles;
 
   return basePlan(hasBundle ? 'shared_bundle' : 'compromise', context, {
     primary: result.primary,
@@ -147,7 +149,9 @@ function composeShared(context, candidates, options) {
     items,
     diagnostics: diagnostics(hasBundle ? {} : {
       degradedFrom: 'shared_bundle',
-      reason: 'insufficient_shared_candidates'
+      reason: hasEnoughItems
+        ? 'insufficient_complementary_roles'
+        : 'insufficient_shared_candidates'
     })
   });
 }

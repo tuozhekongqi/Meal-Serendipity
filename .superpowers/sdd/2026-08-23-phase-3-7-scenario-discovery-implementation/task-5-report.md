@@ -41,3 +41,17 @@ Implemented the pure `composeMealPlan(context, candidates, options)` orchestrati
 ## Concern
 
 `tests/evaluation/phase-6a-evaluation.test.js` is absent from this base branch, so the brief's combined recommendation-plus-Phase-6A command could not be run. Phase 6A scope was intentionally left untouched; the available full suite passed 109/109.
+
+## Important Review Fix: Shared Role Diversity
+
+An independent review found that shared composition filled the second selection pass with duplicate serving roles and then classified the result only by item count. Three safe `shared-main` candidates therefore incorrectly produced `kind: 'shared_bundle'` despite having no complementary role diversity.
+
+The minimal fix keeps all already-safe recommendations but requires both sufficient item count and distinct selected serving roles before claiming `shared_bundle`. When item count is sufficient but roles repeat, the plan now returns `kind: 'compromise'` with `degradedFrom: 'shared_bundle'` and `reason: 'insufficient_complementary_roles'`; true candidate shortages retain `reason: 'insufficient_shared_candidates'`.
+
+TDD and verification evidence:
+
+- RED: the focused three-`shared-main` regression failed 0/1 because actual `kind` was `shared_bundle` instead of `compromise`.
+- GREEN: the same focused regression passed 1/1 after the minimal completeness check.
+- `node --test tests/recommendation/meal-plan.test.js`: 15 passed, 0 failed.
+- `node --test tests/recommendation/*.test.js`: 55 passed, 0 failed.
+- `npm run check:js`: JavaScript syntax verified for 51 files.
