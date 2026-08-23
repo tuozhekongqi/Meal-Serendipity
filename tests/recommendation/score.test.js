@@ -4,6 +4,60 @@ import { test } from 'node:test';
 import { rankCandidates, scoreCandidate } from '../../src/recommendation/score.js';
 import { makeContext, makeLiveCandidate } from './fixtures.js';
 
+const convenientBowl = {
+  id: 'inspiration:convenient-bowl',
+  sourceMode: 'inspiration',
+  store: null,
+  item: {
+    id: 'convenient-bowl',
+    name: '方便饭碗',
+    description: '静态菜品灵感',
+    imageUrl: null,
+    tasteTags: ['咸鲜'],
+    categoryTags: ['米饭'],
+    allergenTags: [],
+    ingredientTags: [],
+    isAvailable: null
+  },
+  pricing: null,
+  delivery: null,
+  availability: null,
+  orderUrl: null,
+  dataUpdatedAt: null,
+  metadata: {
+    discoveryTraits: { convenient: 1, stable: 1, filling: 1, expressive: 0, shareable: 0, varietyFriendly: 0 },
+    priceTier: 1,
+    supportedDiningModes: ['individual']
+  }
+};
+
+const expressivePlate = {
+  id: 'inspiration:expressive-plate',
+  sourceMode: 'inspiration',
+  store: null,
+  item: {
+    id: 'expressive-plate',
+    name: '精致拼盘',
+    description: '静态菜品灵感',
+    imageUrl: null,
+    tasteTags: ['咸鲜'],
+    categoryTags: ['漂亮饭'],
+    allergenTags: [],
+    ingredientTags: [],
+    isAvailable: null
+  },
+  pricing: null,
+  delivery: null,
+  availability: null,
+  orderUrl: null,
+  dataUpdatedAt: null,
+  metadata: {
+    discoveryTraits: { convenient: 0, stable: 0, filling: 0.75, expressive: 1, shareable: 1, varietyFriendly: 1 },
+    priceTier: 4,
+    supportedDiningModes: ['shared']
+  }
+};
+
 test('scores a primary taste match above an otherwise equal mismatch', () => {
   const matched = makeLiveCandidate({ id: 'matched', item: { tasteTags: ['咸鲜'] } });
   const missed = makeLiveCandidate({ id: 'missed', item: { tasteTags: ['甜'] } });
@@ -87,4 +141,61 @@ test('refuses exploration without an injected random source', () => {
     () => rankCandidates(makeContext(), [makeLiveCandidate()], { exploration: 1 }),
     /options\.random/
   );
+});
+
+test('quick and celebration scenes choose different inspiration candidates from the same safe pool', () => {
+  const quick = rankCandidates(
+    makeContext({ mealScene: 'solo_quick', inspirationBudgetTier: 'economy' }),
+    [convenientBowl, expressivePlate]
+  );
+  const celebration = rankCandidates(
+    makeContext({
+      mealScene: 'group_celebration',
+      partySize: 2,
+      inspirationBudgetTier: 'generous',
+      diningMode: 'shared'
+    }),
+    [convenientBowl, expressivePlate]
+  );
+
+  assert.equal(quick[0].candidate.id, 'inspiration:convenient-bowl');
+  assert.equal(celebration[0].candidate.id, 'inspiration:expressive-plate');
+});
+
+test('save scene prefers matching static price tier without creating live pricing', () => {
+  const tierFour = { ...expressivePlate, id: 'inspiration:tier-four', metadata: { ...expressivePlate.metadata, priceTier: 4 } };
+  const tierOne = { ...convenientBowl, id: 'inspiration:tier-one', metadata: { ...convenientBowl.metadata, priceTier: 1 } };
+
+  const ranked = rankCandidates(
+    makeContext({ mealScene: 'solo_save', inspirationBudgetTier: 'economy' }),
+    [tierFour, tierOne]
+  );
+
+  assert.equal(ranked[0].candidate.id, 'inspiration:tier-one');
+  assert.equal(ranked[0].candidate.pricing, null);
+});
+
+test('scenario ranking is deterministic without exploration', () => {
+  const context = makeContext({ mealScene: 'solo_quick', inspirationBudgetTier: 'economy' });
+  const first = rankCandidates(context, [expressivePlate, convenientBowl]);
+  const second = rankCandidates(context, [expressivePlate, convenientBowl]);
+
+  assert.deepEqual(first, second);
+});
+
+test('a valid meal scene leaves live candidate scoring unchanged', () => {
+  const live = makeLiveCandidate({ id: 'live:unchanged' });
+  const legacy = scoreCandidate(makeContext(), live);
+  const withScene = scoreCandidate(makeContext({ mealScene: 'solo_quick' }), live);
+
+  assert.deepEqual(withScene, legacy);
+});
+
+test('an inspiration candidate without a meal scene keeps the legacy score shape', () => {
+  const scored = scoreCandidate(makeContext(), convenientBowl);
+
+  assert.equal(scored.evidence, undefined);
+  assert.deepEqual(Object.keys(scored.components), [
+    'taste', 'delivery', 'context', 'budget', 'distance', 'quality', 'novelty'
+  ]);
 });
