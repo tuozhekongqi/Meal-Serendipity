@@ -43,6 +43,7 @@
  * @property {Candidate} candidate
  * @property {number} score
  * @property {Record<string, number>} components
+ * @property {{sceneReasonCode: string | null, inspirationBudgetMatched: boolean, diningModeMatched: boolean, matchedTraits: string[]} | undefined} [evidence]
  */
 
 /**
@@ -54,6 +55,7 @@
  * @property {{code: string, message: string}[]} reasons
  * @property {{code: string, message: string}[]} tradeoffs
  * @property {string[]} passedConstraints
+ * @property {ScoredCandidate['evidence']} [evidence]
  */
 
 export const SOURCE_MODE = Object.freeze({
@@ -94,5 +96,18 @@ export const REASON_CODE = Object.freeze({
   FRESH_DATA: 'fresh_data',
   QUALITY: 'quality',
   NEW_CHOICE: 'new_choice',
-  CONTEXT_MATCH: 'context_match'
+  CONTEXT_MATCH: 'context_match',
+  QUICK_RELIABLE_MATCH: 'quick_reliable_match',
+  FOCUS_FRIENDLY_MATCH: 'focus_friendly_match',
+  TREAT_EXPRESSION_MATCH: 'treat_expression_match',
+  LATE_NIGHT_COMFORT_MATCH: 'late_night_comfort_match',
+  LIGHTER_SCENE_MATCH: 'lighter_scene_match',
+  SAVING_SCENE_MATCH: 'saving_scene_match',
+  SHAREABLE_MATCH: 'shareable_match',
+  INDIVIDUAL_TASTE_MATCH: 'individual_taste_match',
+  SAME_CUISINE_VARIETY: 'same_cuisine_variety',
+  FAMILY_TABLE_MATCH: 'family_table_match',
+  CELEBRATION_EXPRESSION_MATCH: 'celebration_expression_match',
+  INSPIRATION_BUDGET_MATCH: 'inspiration_budget_match',
+  DINING_MODE_MATCH: 'dining_mode_match'
 });

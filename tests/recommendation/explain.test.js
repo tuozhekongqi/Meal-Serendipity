@@ -64,3 +64,94 @@ test('describes a near-limit delivery time as a tradeoff rather than a speed rea
   assert.equal(explanation.reasonCodes.includes('fast_delivery'), false);
   assert.ok(explanation.tradeoffs.some(({ code }) => code === 'delivery_near_limit'));
 });
+
+test('shows a quick-scene reason only when scored evidence supplies its code', () => {
+  const candidate = {
+    ...makeLiveCandidate(),
+    sourceMode: 'inspiration',
+    store: null,
+    pricing: null,
+    delivery: null,
+    availability: null
+  };
+  const scored = {
+    candidate,
+    score: 80,
+    components: { taste: 0.5, context: 0.5, quality: 0.5, novelty: 0.5 },
+    evidence: {
+      sceneReasonCode: 'quick_reliable_match',
+      inspirationBudgetMatched: false,
+      diningModeMatched: false,
+      matchedTraits: ['convenient', 'stable']
+    }
+  };
+
+  const explanation = explainRecommendation(makeContext(), scored, ['exclusion']);
+
+  assert.ok(explanation.reasonCodes.includes('quick_reliable_match'));
+  assert.match(
+    explanation.reasons.find(({ code }) => code === 'quick_reliable_match').message,
+    /选择简单/
+  );
+  assert.ok(explanation.tradeoffs.some(({ code }) => code === 'live_data_unavailable'));
+});
+
+test('does not infer scenario or dining reasons from missing or false evidence', () => {
+  const candidate = makeLiveCandidate();
+  const withoutEvidence = explainRecommendation(
+    makeContext(),
+    { candidate, score: 80, components: { taste: 0.5, context: 0.5, quality: 0.5, novelty: 0.5 } },
+    ['exclusion']
+  );
+  const falseEvidence = explainRecommendation(
+    makeContext(),
+    {
+      candidate,
+      score: 80,
+      components: { taste: 0.5, context: 0.5, quality: 0.5, novelty: 0.5 },
+      evidence: {
+        sceneReasonCode: null,
+        inspirationBudgetMatched: false,
+        diningModeMatched: false,
+        matchedTraits: []
+      }
+    },
+    ['exclusion']
+  );
+
+  for (const explanation of [withoutEvidence, falseEvidence]) {
+    assert.equal(explanation.reasonCodes.includes('quick_reliable_match'), false);
+    assert.equal(explanation.reasonCodes.includes('inspiration_budget_match'), false);
+    assert.equal(explanation.reasonCodes.includes('dining_mode_match'), false);
+  }
+});
+
+test('uses a static budget-tier reason without claiming a live price', () => {
+  const candidate = {
+    ...makeLiveCandidate(),
+    sourceMode: 'inspiration',
+    pricing: null,
+    delivery: null,
+    availability: null,
+    store: null
+  };
+  const explanation = explainRecommendation(
+    makeContext(),
+    {
+      candidate,
+      score: 80,
+      components: { taste: 0.5, context: 0.5, quality: 0.5, novelty: 0.5 },
+      evidence: {
+        sceneReasonCode: 'within_budget',
+        inspirationBudgetMatched: true
+      }
+    },
+    ['exclusion']
+  );
+
+  assert.ok(explanation.reasonCodes.includes('inspiration_budget_match'));
+  assert.equal(explanation.reasonCodes.includes('within_budget'), false);
+  const message = explanation.reasons.find(({ code }) => code === 'inspiration_budget_match').message;
+  assert.match(message, /预算档/);
+  assert.doesNotMatch(message, /实时价格|附近|可下单|保证健康/);
+});
