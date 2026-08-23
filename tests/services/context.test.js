@@ -101,14 +101,18 @@ test('context rejects incompatible scenarios and bounds anonymous diner preferen
 });
 
 test('phase 3.7 fields never enter a provider request', () => {
+  const dinerOnlyExclusion = 'diner-only-exclusion-sentinel';
   const request = toProviderRequest(createUserContext({
+    exclusions: ['top-level-exclusion-contract'],
     mealScene: 'solo_quick',
     diningMode: null,
     inspirationBudgetTier: 'economy',
-    dinerProfiles: [{ id: 'diner-1', exclusions: ['花生'] }]
+    dinerProfiles: [{ id: 'diner-1', exclusions: [dinerOnlyExclusion] }]
   }), { requestId: 'request-3-7', requestedAt: NOW });
   const serialized = JSON.stringify(request);
 
+  assert.deepEqual(request.constraints.exclusions, ['top-level-exclusion-contract']);
+  assert.equal(serialized.includes(dinerOnlyExclusion), false);
   for (const forbidden of ['mealScene', 'diningMode', 'inspirationBudgetTier', 'dinerProfiles']) {
     assert.equal(serialized.includes(forbidden), false);
   }

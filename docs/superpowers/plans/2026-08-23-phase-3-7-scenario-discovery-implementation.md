@@ -116,7 +116,7 @@ test('multi scenes expose all four dining modes without silently selecting one',
 
 - [ ] **Step 2: Run the new domain test and verify it fails**
 
-Run: `node --test tests/domain/scenarios.test.js`  
+Run: `node --test tests/domain/scenarios.test.js`
 Expected: FAIL because `src/domain/scenarios.js` does not exist.
 
 - [ ] **Step 3: Implement the immutable scenario catalog and selectors**
@@ -181,7 +181,7 @@ Normalize valid enum values, `partySize` from 1 to 50, at most 50 anonymous dine
 
 - [ ] **Step 6: Run domain, context, provider, and privacy tests**
 
-Run: `node --test tests/domain/scenarios.test.js tests/services/context.test.js tests/providers/providers.test.js tests/privacy/phase-6a-schema-contract.test.js`  
+Run: `node --test tests/domain/scenarios.test.js tests/services/context.test.js tests/providers/providers.test.js tests/privacy/phase-6a-schema-contract.test.js`
 Expected: all tests PASS; provider request snapshots contain no Phase 3.7 fields.
 
 - [ ] **Step 7: Commit the domain contract**
@@ -224,7 +224,7 @@ test('all static dishes expose bounded discovery metadata and a local image cont
 
 - [ ] **Step 2: Run the dish test and verify the new assertions fail**
 
-Run: `node --test tests/recommendation/dishes.test.js`  
+Run: `node --test tests/recommendation/dishes.test.js`
 Expected: FAIL because discovery metadata and `item.image` are absent.
 
 - [ ] **Step 3: Implement category defaults and explicit named overrides**
@@ -265,7 +265,7 @@ metadata: Object.freeze({ ...existingMetadata, ...discovery })
 
 - [ ] **Step 5: Run dish, filter, legacy adapter, and provider tests**
 
-Run: `node --test tests/recommendation/dishes.test.js tests/recommendation/filter.test.js tests/recommendation/legacy-adapter.test.js tests/providers/providers.test.js`  
+Run: `node --test tests/recommendation/dishes.test.js tests/recommendation/filter.test.js tests/recommendation/legacy-adapter.test.js tests/providers/providers.test.js`
 Expected: PASS; 175/175 candidates remain unique and inspiration-only.
 
 - [ ] **Step 6: Commit static discovery metadata**
@@ -324,7 +324,7 @@ test('save scene prefers matching static price tier without creating live pricin
 
 - [ ] **Step 3: Run the tests and verify they fail for missing profiles**
 
-Run: `node --test tests/recommendation/scenario-profiles.test.js tests/recommendation/score.test.js`  
+Run: `node --test tests/recommendation/scenario-profiles.test.js tests/recommendation/score.test.js`
 Expected: FAIL because scenario scoring is not implemented.
 
 - [ ] **Step 4: Implement explicit profiles and evidence calculation**
@@ -351,12 +351,12 @@ In `scoreCandidate()`, use the new scenario path only when `candidate.sourceMode
 
 - [ ] **Step 5: Run the new tests and all existing scoring/recommendation tests**
 
-Run: `node --test tests/recommendation/scenario-profiles.test.js tests/recommendation/score.test.js tests/recommendation/recommend.test.js tests/recommendation/explain.test.js`  
+Run: `node --test tests/recommendation/scenario-profiles.test.js tests/recommendation/score.test.js tests/recommendation/recommend.test.js tests/recommendation/explain.test.js`
 Expected: PASS; all pre-Phase-3.7 fixture rankings remain unchanged.
 
 - [ ] **Step 6: Run the full 90-test regression gate**
 
-Run: `npm test`  
+Run: `npm test`
 Expected: at least 90 tests PASS, 0 failures; Phase 6A evaluation remains 28/28 and stable across 20 runs.
 
 - [ ] **Step 7: Commit scenario scoring**
@@ -405,7 +405,7 @@ test('never turns an inspiration budget tier into a real-price claim', () => {
 
 - [ ] **Step 2: Run explanation tests and verify failure**
 
-Run: `node --test tests/recommendation/explain.test.js tests/recommendation/recommend.test.js`  
+Run: `node --test tests/recommendation/explain.test.js tests/recommendation/recommend.test.js`
 Expected: FAIL because the new reason codes are unknown.
 
 - [ ] **Step 3: Add exact reason codes and safe Chinese messages**
@@ -435,7 +435,7 @@ Keep the existing shape and add only `evidence`; existing consumers remain valid
 
 - [ ] **Step 5: Run explanation, presentation, and privacy tests**
 
-Run: `node --test tests/recommendation/explain.test.js tests/recommendation/recommend.test.js tests/presentation/recommendation-view-model.test.js tests/privacy/phase-6a-schema-contract.test.js`  
+Run: `node --test tests/recommendation/explain.test.js tests/recommendation/recommend.test.js tests/presentation/recommendation-view-model.test.js tests/privacy/phase-6a-schema-contract.test.js`
 Expected: PASS; reasons are visible data, not telemetry events.
 
 - [ ] **Step 6: Commit explainability changes**
@@ -514,7 +514,7 @@ test('same-cuisine shortages are explicit and never filled with duplicate dishes
 
 - [ ] **Step 4: Run meal-plan tests and verify module-not-found failure**
 
-Run: `node --test tests/recommendation/meal-plan.test.js`  
+Run: `node --test tests/recommendation/meal-plan.test.js`
 Expected: FAIL because `composeMealPlan()` does not exist.
 
 - [ ] **Step 5: Implement single and shared composition using ranked recommendations**
@@ -564,12 +564,12 @@ test('excluded candidate ids rotate the primary without ambient randomness', () 
 
 - [ ] **Step 9: Run all recommendation and Phase 6A evaluation tests**
 
-Run: `node --test tests/recommendation/*.test.js tests/evaluation/phase-6a-evaluation.test.js`  
+Run: `node --test tests/recommendation/*.test.js tests/evaluation/phase-6a-evaluation.test.js`
 Expected: PASS; existing offline evaluation continues calling the unchanged `recommend()` contract and remains 28/28.
 
 - [ ] **Step 10: Run the full regression suite**
 
-Run: `npm test`  
+Run: `npm test`
 Expected: at least 90 existing tests plus new tests PASS, 0 failures.
 
 - [ ] **Step 11: Commit the meal-plan composer**
@@ -641,7 +641,7 @@ test('four-plus exact count creates stable anonymous diner slots', () => {
 
 - [ ] **Step 4: Run the tests and verify failure**
 
-Run: `node --test tests/presentation/flow-state.test.js`  
+Run: `node --test tests/presentation/flow-state.test.js`
 Expected: FAIL because the reducer is missing.
 
 - [ ] **Step 5: Implement explicit reducer events and visible-step calculation**
@@ -678,7 +678,7 @@ All edit events must preserve compatible values and clear stale results. Exclusi
 
 - [ ] **Step 6: Run flow-state and context tests**
 
-Run: `node --test tests/presentation/flow-state.test.js tests/services/context.test.js`  
+Run: `node --test tests/presentation/flow-state.test.js tests/services/context.test.js`
 Expected: PASS; `createContextInputFromFlow()` creates normalized anonymous profiles but does not persist them.
 
 - [ ] **Step 7: Commit flow state**
@@ -737,7 +737,7 @@ test('individual view keeps assignment labels and puts reasons beside each resul
 
 - [ ] **Step 3: Run presentation tests and verify failure**
 
-Run: `node --test tests/presentation/recommendation-view-model.test.js tests/presentation/meal-plan-view-model.test.js`  
+Run: `node --test tests/presentation/recommendation-view-model.test.js tests/presentation/meal-plan-view-model.test.js`
 Expected: FAIL for missing image and meal-plan fields.
 
 - [ ] **Step 4: Add a strict local-image resolver**
@@ -781,7 +781,7 @@ Multi-person bundle and assignment items reuse this card structure at a smaller 
 
 - [ ] **Step 6: Run presentation and inspiration-boundary tests**
 
-Run: `node --test tests/presentation/*.test.js tests/providers/providers.test.js`  
+Run: `node --test tests/presentation/*.test.js tests/providers/providers.test.js`
 Expected: PASS; inspiration presentation still exposes no merchant, live metric, remote image, or ordering action.
 
 - [ ] **Step 7: Commit view models**
@@ -830,7 +830,7 @@ Assert that single diners never see the dining-mode step, multi-person diners ca
 
 - [ ] **Step 3: Run the focused E2E tests and verify failure against the old UI**
 
-Run: `npm run build; npx playwright test tests/e2e/recommendation-flow.spec.js --grep "party size|dining mode"`  
+Run: `npm run build; npx playwright test tests/e2e/recommendation-flow.spec.js --grep "party size|dining mode"`
 Expected: FAIL because the current app starts with four abstract state cards.
 
 - [ ] **Step 4: Implement step renderers using the shared domain catalog**
@@ -1143,7 +1143,7 @@ test('build copies only approved local dish images', async () => {
 
 - [ ] **Step 2: Run the build test and verify failure**
 
-Run: `node --test tests/build/build-pages.test.js`  
+Run: `node --test tests/build/build-pages.test.js`
 Expected: FAIL because the current build emits only `app.css` and `app.js` under `assets`.
 
 - [ ] **Step 3: Add an explicit asset allowlist and deterministic copy**
@@ -1223,7 +1223,7 @@ Use deterministic static candidates or pure component state setup already expose
 
 - [ ] **Step 2: Run the complete E2E suite**
 
-Run: `npm run build; npm run test:e2e`  
+Run: `npm run build; npm run test:e2e`
 Expected: all Chromium tests PASS with no unexpected console warnings, page errors, request failures, or horizontal overflow.
 
 - [ ] **Step 3: Update product and design documentation to verified behavior**

@@ -17,8 +17,30 @@ test('single and multi party sizes expose disjoint approved scene sets', () => {
   ]);
 });
 
-test('multi scenes expose all four dining modes without silently selecting one', () => {
-  assert.deepEqual(getDiningModesForScene('group_individual').map(({ value }) => value), [
-    'individual', 'shared', 'shared_main_personal', 'undecided'
+test('every multi scene exposes all four dining modes in its approved order without silently selecting one', () => {
+  assert.deepEqual(getScenesForPartySize(3).map(({ value }) => ({
+    scene: value,
+    diningModes: getDiningModesForScene(value).map(({ value: mode }) => mode)
+  })), [
+    {
+      scene: 'group_gathering',
+      diningModes: ['shared', 'shared_main_personal', 'individual', 'undecided']
+    },
+    {
+      scene: 'group_individual',
+      diningModes: ['individual', 'shared', 'shared_main_personal', 'undecided']
+    },
+    {
+      scene: 'group_mixed_taste',
+      diningModes: ['shared_main_personal', 'individual', 'shared', 'undecided']
+    },
+    {
+      scene: 'group_family',
+      diningModes: ['shared', 'shared_main_personal', 'undecided', 'individual']
+    },
+    {
+      scene: 'group_celebration',
+      diningModes: ['shared', 'shared_main_personal', 'individual', 'undecided']
+    }
   ]);
 });
