@@ -32,7 +32,7 @@ Actual results:
 
 - Focused scenario and score suite: 13 passed, 0 failed.
 - Scenario, score, recommendation, and explanation suite: 21 passed, 0 failed.
-- Full suite: 89 passed, 0 failed.
+- Full suite before Fix Round 1: 89 passed, 0 failed.
 
 ## Coverage
 
@@ -45,5 +45,30 @@ Actual results:
 ## Verification Notes
 
 - `git diff --check` passed.
-- The supplied plan calls this a 90-test regression gate, but this worktree's actual full suite totals 89 passing tests. No existing assertion was removed or weakened.
+- Before Fix Round 1, the worktree's full suite totaled 89 passing tests. No existing assertion was removed or weakened.
 - No executable Phase 6A 28/28 evaluation harness was present in the scoped test files, so that plan statement was not independently rerun here.
+
+## Fix Round 1: No-Scene Legacy Ranking Characterization
+
+Reviewer feedback identified that the no-scene compatibility coverage asserted only the component shape. Added a fixed, literal two-candidate inspiration pool using `rankCandidates(makeContext(), ...)` and hand-derived expectations:
+
+- `inspiration:legacy-taste-match` ranks first with score `67`.
+- `inspiration:legacy-taste-miss` ranks second with score `40`.
+
+This is characterization coverage for the preserved legacy path, not a new behavior. It passed directly against the existing implementation; no RED state was fabricated and no production code changed.
+
+Command run:
+
+```powershell
+node --test tests/recommendation/scenario-profiles.test.js tests/recommendation/score.test.js
+```
+
+Actual result: 14 passed, 0 failed.
+
+Full regression after this characterization addition:
+
+```powershell
+npm test
+```
+
+Actual result: 90 passed, 0 failed; `git diff --check` also passed.

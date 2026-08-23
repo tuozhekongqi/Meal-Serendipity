@@ -199,3 +199,67 @@ test('an inspiration candidate without a meal scene keeps the legacy score shape
     'taste', 'delivery', 'context', 'budget', 'distance', 'quality', 'novelty'
   ]);
 });
+
+test('an inspiration pool without a meal scene preserves legacy score order and values', () => {
+  const legacyTasteMatch = {
+    id: 'inspiration:legacy-taste-match',
+    sourceMode: 'inspiration',
+    store: null,
+    item: {
+      id: 'legacy-taste-match',
+      name: '咸鲜盖饭',
+      description: '静态菜品灵感',
+      imageUrl: null,
+      tasteTags: ['咸鲜'],
+      categoryTags: ['米饭'],
+      allergenTags: [],
+      ingredientTags: [],
+      isAvailable: null
+    },
+    pricing: null,
+    delivery: null,
+    availability: null,
+    orderUrl: null,
+    dataUpdatedAt: null,
+    metadata: {
+      discoveryTraits: {},
+      priceTier: 1,
+      supportedDiningModes: ['individual'],
+      popularity: 'mainstream'
+    }
+  };
+  const legacyTasteMiss = {
+    id: 'inspiration:legacy-taste-miss',
+    sourceMode: 'inspiration',
+    store: null,
+    item: {
+      id: 'legacy-taste-miss',
+      name: '甜味拼盘',
+      description: '静态菜品灵感',
+      imageUrl: null,
+      tasteTags: ['甜'],
+      categoryTags: ['甜品'],
+      allergenTags: [],
+      ingredientTags: [],
+      isAvailable: null
+    },
+    pricing: null,
+    delivery: null,
+    availability: null,
+    orderUrl: null,
+    dataUpdatedAt: null,
+    metadata: {
+      discoveryTraits: {},
+      priceTier: 4,
+      supportedDiningModes: ['shared'],
+      popularity: 'niche'
+    }
+  };
+
+  const ranked = rankCandidates(makeContext(), [legacyTasteMiss, legacyTasteMatch]);
+
+  assert.deepEqual(ranked.map(({ candidate, score }) => ({ id: candidate.id, score })), [
+    { id: 'inspiration:legacy-taste-match', score: 67 },
+    { id: 'inspiration:legacy-taste-miss', score: 40 }
+  ]);
+});
