@@ -3,15 +3,17 @@ import test from 'node:test';
 
 import { commitIfCurrentRequest } from '../../src/presentation/request-lifecycle.js';
 
-test('editing during a request prevents the aborted request from committing a later failure', () => {
+test('an aborted active request cannot commit an ordinary late failure', () => {
   const request = new AbortController();
-  let activeRequest = request;
+  const activeRequest = request;
   let visibleStatus = 'loading';
 
   request.abort();
-  activeRequest = null;
   visibleStatus = 'editing-preferences';
-  const didCommit = commitIfCurrentRequest(request, activeRequest, () => { visibleStatus = 'error'; });
+  const ordinaryError = new Error('provider rejected after abort');
+  const didCommit = commitIfCurrentRequest(request, activeRequest, () => {
+    visibleStatus = ordinaryError.name;
+  });
 
   assert.equal(didCommit, false);
   assert.equal(visibleStatus, 'editing-preferences');

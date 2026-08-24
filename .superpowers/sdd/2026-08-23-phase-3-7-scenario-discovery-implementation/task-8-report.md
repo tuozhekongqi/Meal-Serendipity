@@ -115,3 +115,31 @@ Complete. This round addresses every independent-review finding without changing
 
 - The static production Provider has no natural error mode suitable for deterministic browser injection. The race is therefore covered at the pure request-lifecycle boundary with real abort signals, while feedback actions are covered at the real component event boundary; no production test hook was added.
 - Task 9 still owns result visual reconstruction, and Task 10 still owns progress/radio-card styling. This fix round deliberately does not change CSS.
+
+---
+
+## Fix Round 2 (2026-08-24)
+
+### Status and Scope
+
+Complete. This round changes only the two review-identified tests plus this report. Both temporary production mutations were restored before GREEN verification; the final production diff is empty.
+
+- `tests/presentation/request-lifecycle.test.js`: the aborted-request case now keeps the same request as `activeRequest` and models an ordinary late provider failure attempting to commit an error state.
+- `tests/e2e/recommendation-flow.spec.js`: the result-level `返回` is reached with repeated `Shift+Tab` keystrokes and activated with `Enter`; no direct focus or click is used for that `edit_step`. The test asserts the retained preferences heading owns focus and `activeElement` is not `BODY`.
+
+### RED / Mutation Proof
+
+1. Temporarily removed `request.signal.aborted === false` from `requestIsCurrent()` and ran `node --test tests/presentation/request-lifecycle.test.js` — expected FAIL (2/3 passed, 1 failed). The strengthened test reported `true !== false` for `an aborted active request cannot commit an ordinary late failure` while request identity still matched.
+2. Restored the signal condition, temporarily removed the `focusCurrentStep()` call after flow rendering, rebuilt, and ran `npx playwright test tests/e2e/recommendation-flow.spec.js --grep "completed single flow"` — expected FAIL (0/1). Playwright reported the new preferences legend as `inactive`, proving the keyboard path detects focus falling away after the result edit DOM replacement.
+
+### GREEN Verification
+
+- Restored `request.signal.aborted === false`; `node --test tests/presentation/request-lifecycle.test.js` — PASS (3/3).
+- Restored the step-focus call and ran `npm run build` — PASS.
+- `npx playwright test tests/e2e/recommendation-flow.spec.js --grep "completed single flow"` — PASS (1/1).
+- `node --check tests/presentation/request-lifecycle.test.js` and `node --check tests/e2e/recommendation-flow.spec.js` — PASS.
+- `git diff --check` — PASS (Git emitted only line-ending notices).
+
+### Concerns
+
+- None. No Provider, algorithm, analytics, Phase 6B, production hook, or final production-code change was introduced.

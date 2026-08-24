@@ -154,8 +154,16 @@ test('completed single flow returns one explained static inspiration and support
   await page.getByRole('button', { name: '合适', exact: true }).click();
   await expect(page.getByText('已记下：这个方向合适。本次反馈不会上传。')).toBeVisible();
 
-  await page.locator('#result-content').getByRole('button', { name: '返回', exact: true }).click();
-  await expect(page.locator('#input-flow legend').first()).toBeFocused();
+  const resultBack = page.locator('#result-content').getByRole('button', { name: '返回', exact: true });
+  for (let step = 0; step < 8 && !(await resultBack.evaluate((button) => button === document.activeElement)); step += 1) {
+    await page.keyboard.press('Shift+Tab');
+  }
+  await expect(resultBack).toBeFocused();
+  await page.keyboard.press('Enter');
+
+  const preferencesHeading = page.locator('#input-flow legend').first();
+  await expect(preferencesHeading).toBeFocused();
+  expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe('BODY');
   await expect(page.getByLabel('日常预算', { exact: true })).toBeChecked();
   await expect(page.getByRole('group', { name: '第 1 位食客偏好' }).getByRole('button', { name: '咸鲜', exact: true })).toHaveAttribute('aria-pressed', 'true');
 });
