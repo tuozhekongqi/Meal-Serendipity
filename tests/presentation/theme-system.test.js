@@ -46,9 +46,50 @@ const expectedAssetFiles = [
   'snacks.webp',
   'soup.webp'
 ];
+const auditedDishImages = Object.freeze({
+  '照烧鸡腿饭': Object.freeze({ imageKey: 'rice-bowl', alt: '鸡肉米饭碗菜品灵感图' }),
+  '小火锅': Object.freeze({ imageKey: 'hotpot', alt: '双味火锅菜品灵感图' }),
+  '老北京涮羊肉': Object.freeze({ imageKey: 'hotpot', alt: '双味火锅菜品灵感图' }),
+  '烧烤烤串': Object.freeze({ imageKey: 'grill', alt: '烤串拼盘菜品灵感图' }),
+  '卤味拼盘': Object.freeze({ imageKey: 'braised', alt: '豆制品卤味拼盘灵感图' }),
+  '卤香干': Object.freeze({ imageKey: 'braised', alt: '豆制品卤味拼盘灵感图' }),
+  '低脂轻食沙拉': Object.freeze({ imageKey: 'light-meal', alt: '鸡胸牛油果谷物碗菜品灵感图' }),
+  '牛油果鸡胸碗': Object.freeze({ imageKey: 'light-meal', alt: '鸡胸牛油果谷物碗菜品灵感图' }),
+  '藜麦蔬菜碗': Object.freeze({ imageKey: 'light-meal', alt: '鸡胸牛油果谷物碗菜品灵感图' }),
+  '蛋白能量碗': Object.freeze({ imageKey: 'light-meal', alt: '鸡胸牛油果谷物碗菜品灵感图' }),
+  '广式云吞汤': Object.freeze({ imageKey: 'soup', alt: '青菜云吞汤菜品灵感图' }),
+  '红酒烩牛肉': Object.freeze({ imageKey: 'sharing', alt: '炖牛肉共享餐菜品灵感图' })
+});
+const representativeMismatches = [
+  '清蒸鲈鱼套餐',
+  '山药排骨汤饭',
+  '鲍汁捞饭',
+  '关东煮',
+  '魔芋凉皮',
+  '荞麦冷面'
+];
 
 function themeBlock(name) {
   return tokens.match(new RegExp(`\\[data-theme=["']${name}["']\\]\\s*\\{([\\s\\S]*?)\\}`))?.[1] ?? '';
+}
+
+function cssHex(block, variable) {
+  const value = block.match(new RegExp(`${variable}\\s*:\\s*(#[0-9a-f]{6})`, 'i'))?.[1];
+  assert.ok(value, `${variable} must resolve to a six-digit hex color`);
+  return value;
+}
+
+function relativeLuminance(hex) {
+  const channels = hex.slice(1).match(/.{2}/g).map((channel) => {
+    const srgb = Number.parseInt(channel, 16) / 255;
+    return srgb <= 0.04045 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
+  });
+  return (0.2126 * channels[0]) + (0.7152 * channels[1]) + (0.0722 * channels[2]);
+}
+
+function contrastRatio(first, second) {
+  const luminances = [relativeLuminance(first), relativeLuminance(second)].sort((a, b) => b - a);
+  return (luminances[0] + 0.05) / (luminances[1] + 0.05);
 }
 
 function webpDetails(buffer) {
@@ -114,24 +155,84 @@ test('primary and secondary actions remain visible across themed surfaces', () =
   }
 });
 
+test('theme focus rings retain at least 3:1 contrast on page, card, and selected surfaces', () => {
+  for (const theme of Object.keys(themeColors)) {
+    const block = themeBlock(theme);
+    const focus = cssHex(block, '--color-theme-focus');
+    for (const surfaceVariable of ['--color-page-bg', '--color-card-surface', '--color-selected-surface']) {
+      const surface = cssHex(block, surfaceVariable);
+      assert.ok(
+        contrastRatio(focus, surface) >= 3,
+        `${theme} ${focus} focus must contrast with ${surfaceVariable} ${surface}`
+      );
+    }
+  }
+});
+
+test('small muted text retains at least 4.5:1 contrast on its themed component surfaces', () => {
+  const root = tokens.match(/:root\s*\{([\s\S]*?)\}/)?.[1] ?? '';
+  const muted = cssHex(root, '--color-text-tertiary');
+  for (const theme of Object.keys(themeColors)) {
+    const block = themeBlock(theme);
+    for (const surfaceVariable of [
+      '--color-card-surface',
+      '--color-input-surface',
+      '--color-secondary-surface',
+      '--color-hover-surface',
+      '--color-selected-surface'
+    ]) {
+      const surface = cssHex(block, surfaceVariable);
+      assert.ok(
+        contrastRatio(muted, surface) >= 4.5,
+        `${muted} muted text must contrast with ${theme} ${surfaceVariable} ${surface}`
+      );
+    }
+  }
+});
+
 test('loading and evidence visuals stay static and do not generate decorative checks', () => {
   assert.doesNotMatch(components, /@keyframes\s+loading/i);
   assert.doesNotMatch(components, /\.loading-bars\s+span\s*\{[^}]*animation\s*:/s);
   assert.doesNotMatch(components, /content:\s*["']✓["']/);
 });
 
-test('dish metadata resolves every item through the exact local manifest contract', () => {
+test('only explicitly audited dish names resolve to truthful local inspiration images', () => {
   assert.deepEqual(Object.values(DISH_IMAGE_MANIFEST).sort(), expectedAssetFiles);
-  for (const dish of DISHES) {
-    const imageKey = dish.metadata.imageKey;
-    assert.equal(typeof imageKey, 'string');
-    assert.ok(imageKey.trim().length > 0, `${dish.item.name} must have a non-empty imageKey`);
-    assert.ok(Object.hasOwn(DISH_IMAGE_MANIFEST, imageKey), `${dish.item.name} uses unknown imageKey ${imageKey}`);
+  assert.ok(Object.keys(auditedDishImages).length >= 12);
+  const dishesByName = new Map(DISHES.map((dish) => [dish.item.name, dish]));
+  const dishesWithSpecificImages = DISHES.filter((dish) => dish.item.image);
+  assert.deepEqual(
+    dishesWithSpecificImages.map((dish) => dish.item.name).sort(),
+    Object.keys(auditedDishImages).sort(),
+    'category defaults or unreviewed overrides must not assign specific images'
+  );
+
+  for (const [dishName, { imageKey, alt }] of Object.entries(auditedDishImages)) {
+    const dish = dishesByName.get(dishName);
+    assert.ok(dish, `${dishName} must exist in the inspiration catalog`);
+    assert.ok(Object.hasOwn(DISH_IMAGE_MANIFEST, imageKey), `${dishName} uses unknown imageKey ${imageKey}`);
+    assert.equal(dish.metadata.imageKey, imageKey);
     assert.deepEqual(dish.item.image, {
       src: `./assets/dishes/${DISH_IMAGE_MANIFEST[imageKey]}`,
-      alt: `${dish.item.name}菜品灵感示意图`,
+      alt,
       kind: 'dish-inspiration'
     });
+    assert.doesNotMatch(dish.item.image.alt, new RegExp(`^${dishName}菜品`));
+  }
+});
+
+test('audited inspiration alt text describes the asset instead of claiming an exact dish photo', () => {
+  const dish = DISHES.find((candidate) => candidate.item.name === '照烧鸡腿饭');
+  assert.equal(dish.item.image.alt, '鸡肉米饭碗菜品灵感图');
+  assert.doesNotMatch(dish.item.image.alt, /照烧鸡腿饭菜品/);
+});
+
+test('known photo mismatches remain unassigned for the neutral placeholder boundary', () => {
+  for (const dishName of representativeMismatches) {
+    const dish = DISHES.find((candidate) => candidate.item.name === dishName);
+    assert.ok(dish, `${dishName} must exist in the inspiration catalog`);
+    assert.equal(dish.item.image, null, `${dishName} must not claim a category-default photo`);
+    assert.equal(Object.hasOwn(dish.metadata, 'imageKey'), false);
   }
 });
 

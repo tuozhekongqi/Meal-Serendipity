@@ -2,7 +2,7 @@
   color-scheme: light;
   --color-text: #171717;
   --color-text-secondary: #606460;
-  --color-text-tertiary: #7f8580;
+  --color-text-tertiary: #5F645F;
   --color-action: #202020;
   --color-action-hover: #000000;
   --color-focus: var(--color-theme-focus);
@@ -152,7 +152,7 @@
   --color-theme-border-strong: #94A6B4;
   --color-text-on-theme: #F7FAFC;
   --color-text-muted-on-theme: #D6E0E7;
-  --color-theme-focus: #F1C77A;
+  --color-theme-focus: #B67600;
   --theme-shadow-color: rgba(8, 17, 25, .16);
   --background-gradient: none;
 }

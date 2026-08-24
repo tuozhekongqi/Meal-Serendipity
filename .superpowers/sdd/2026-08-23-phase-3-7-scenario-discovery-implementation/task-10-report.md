@@ -138,3 +138,52 @@ Both were generated from the built artifact with reduced motion and no browser c
 ## Concerns
 
 No unresolved implementation concern. `src/main.js`, the build scripts, and their build contract test are the smallest necessary scope expansion beyond the nominal style/asset file list: root-only scenario theme selection and packaged console-clean local images cannot be delivered from CSS/source assets alone. The exact manifest prevents recursive or external asset copying. Rollback is the Task 10 commit on baseline `56fc9a0`.
+
+## Independent review fix — round 1
+
+### RED
+
+The review was reproduced against commit `a7eb2a8`: category-level `imageKey` defaults assigned a concrete asset to all 175 dishes, including visibly incompatible fish, soup-rice, oden, cold-noodle, and konjac dishes; image alt text then described each generic asset as if it were the named dish. The late-night focus color also failed the requested 3:1 non-text contrast on white and selected surfaces, and `#7f8580` small muted text failed 4.5:1 on white.
+
+Focused command:
+
+```powershell
+node --test tests/presentation/theme-system.test.js tests/presentation/recommendation-view-model.test.js tests/presentation/meal-plan-view-model.test.js
+```
+
+Result: 19 tests, 15 passed and 4 failed for the four intended behaviors: focus contrast, muted-text contrast, audited-only image assignment, and representative mismatch fallback. A separate focused alt test failed with actual `照烧鸡腿饭菜品灵感示意图` versus the asset-truthful expected `鸡肉米饭碗菜品灵感图`. Production code was unchanged before these failures were observed.
+
+### Audited mapping rule and implementation
+
+Category metadata no longer supplies an `imageKey`, and the former dish overrides no longer bypass the audit. A single explicit dish-name allowlist is now the only way static catalog data receives a concrete image. An assignment is admitted only when the visible food form and the dish name remain semantically compatible to an ordinary user; cuisine/category resemblance alone is insufficient. Unlisted dishes expose no `item.image` and no metadata `imageKey`, so the existing presentation boundary supplies the neutral local placeholder.
+
+The 12 independently asserted mappings are:
+
+- `照烧鸡腿饭 → rice-bowl`
+- `小火锅`, `老北京涮羊肉 → hotpot`
+- `烧烤烤串 → grill`
+- `卤味拼盘`, `卤香干 → braised`
+- `低脂轻食沙拉`, `牛油果鸡胸碗`, `藜麦蔬菜碗`, `蛋白能量碗 → light-meal`
+- `广式云吞汤 → soup`
+- `红酒烩牛肉 → sharing`
+
+This leaves 163 of 175 dishes intentionally unassigned. All twelve generated WebP assets remain project-local and packaged, but assets without a safe catalog match are not forced into use. Every concrete asset now has an asset-truthful alt descriptor such as `鸡肉米饭碗菜品灵感图`, `双味火锅菜品灵感图`, or `青菜云吞汤菜品灵感图`; alt construction never interpolates the recommended dish name.
+
+The six fixed mismatch fixtures are `清蒸鲈鱼套餐`, `山药排骨汤饭`, `鲍汁捞饭`, `关东煮`, `魔芋凉皮`, and `荞麦冷面`. Each now reaches `菜品灵感占位图`, rather than `plated.webp` or `light-meal.webp`.
+
+For accessibility, late-night focus changed to `#B67600`; its contrast is 3.24:1 on the fixed page, 3.76:1 on white cards, and 3.07:1 on the selected surface. Small tertiary text changed to `#5F645F`; the numerical contract checks all card/input/secondary/hover/selected theme surfaces, with a minimum of 4.60:1.
+
+### GREEN and revised visual evidence
+
+```text
+focused theme/view-model/meal-plan tests  PASS — 20/20
+npm test                                 PASS — 137/137
+npm run build                            PASS
+npm run check:dist                       PASS
+npm run check:js                         PASS — 58 JavaScript files
+full recommendation-flow E2E             PASS — 22/22
+Task 9 result|placeholder|empty|error     PASS — 7/7
+git diff --check                         PASS — line-ending notices only
+```
+
+The full E2E rerun reconfirmed 320/390/768/1024/1440 overflow and image ratios, all six themes, console cleanliness, reduced motion, and the 200% zoom-equivalent gate. Revised screenshots were captured from the built artifact and inspected at original resolution. The mobile and desktop review flows deliberately reproduce the previous `清蒸鲈鱼套餐` / `山药排骨汤饭` conflict; all shown dishes now use the neutral placeholder, with no concrete-photo/name mismatch. The final mobile capture has no fixed-action overlay. The CLI browser reported zero console warnings or errors, and the capture browser plus local server were closed afterward.

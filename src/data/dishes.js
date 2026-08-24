@@ -1,5 +1,5 @@
 import { SOURCE_MODE } from '../domain/models.js';
-import { DISH_IMAGE_MANIFEST, getDishDiscoveryMetadata } from './dish-discovery-metadata.js';
+import { DISH_IMAGE_ALTS, DISH_IMAGE_MANIFEST, getDishDiscoveryMetadata } from './dish-discovery-metadata.js';
 
 const LEGACY_DISHES = [
   /* 🍚 米饭类 */
@@ -241,7 +241,7 @@ function toInspirationCandidate(dish) {
       isAvailable: null,
       image: discovery.imageKey ? Object.freeze({
         src: `./assets/dishes/${DISH_IMAGE_MANIFEST[discovery.imageKey]}`,
-        alt: `${dish.n}菜品灵感示意图`,
+        alt: DISH_IMAGE_ALTS[discovery.imageKey],
         kind: 'dish-inspiration'
       }) : null
     }),
