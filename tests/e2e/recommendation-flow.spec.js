@@ -134,18 +134,37 @@ test('keyboard navigation moves focus to each newly rendered step', async ({ pag
   await expect(page.locator('#input-flow legend').first()).toBeFocused();
 });
 
-test('completed single flow returns one explained static inspiration and supports swap and feedback', async ({ page }) => {
+test('single result keeps visible reasons, image hierarchy, placeholder recovery, and retained-condition return', async ({ page }) => {
   await openSinglePreferences(page);
   await page.getByLabel('日常预算', { exact: true }).check();
   await page.getByRole('group', { name: '第 1 位食客偏好' }).getByRole('button', { name: '咸鲜', exact: true }).click();
 
   await desktopAction(page, '生成推荐').click();
   await expect(page.locator('[data-state="success"]')).toBeVisible();
-  await expect(page.getByText('今天吃这个。')).toBeVisible();
-  await expect(page.getByRole('heading', { name: '为什么是它' })).toBeVisible();
+  await expect(page.getByText('菜品灵感 · 非实时商家信息', { exact: true })).toBeVisible();
+  const reasonBlock = page.locator('.reason-block').filter({ has: page.getByRole('heading', { name: '为什么推荐', exact: true }) });
+  await expect(reasonBlock).toBeVisible();
+  await expect(reasonBlock.locator('li').first()).not.toHaveText('');
+  await expect(page.getByRole('heading', { name: '已通过的约束', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '需要知道的取舍', exact: true })).toBeVisible();
   await expect(page.locator('.source-badge')).toHaveText('菜品灵感');
   await expect(page.locator('.metric-grid')).toHaveCount(0);
   await expect(page.locator('.store-name')).toHaveCount(0);
+
+  const primaryImage = page.locator('[data-primary-dish-image]');
+  const alternativeImages = page.locator('[data-alternative-dish-image]');
+  await expect(primaryImage).toBeVisible();
+  await expect(alternativeImages).toHaveCount(2);
+  const primaryWidth = Number(await primaryImage.getAttribute('width'));
+  const alternativeWidth = Number(await alternativeImages.first().getAttribute('width'));
+  expect(primaryWidth).toBeGreaterThan(alternativeWidth);
+  await primaryImage.evaluate((image) => {
+    if (image.dataset.imageKind !== 'placeholder') image.dispatchEvent(new Event('error'));
+  });
+  await expect(primaryImage).toHaveAttribute('src', /assets\/dishes\/placeholder\.svg$/);
+  await expect(primaryImage).toHaveAttribute('data-image-kind', 'placeholder');
+  await primaryImage.dispatchEvent('error');
+  await expect(primaryImage).toHaveAttribute('src', /assets\/dishes\/placeholder\.svg$/);
 
   const firstDish = await page.locator('#recommendation-title').textContent();
   await page.locator('.result-actions').getByRole('button', { name: '换一个' }).click();
@@ -154,7 +173,7 @@ test('completed single flow returns one explained static inspiration and support
   await page.getByRole('button', { name: '合适', exact: true }).click();
   await expect(page.getByText('已记下：这个方向合适。本次反馈不会上传。')).toBeVisible();
 
-  const resultBack = page.locator('#result-content').getByRole('button', { name: '返回', exact: true });
+  const resultBack = page.locator('#result-content').getByRole('button', { name: '返回修改条件', exact: true });
   for (let step = 0; step < 8 && !(await resultBack.evaluate((button) => button === document.activeElement)); step += 1) {
     await page.keyboard.press('Shift+Tab');
   }
@@ -166,6 +185,37 @@ test('completed single flow returns one explained static inspiration and support
   expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe('BODY');
   await expect(page.getByLabel('日常预算', { exact: true })).toBeChecked();
   await expect(page.getByRole('group', { name: '第 1 位食客偏好' }).getByRole('button', { name: '咸鲜', exact: true })).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('empty result keeps exclusions strict and offers both recovery paths', async ({ page }) => {
+  await openSinglePreferences(page, '快速解决');
+  await page.getByLabel('日常预算', { exact: true }).check();
+  const exclusions = page.getByRole('group', { name: '第 1 位食客偏好' }).getByLabel(/需要避开的食材/);
+  await exclusions.fill('辣、咸鲜、酸、浓郁、甜、清淡');
+
+  await desktopAction(page, '生成推荐').click();
+  const empty = page.locator('[data-state="empty"]');
+  await expect(empty).toBeVisible();
+  await expect(empty).toContainText('忌口和过敏原没有被放宽');
+  await expect(empty.getByRole('button', { name: '修改条件', exact: true })).toBeVisible();
+  await expect(empty.getByRole('button', { name: '返回上一步', exact: true })).toBeVisible();
+
+  await empty.getByRole('button', { name: '修改条件', exact: true }).click();
+  await expect(page.locator('#input-flow legend').first()).toBeFocused();
+  await expect(page.getByLabel('日常预算', { exact: true })).toBeChecked();
+  await expect(page.getByRole('group', { name: '第 1 位食客偏好' }).getByLabel(/需要避开的食材/)).toHaveValue('辣、咸鲜、酸、浓郁、甜、清淡');
+});
+
+test('degraded compromise result explains the boundary and exposes condition recovery', async ({ page }) => {
+  await openMultiPreferences(page, '还没想好');
+  await page.getByLabel('日常预算', { exact: true }).check();
+  await desktopAction(page, '生成推荐').click();
+
+  const result = page.locator('[data-state="success"][data-plan-kind="compromise"]');
+  await expect(result).toBeVisible();
+  await expect(result.locator('.degraded-plan')).toContainText('这次需要折中');
+  await expect(result.locator('.degraded-plan')).toContainText('尚未指定多人用餐方式');
+  await expect(result.getByRole('button', { name: '返回修改条件', exact: true })).toBeVisible();
 });
 
 test('swap rotation never repeats a shown primary and never relaxes exhausted exclusions', async ({ page }) => {

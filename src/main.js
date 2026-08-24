@@ -8,7 +8,6 @@ import {
   FLOW_STEP,
   createContextInputFromFlow,
   createFlowState,
-  getVisibleSteps,
   transitionFlow
 } from './presentation/flow-state.js';
 import { createMealPlanViewModel } from './presentation/meal-plan-view-model.js';
@@ -75,13 +74,6 @@ const CONDITION_EVENTS = new Set([
   'set_diner_draft'
 ]);
 const FOCUS_STEP_EVENTS = new Set(['back', 'next', 'edit_step']);
-
-const STEP_EDIT_LABELS = Object.freeze({
-  [FLOW_STEP.PARTY]: '修改人数',
-  [FLOW_STEP.SCENE]: '修改场景',
-  [FLOW_STEP.DINING]: '修改用餐方式',
-  [FLOW_STEP.PREFERENCES]: '修改偏好'
-});
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, (character) => ({
@@ -162,77 +154,23 @@ function renderEditingState() {
   </div>`;
 }
 
-function addEditControls(root) {
-  const controls = document.createElement('nav');
-  controls.className = 'state-actions result-edit-actions';
-  controls.setAttribute('aria-label', '修改推荐条件');
-  controls.innerHTML = `<button class="button button-secondary button-small" type="button" data-edit-step="${FLOW_STEP.PREFERENCES}">返回</button>${getVisibleSteps(state).filter((step) => step !== FLOW_STEP.PREFERENCES).map((step) => (
-    `<button class="button button-quiet button-small" type="button" data-edit-step="${step}">${STEP_EDIT_LABELS[step]}</button>`
-  )).join('')}`;
-  controls.querySelectorAll('[data-edit-step]').forEach((button) => {
-    button.addEventListener('click', () => editStep(button.dataset.editStep));
-  });
-  root.append(controls);
-}
-
-function mobileResultActions(primary = null) {
-  roots.mobileActions.innerHTML = `${primary ? `<button type="button" class="button button-primary" data-mobile-result="primary">${escapeHtml(primary.action.label)}</button>` : ''}<button type="button" class="button button-secondary" data-mobile-result="swap">换一个</button>`;
-  roots.mobileActions.querySelector('[data-mobile-result="primary"]')?.addEventListener('click', () => handlePrimaryAction(primary));
+function mobileResultActions() {
+  roots.mobileActions.innerHTML = '<button type="button" class="button button-primary" data-mobile-result="swap">换一个</button><button type="button" class="button button-secondary" data-mobile-result="back">返回修改条件</button>';
   roots.mobileActions.querySelector('[data-mobile-result="swap"]')?.addEventListener('click', swapRecommendation);
-}
-
-function resultEntries(viewModel) {
-  if (viewModel.assignments.length) {
-    return viewModel.assignments.map(({ ownerLabel, card }) => ({ label: ownerLabel, card }));
-  }
-  if (viewModel.bundleItems.length) {
-    return viewModel.bundleItems.map(({ role, card }, index) => ({
-      label: role || `第 ${index + 1} 道`,
-      card
-    }));
-  }
-  return viewModel.primary ? [{ label: viewModel.partyLabel, card: viewModel.primary }] : [];
-}
-
-function renderSetPlan(viewModel) {
-  const entries = resultEntries(viewModel);
-  roots.result.innerHTML = `<article class="result-wrap" data-state="success">
-    <div class="result-header"><p class="result-overline">已组合这一餐。</p><span class="source-badge">${escapeHtml(viewModel.mode.label)}</span></div>
-    <h3 tabindex="-1" id="recommendation-title">${escapeHtml(viewModel.partyLabel ?? '多人用餐')}</h3>
-    ${viewModel.sceneLabel ? `<p class="dish-description">${escapeHtml(viewModel.sceneLabel)}</p>` : ''}
-    <ul class="reason-list">${entries.map(({ label, card }) => `<li><strong>${escapeHtml(label ?? '餐品')}</strong><span>${card ? escapeHtml(card.name) : '暂无安全候选'}</span>${card?.reasons?.[0]?.message ? `<small>${escapeHtml(card.reasons[0].message)}</small>` : ''}</li>`).join('')}</ul>
-    <div class="result-actions"><button class="button button-secondary" type="button" data-result-action="swap">换一个</button></div>
-  </article>`;
-  const card = roots.result.querySelector('.result-wrap');
-  card.querySelector('[data-result-action="swap"]')?.addEventListener('click', swapRecommendation);
-  addEditControls(card);
-  renderFeedback(card, handleFeedback);
-  mobileResultActions();
+  roots.mobileActions.querySelector('[data-mobile-result="back"]')?.addEventListener('click', () => editStep(FLOW_STEP.PREFERENCES));
 }
 
 function renderMealPlan(viewModel, { focus = true } = {}) {
   updateMode(viewModel.mode.value);
   renderModeNotice(roots.notice, viewModel.mode);
 
-  if (viewModel.primary) {
-    const card = renderRecommendation(roots.result, {
-      mode: viewModel.mode,
-      primary: viewModel.primary,
-      alternatives: viewModel.alternatives.map((alternative) => ({
-        ...alternative,
-        differenceLabel: alternative.differenceLabel ?? '另一个合适选择'
-      }))
-    }, {
-      onSwap: swapRecommendation,
-      onAlternative: () => showToast(roots.toast, '可用“换一个”重新组合整个用餐方案'),
-      onPrimaryAction: handlePrimaryAction
-    });
-    addEditControls(card);
-    renderFeedback(card, handleFeedback);
-    mobileResultActions(viewModel.primary);
-  } else {
-    renderSetPlan(viewModel);
-  }
+  const card = renderRecommendation(roots.result, viewModel, {
+    onSwap: swapRecommendation,
+    onBack: () => editStep(FLOW_STEP.PREFERENCES),
+    onAlternative: () => showToast(roots.toast, '可用“换一个”重新组合整个用餐方案')
+  });
+  renderFeedback(card, handleFeedback);
+  mobileResultActions();
 
   if (focus) {
     roots.result.querySelector('#recommendation-title')?.focus({ preventScroll: true });
@@ -254,7 +192,10 @@ function renderResult() {
   }
   if (state.status === 'empty') {
     renderStatusActions(roots.mobileActions, 'empty');
-    renderEmptyState(roots.result, () => editStep(FLOW_STEP.PREFERENCES));
+    renderEmptyState(roots.result, {
+      onEdit: () => editStep(FLOW_STEP.PREFERENCES),
+      onBack: () => dispatch({ type: 'back' })
+    });
     return;
   }
   if (state.status === 'error') {
