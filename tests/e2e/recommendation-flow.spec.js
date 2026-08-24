@@ -17,11 +17,88 @@ test.afterEach(async ({ page }) => {
   expect(runtimeProblems.get(page), 'browser console and resource loading must stay clean').toEqual([]);
 });
 
-test('quick recommendation returns one explained static inspiration and supports swap and feedback', async ({ page }) => {
+function desktopAction(page, name) {
+  return page.locator('#desktop-actions').getByRole('button', { name, exact: true });
+}
+
+async function openSinglePreferences(page, scene = '想吃点好的') {
+  await page.getByLabel('1 人', { exact: true }).check();
+  await desktopAction(page, '下一步').click();
+  await page.getByLabel(scene, { exact: true }).check();
+  await desktopAction(page, '下一步').click();
+}
+
+test('party size is the first required decision and a single diner never sees dining mode', async ({ page }) => {
   await expect(page.getByRole('heading', { name: '今天吃什么？' })).toBeVisible();
   await expect(page.getByText('当前是菜品灵感', { exact: true })).toBeVisible();
+  await expect(page.getByRole('list', { name: '推荐流程进度' })).toBeVisible();
+  await expect(page.getByRole('group', { name: /用餐人数/ })).toBeVisible();
+  for (const label of ['1 人', '2 人', '3 人', '4 人以上']) {
+    await expect(page.getByLabel(label, { exact: true })).toBeVisible();
+  }
+  await expect(page.getByRole('group', { name: /用餐方式/ })).toHaveCount(0);
 
-  await page.locator('#desktop-actions').getByRole('button', { name: '马上推荐' }).click();
+  await page.getByLabel('1 人', { exact: true }).check();
+  await desktopAction(page, '下一步').click();
+  await expect(page.getByRole('group', { name: /用餐场景/ })).toBeVisible();
+  await expect(page.getByRole('group', { name: /用餐方式/ })).toHaveCount(0);
+
+  await page.getByLabel('学习 / 工作', { exact: true }).check();
+  await desktopAction(page, '下一步').click();
+  await expect(page.getByRole('group', { name: /预算档位/ })).toBeVisible();
+  await expect(page.getByRole('group', { name: /用餐方式/ })).toHaveCount(0);
+
+  await desktopAction(page, '返回').click();
+  await expect(page.getByLabel('学习 / 工作', { exact: true })).toBeChecked();
+  await desktopAction(page, '返回').click();
+  await expect(page.getByLabel('1 人', { exact: true })).toBeChecked();
+});
+
+test('dining mode is required for six diners and exposes all four compatible modes', async ({ page }) => {
+  await page.getByLabel('4 人以上', { exact: true }).check();
+  const exactCount = page.getByLabel('准确用餐人数', { exact: true });
+  await expect(exactCount).toBeVisible();
+  await expect(page.getByText('请输入 4 至 50 人的准确人数。', { exact: true })).toBeVisible();
+  await exactCount.fill('');
+  await expect(desktopAction(page, '下一步')).toBeDisabled();
+  await exactCount.fill('6');
+  await expect(desktopAction(page, '下一步')).toBeEnabled();
+  await desktopAction(page, '下一步').click();
+
+  await page.getByLabel('一起聚餐', { exact: true }).check();
+  await desktopAction(page, '下一步').click();
+
+  const next = desktopAction(page, '下一步');
+  await expect(next).toBeDisabled();
+  for (const label of ['一起吃共享菜', '每个人单独点', '主菜统一，口味各自不同', '还没想好']) {
+    const option = page.getByLabel(label, { exact: true });
+    await expect(option).toBeVisible();
+    await option.check();
+    await expect(option).toBeChecked();
+    await expect(next).toBeEnabled();
+  }
+  await next.click();
+
+  await expect(page.locator('[data-diner-region]')).toHaveCount(6);
+  await expect(page.getByRole('group', { name: '第 6 位食客偏好' })).toBeVisible();
+  await expect(page.getByLabel(/姓名|称呼/)).toHaveCount(0);
+  await expect(page.locator('input[name*="name" i]')).toHaveCount(0);
+
+  await desktopAction(page, '返回').click();
+  await expect(page.getByLabel('还没想好', { exact: true })).toBeChecked();
+  await desktopAction(page, '返回').click();
+  await expect(page.getByLabel('一起聚餐', { exact: true })).toBeChecked();
+  await desktopAction(page, '返回').click();
+  await expect(page.getByLabel('4 人以上', { exact: true })).toBeChecked();
+  await expect(exactCount).toHaveValue('6');
+});
+
+test('completed single flow returns one explained static inspiration and supports swap and feedback', async ({ page }) => {
+  await openSinglePreferences(page);
+  await page.getByLabel('日常预算', { exact: true }).check();
+  await page.getByRole('group', { name: '第 1 位食客偏好' }).getByRole('button', { name: '咸鲜', exact: true }).click();
+
+  await desktopAction(page, '生成推荐').click();
   await expect(page.locator('[data-state="success"]')).toBeVisible();
   await expect(page.getByText('今天吃这个。')).toBeVisible();
   await expect(page.getByRole('heading', { name: '为什么是它' })).toBeVisible();
@@ -35,27 +112,30 @@ test('quick recommendation returns one explained static inspiration and supports
 
   await page.getByRole('button', { name: '合适', exact: true }).click();
   await expect(page.getByText('已记下：这个方向合适。本次反馈不会上传。')).toBeVisible();
+
+  await page.locator('#result-content').getByRole('button', { name: '返回', exact: true }).click();
+  await expect(page.getByLabel('日常预算', { exact: true })).toBeChecked();
+  await expect(page.getByRole('group', { name: '第 1 位食客偏好' }).getByRole('button', { name: '咸鲜', exact: true })).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('precise flow shows real three-step progress and restores only non-sensitive preferences', async ({ page }) => {
-  await page.locator('#desktop-actions').getByRole('button', { name: '精准筛选' }).click();
-  await expect(page.getByText('第 2 步，共 3 步')).toBeVisible();
-
-  await page.getByRole('button', { name: '辣', exact: true }).click();
-  await page.getByLabel(/不吃或需要避开的食材/).fill('花生');
-  await page.getByLabel(/用餐人数/).selectOption('2');
-  await page.locator('#desktop-actions').getByRole('button', { name: '下一步' }).click();
-
-  await expect(page.getByText('第 3 步，共 3 步')).toBeVisible();
-  await expect(page.getByText('已填写，仅本次使用')).toBeVisible();
-  await page.locator('#desktop-actions').getByRole('button', { name: '生成推荐' }).click();
+test('flow restores only non-sensitive preferences', async ({ page }) => {
+  await openSinglePreferences(page, '清淡一点');
+  await page.getByLabel('日常预算', { exact: true }).check();
+  const diner = page.getByRole('group', { name: '第 1 位食客偏好' });
+  await diner.getByRole('button', { name: '辣', exact: true }).click();
+  await diner.getByLabel(/需要避开的食材/).fill('花生');
+  await desktopAction(page, '生成推荐').click();
   await expect(page.locator('[data-state="success"]')).toBeVisible();
+  await expect.poll(async () => page.evaluate(() => localStorage.getItem('meal-serendipity:preferences'))).not.toContain('花生');
 
   await page.reload();
-  await page.locator('#desktop-actions').getByRole('button', { name: '精准筛选' }).click();
-  await expect(page.getByRole('button', { name: '辣', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByLabel(/用餐人数/)).toHaveValue('2');
-  await expect(page.getByLabel(/不吃或需要避开的食材/)).toHaveValue('');
+  await expect(page.getByLabel('1 人', { exact: true })).toBeChecked();
+  await desktopAction(page, '下一步').click();
+  await page.getByLabel('清淡一点', { exact: true }).check();
+  await desktopAction(page, '下一步').click();
+  const restoredDiner = page.getByRole('group', { name: '第 1 位食客偏好' });
+  await expect(restoredDiner.getByRole('button', { name: '辣', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(restoredDiner.getByLabel(/需要避开的食材/)).toHaveValue('');
 });
 
 test('data dialog traps focus, closes with Escape, and returns focus to its trigger', async ({ page }) => {

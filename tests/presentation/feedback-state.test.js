@@ -4,7 +4,6 @@ import test from 'node:test';
 import {
   renderEmptyState,
   renderErrorState,
-  renderInitialState,
   renderLoadingState,
   renderStatusActions
 } from '../../src/components/feedback.js';
@@ -42,12 +41,7 @@ test('loading state remains explicitly identifiable without an error treatment',
   assert.doesNotMatch(root.innerHTML, /state-visual error/);
 });
 
-test('initial and success copy state the decision directly without generic AI phrasing', () => {
-  const initialRoot = rootStub();
-  renderInitialState(initialRoot);
-  assert.match(initialRoot.innerHTML, /先选一个状态/);
-  assert.doesNotMatch(initialRoot.innerHTML, /答案会出现在这里/);
-
+test('success copy states the decision directly without generic AI phrasing', () => {
   const resultRoot = {
     ...rootStub(),
     querySelectorAll() { return []; }
