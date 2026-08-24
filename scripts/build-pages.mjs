@@ -3,7 +3,21 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { DISH_IMAGE_MANIFEST } from '../src/data/dish-discovery-metadata.js';
+const APPROVED_DISH_ASSETS = Object.freeze([
+  'braised.webp',
+  'celebration.webp',
+  'dessert.webp',
+  'grill.webp',
+  'hotpot.webp',
+  'light-meal.webp',
+  'noodles.webp',
+  'placeholder.svg',
+  'plated.webp',
+  'rice-bowl.webp',
+  'sharing.webp',
+  'snacks.webp',
+  'soup.webp'
+]);
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const argumentsMap = new Map(process.argv.slice(2).map((argument) => {
@@ -68,6 +82,18 @@ function createIco() {
   return buffer;
 }
 
+async function readApprovedDishAsset(file) {
+  const sourcePath = path.join(projectRoot, 'assets', 'dishes', file);
+  try {
+    return await readFile(sourcePath);
+  } catch (error) {
+    if (error?.code === 'ENOENT') {
+      throw new Error(`Approved dish source file is missing: assets/dishes/${file}`);
+    }
+    throw error;
+  }
+}
+
 async function main() {
   assertSafeOutputDirectory(outputDirectory);
   await rm(outputDirectory, { recursive: true, force: true });
@@ -91,16 +117,15 @@ async function main() {
   const css = await Promise.all(cssFiles.map((file) => readFile(path.join(projectRoot, 'src', 'styles', file), 'utf8')));
   const indexHtml = rewriteIndex(await readFile(path.join(projectRoot, 'index.html'), 'utf8'));
 
-  const dishAssets = Object.values(DISH_IMAGE_MANIFEST);
   await Promise.all([
     writeFile(path.join(outputDirectory, 'assets', 'app.css'), `${css.join('\n')}\n`),
     writeFile(path.join(outputDirectory, 'index.html'), indexHtml),
     writeFile(path.join(outputDirectory, '404.html'), await readFile(path.join(projectRoot, '404.html'))),
     writeFile(path.join(outputDirectory, 'favicon.svg'), await readFile(path.join(projectRoot, 'favicon.svg'))),
     writeFile(path.join(outputDirectory, 'favicon.ico'), createIco()),
-    ...dishAssets.map(async (file) => writeFile(
+    ...APPROVED_DISH_ASSETS.map(async (file) => writeFile(
       path.join(outputDirectory, 'assets', 'dishes', file),
-      await readFile(path.join(projectRoot, 'assets', 'dishes', file))
+      await readApprovedDishAsset(file)
     ))
   ]);
 
