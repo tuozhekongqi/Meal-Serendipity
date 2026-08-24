@@ -63,6 +63,15 @@ test('maps all meal-plan kinds to render-safe cards while retaining truthful dia
     name: '清香豆腐',
     image: { src: '../outside.svg', alt: '不安全路径', kind: 'dish-inspiration' }
   });
+  const sameCuisineSafe = recommendation({
+    id: 'inspiration:teriyaki-chicken-rice',
+    name: '照烧鸡腿饭',
+    image: {
+      src: './assets/dishes/rice-bowl.webp',
+      alt: '鸡肉米饭碗菜品灵感图',
+      kind: 'dish-inspiration'
+    }
+  });
   const cases = [
     plan('single', { primary: safe }),
     plan('shared_bundle', { items: [{ role: 'shared-main', recommendation: safe }] }),
@@ -74,7 +83,7 @@ test('maps all meal-plan kinds to render-safe cards while retaining truthful dia
     }),
     plan('same_cuisine_set', {
       dinerAssignments: [
-        { dinerId: 'diner-1', recommendation: safe },
+        { dinerId: 'diner-1', recommendation: sameCuisineSafe },
         { dinerId: 'diner-2', recommendation: unsafe }
       ]
     }),
@@ -121,9 +130,17 @@ test('maps all meal-plan kinds to render-safe cards while retaining truthful dia
     '符合主要口味偏好',
     '符合主要口味偏好'
   ]);
-  assert.deepEqual(sameCuisine.assignments.map(({ card }) => card.image.kind), [
-    'dish-inspiration',
-    'placeholder'
+  assert.deepEqual(sameCuisine.assignments.map(({ card }) => card.image), [
+    {
+      src: './assets/dishes/rice-bowl.webp',
+      alt: '鸡肉米饭碗菜品灵感图',
+      kind: 'dish-inspiration'
+    },
+    {
+      src: './assets/dishes/placeholder.svg',
+      alt: '菜品灵感占位图',
+      kind: 'placeholder'
+    }
   ]);
 
   const bundle = createMealPlanViewModel({ plan: cases[1], mode: 'inspiration', notices: [] });
