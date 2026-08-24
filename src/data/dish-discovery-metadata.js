@@ -46,14 +46,11 @@ export const DISH_IMAGE_ALTS = Object.freeze({
 
 const AUDITED_DISH_IMAGE_KEYS = Object.freeze({
   照烧鸡腿饭: 'rice-bowl',
-  小火锅: 'hotpot',
-  老北京涮羊肉: 'hotpot',
   烧烤烤串: 'grill',
   卤味拼盘: 'braised',
   卤香干: 'braised',
   低脂轻食沙拉: 'light-meal',
   牛油果鸡胸碗: 'light-meal',
-  藜麦蔬菜碗: 'light-meal',
   蛋白能量碗: 'light-meal',
   广式云吞汤: 'soup',
   红酒烩牛肉: 'sharing'

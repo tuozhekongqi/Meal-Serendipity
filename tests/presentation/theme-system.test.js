@@ -48,14 +48,11 @@ const expectedAssetFiles = [
 ];
 const auditedDishImages = Object.freeze({
   '照烧鸡腿饭': Object.freeze({ imageKey: 'rice-bowl', alt: '鸡肉米饭碗菜品灵感图' }),
-  '小火锅': Object.freeze({ imageKey: 'hotpot', alt: '双味火锅菜品灵感图' }),
-  '老北京涮羊肉': Object.freeze({ imageKey: 'hotpot', alt: '双味火锅菜品灵感图' }),
   '烧烤烤串': Object.freeze({ imageKey: 'grill', alt: '烤串拼盘菜品灵感图' }),
   '卤味拼盘': Object.freeze({ imageKey: 'braised', alt: '豆制品卤味拼盘灵感图' }),
   '卤香干': Object.freeze({ imageKey: 'braised', alt: '豆制品卤味拼盘灵感图' }),
   '低脂轻食沙拉': Object.freeze({ imageKey: 'light-meal', alt: '鸡胸牛油果谷物碗菜品灵感图' }),
   '牛油果鸡胸碗': Object.freeze({ imageKey: 'light-meal', alt: '鸡胸牛油果谷物碗菜品灵感图' }),
-  '藜麦蔬菜碗': Object.freeze({ imageKey: 'light-meal', alt: '鸡胸牛油果谷物碗菜品灵感图' }),
   '蛋白能量碗': Object.freeze({ imageKey: 'light-meal', alt: '鸡胸牛油果谷物碗菜品灵感图' }),
   '广式云吞汤': Object.freeze({ imageKey: 'soup', alt: '青菜云吞汤菜品灵感图' }),
   '红酒烩牛肉': Object.freeze({ imageKey: 'sharing', alt: '炖牛肉共享餐菜品灵感图' })
@@ -66,7 +63,10 @@ const representativeMismatches = [
   '鲍汁捞饭',
   '关东煮',
   '魔芋凉皮',
-  '荞麦冷面'
+  '荞麦冷面',
+  '小火锅',
+  '老北京涮羊肉',
+  '藜麦蔬菜碗'
 ];
 
 function themeBlock(name) {
@@ -198,7 +198,6 @@ test('loading and evidence visuals stay static and do not generate decorative ch
 
 test('only explicitly audited dish names resolve to truthful local inspiration images', () => {
   assert.deepEqual(Object.values(DISH_IMAGE_MANIFEST).sort(), expectedAssetFiles);
-  assert.ok(Object.keys(auditedDishImages).length >= 12);
   const dishesByName = new Map(DISHES.map((dish) => [dish.item.name, dish]));
   const dishesWithSpecificImages = DISHES.filter((dish) => dish.item.image);
   assert.deepEqual(

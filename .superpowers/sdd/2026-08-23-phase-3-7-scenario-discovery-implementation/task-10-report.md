@@ -187,3 +187,35 @@ git diff --check                         PASS — line-ending notices only
 ```
 
 The full E2E rerun reconfirmed 320/390/768/1024/1440 overflow and image ratios, all six themes, console cleanliness, reduced motion, and the 200% zoom-equivalent gate. Revised screenshots were captured from the built artifact and inspected at original resolution. The mobile and desktop review flows deliberately reproduce the previous `清蒸鲈鱼套餐` / `山药排骨汤饭` conflict; all shown dishes now use the neutral placeholder, with no concrete-photo/name mismatch. The final mobile capture has no fixed-action overlay. The CLI browser reported zero console warnings or errors, and the capture browser plus local server were closed afterward.
+
+## Independent review fix — round 2
+
+The remaining review found three still-too-broad assignments: the split red/clear hotpot image did not truthfully depict either generic `小火锅` or copper-pot `老北京涮羊肉`, and the chicken-topped light-meal image did not truthfully depict a vegetable-only `藜麦蔬菜碗`.
+
+### RED / GREEN
+
+The literal audited expectation removed those three names and the placeholder regression added all three before production changed. Focused RED produced two intended failures: the exact audited-only list reported the three unexpected concrete images, and the mismatch test observed `小火锅` still resolving to `hotpot.webp`. After deleting only the three allowlist entries, the focused theme/mapping/view-model/meal-plan suite passed 20/20.
+
+The final explicit allowlist contains 9 mappings:
+
+- `照烧鸡腿饭 → rice-bowl`
+- `烧烤烤串 → grill`
+- `卤味拼盘`, `卤香干 → braised`
+- `低脂轻食沙拉`, `牛油果鸡胸碗`, `蛋白能量碗 → light-meal`
+- `广式云吞汤 → soup`
+- `红酒烩牛肉 → sharing`
+
+Each remaining mapping was rechecked against the actual asset: the visible primary subject directly matches the named chicken rice bowl, skewers, braised assortment/tofu, chicken-avocado light meal, wonton soup, or beef stew. No borderline mapping was retained for asset usage. The other 166 dishes now expose no concrete image and reach the neutral placeholder through the existing presentation boundary.
+
+Verification:
+
+```text
+focused theme/mapping/view-model/meal-plan tests  PASS — 20/20
+npm run build                                  PASS
+npm run check:dist                             PASS
+npm run check:js                               PASS — 58 JavaScript files
+single-result placeholder E2E smoke            PASS — 1/1
+git diff --check                               PASS — line-ending notices only
+```
+
+The existing 390px and 1440px screenshots do not exercise any of the three removed assignments; their reproduced fish/soup-rice placeholder evidence and layout are unchanged, so they were not recaptured in round 2. No five-width rerun was needed because this round changes only three static data allowlist entries, not rendering, styles, assets, or responsive behavior.
