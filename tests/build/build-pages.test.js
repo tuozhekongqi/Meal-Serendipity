@@ -6,6 +6,8 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import test from 'node:test';
 
+import { DISH_IMAGE_MANIFEST } from '../../src/data/dish-discovery-metadata.js';
+
 const execFileAsync = promisify(execFile);
 const projectRoot = path.resolve(import.meta.dirname, '..', '..');
 
@@ -50,4 +52,13 @@ test('build emits a self-contained Pages artifact without repository-only direct
 
   const css = await readFile(path.join(outputDirectory, 'assets', 'app.css'), 'utf8');
   assert.match(css, /--color-bg/);
+
+  const expectedDishAssets = Object.values(DISH_IMAGE_MANIFEST).sort();
+  assert.deepEqual(
+    (await readdir(path.join(outputDirectory, 'assets', 'dishes'))).sort(),
+    expectedDishAssets
+  );
+  for (const file of expectedDishAssets) {
+    assert.ok((await stat(path.join(outputDirectory, 'assets', 'dishes', file))).size > 0);
+  }
 });

@@ -4,6 +4,7 @@
   .app-main { padding-right:var(--space-3); padding-left:var(--space-3); }
   .decision-panel { padding:var(--space-5) var(--space-3); }
   .result-panel { padding:0 var(--space-3); }
+  .result-panel { --result-gutter:var(--space-3); }
   .result-wrap { padding-top:var(--space-5); }
   .scene-grid { gap:var(--space-2); }
   .scene-card { min-height:6.15rem; padding:var(--space-3); }
@@ -31,6 +32,9 @@
 @media (min-width:48rem) {
   .app-main { padding-top:var(--space-12); }
   .hero { margin-bottom:var(--space-12); }
+  .alternatives-list, .meal-plan-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .alternative-card { grid-template-columns:1fr; grid-template-rows:auto; gap:var(--space-2); }
+  .alternative-dish-image { grid-row:auto; }
 }
 
 @media (min-width:56.25rem) {
@@ -49,13 +53,14 @@
   .decision-layout { grid-template-columns:minmax(20rem,22rem) minmax(0,1fr); align-items:start; column-gap:var(--space-12); }
   .decision-panel { position:sticky; top:var(--space-4); padding:var(--space-6); }
   .result-panel { min-height:30rem; padding:0 var(--space-8); }
+  .result-panel { --result-gutter:var(--space-8); }
   .result-wrap { padding:var(--space-6) 0; }
   .state-card { min-height:30rem; padding:var(--space-6) 0; }
 }
 
 @media (min-width:75rem) {
   .reason-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .alternatives-list { grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:var(--space-6); }
+  .alternatives-list { column-gap:var(--space-6); }
 }
 
 @media (min-width:90rem) {

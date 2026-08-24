@@ -57,7 +57,7 @@ function imageMarkup(image, kind) {
     ? 'dish-image primary-dish-image'
     : alternative ? 'dish-image alternative-dish-image' : 'dish-image supporting-dish-image';
   const width = primary ? 960 : alternative ? 360 : 480;
-  const height = primary ? 640 : alternative ? 240 : 320;
+  const height = primary ? 720 : alternative ? 270 : 360;
   const semanticHook = primary
     ? ' data-primary-dish-image'
     : alternative ? ' data-alternative-dish-image' : ' data-supporting-dish-image';

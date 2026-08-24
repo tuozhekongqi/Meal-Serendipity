@@ -3,6 +3,8 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { DISH_IMAGE_MANIFEST } from '../src/data/dish-discovery-metadata.js';
+
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const argumentsMap = new Map(process.argv.slice(2).map((argument) => {
   const [key, ...value] = argument.split('=');
@@ -70,6 +72,7 @@ async function main() {
   assertSafeOutputDirectory(outputDirectory);
   await rm(outputDirectory, { recursive: true, force: true });
   await mkdir(path.join(outputDirectory, 'assets'), { recursive: true });
+  await mkdir(path.join(outputDirectory, 'assets', 'dishes'), { recursive: true });
 
   await build({
     absWorkingDir: projectRoot,
@@ -88,12 +91,17 @@ async function main() {
   const css = await Promise.all(cssFiles.map((file) => readFile(path.join(projectRoot, 'src', 'styles', file), 'utf8')));
   const indexHtml = rewriteIndex(await readFile(path.join(projectRoot, 'index.html'), 'utf8'));
 
+  const dishAssets = Object.values(DISH_IMAGE_MANIFEST);
   await Promise.all([
     writeFile(path.join(outputDirectory, 'assets', 'app.css'), `${css.join('\n')}\n`),
     writeFile(path.join(outputDirectory, 'index.html'), indexHtml),
     writeFile(path.join(outputDirectory, '404.html'), await readFile(path.join(projectRoot, '404.html'))),
     writeFile(path.join(outputDirectory, 'favicon.svg'), await readFile(path.join(projectRoot, 'favicon.svg'))),
-    writeFile(path.join(outputDirectory, 'favicon.ico'), createIco())
+    writeFile(path.join(outputDirectory, 'favicon.ico'), createIco()),
+    ...dishAssets.map(async (file) => writeFile(
+      path.join(outputDirectory, 'assets', 'dishes', file),
+      await readFile(path.join(projectRoot, 'assets', 'dishes', file))
+    ))
   ]);
 
   process.stdout.write(`Built GitHub Pages artifact at ${outputDirectory}\n`);

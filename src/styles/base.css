@@ -1,6 +1,6 @@
 *, *::before, *::after { box-sizing: border-box; }
 html { min-width:20rem; background:var(--color-page-bg); scroll-behavior:smooth; }
-body { margin:0; min-width:20rem; min-height:100vh; min-height:100dvh; overflow-x:hidden; color:var(--color-text); background-color:var(--color-page-bg); background-image:var(--background-gradient); font-family:var(--font-body); font-size:var(--text-body); line-height:1.65; -webkit-font-smoothing:antialiased; }
+body { margin:0; min-width:20rem; min-height:100vh; min-height:100dvh; overflow-x:hidden; color:var(--color-text-on-theme); background-color:var(--color-page-bg); background-image:var(--background-gradient); font-family:var(--font-body); font-size:var(--text-body); line-height:1.65; -webkit-font-smoothing:antialiased; }
 button, input, select, textarea { color:inherit; font:inherit; }
 [hidden] { display:none!important; }
 button, a { -webkit-tap-highlight-color:transparent; }
@@ -13,7 +13,7 @@ h1, h2, h3 { font-family:var(--font-display); font-weight:600; }
 .skip-link:focus { transform:translateY(0); }
 .visually-hidden { position:absolute!important; width:1px!important; height:1px!important; padding:0!important; margin:-1px!important; overflow:hidden!important; clip:rect(0,0,0,0)!important; white-space:nowrap!important; border:0!important; }
 
-.app-header { border-bottom:1px solid var(--color-border); background:var(--color-card-surface); }
+.app-header { color:var(--color-text); border-bottom:1px solid var(--color-border); background:var(--color-card-surface); }
 .header-inner { display:flex; align-items:center; justify-content:space-between; max-width:var(--content-max); min-height:4.25rem; padding:0 var(--space-4); margin:0 auto; gap:var(--space-3); }
 .brand { display:inline-flex; align-items:center; gap:.625rem; min-height:var(--control-min-height); font-family:var(--font-mono); font-size:.875rem; font-weight:600; letter-spacing:-.025em; text-decoration:none; }
 .brand > span:last-child > span { color:var(--color-text-tertiary); }
@@ -23,17 +23,19 @@ h1, h2, h3 { font-family:var(--font-display); font-weight:600; }
 .header-actions { display:flex; align-items:center; gap:var(--space-2); }
 
 .app-main { max-width:var(--content-max); padding:var(--space-10) var(--space-4) 7.5rem; margin:0 auto; }
-.hero { display:grid; max-width:46rem; padding-bottom:var(--space-8); margin-bottom:var(--space-8); border-bottom:1px solid var(--color-border); }
+.hero { display:grid; max-width:46rem; padding-bottom:var(--space-8); margin-bottom:var(--space-8); border-bottom:1px solid color-mix(in srgb,var(--color-text-on-theme) 20%,transparent); }
 .eyebrow, .section-kicker { margin-bottom:var(--space-3); color:var(--color-text-tertiary); font-family:var(--font-mono); font-size:var(--text-caption); font-weight:500; letter-spacing:.04em; }
+.hero .eyebrow { color:var(--color-text-muted-on-theme); }
 .hero h1 { max-width:none; margin-bottom:var(--space-4); font-size:var(--text-display); line-height:1.08; letter-spacing:-.035em; }
-.hero-copy { max-width:30rem; margin-bottom:0; color:var(--color-text-secondary); line-height:1.75; }
+.hero-copy { max-width:30rem; margin-bottom:0; color:var(--color-text-muted-on-theme); line-height:1.75; }
 
 .decision-layout { display:grid; gap:var(--space-10); }
-.decision-panel, .result-panel { min-width:0; border:1px solid var(--color-border); border-radius:var(--radius-card); background:var(--color-card-surface); box-shadow:var(--shadow-surface); }
+.decision-panel, .result-panel { min-width:0; color:var(--color-text); border:1px solid var(--color-border); border-radius:var(--radius-card); background:var(--color-card-surface); box-shadow:none; }
 .decision-panel { padding:var(--space-6); }
 .result-panel { min-height:24rem; padding:0 var(--space-6); overflow:hidden; }
 .section-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:var(--space-4); margin-bottom:var(--space-6); }
 .section-heading h2 { margin:0; font-size:var(--text-title); line-height:1.35; letter-spacing:-.015em; }
+.dialog, .mobile-action-bar { color:var(--color-text); }
 
 @media (prefers-reduced-motion:reduce) {
   html { scroll-behavior:auto; }

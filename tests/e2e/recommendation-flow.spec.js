@@ -21,6 +21,20 @@ function desktopAction(page, name) {
   return page.locator('#desktop-actions').getByRole('button', { name, exact: true });
 }
 
+function visibleAction(page, name) {
+  return page.getByRole('button', { name, exact: true }).filter({ visible: true });
+}
+
+async function completeResponsiveSingleFlow(page, scene = '想吃点好的') {
+  await page.getByLabel('1 人', { exact: true }).check();
+  await visibleAction(page, '下一步').click();
+  await page.getByLabel(scene, { exact: true }).check();
+  await visibleAction(page, '下一步').click();
+  await page.getByLabel('日常预算', { exact: true }).check();
+  await visibleAction(page, '生成推荐').click();
+  await expect(page.locator('[data-state="success"]')).toBeVisible();
+}
+
 async function openSinglePreferences(page, scene = '想吃点好的') {
   await page.getByLabel('1 人', { exact: true }).check();
   await desktopAction(page, '下一步').click();
@@ -286,6 +300,120 @@ test('data dialog traps focus, closes with Escape, and returns focus to its trig
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(trigger).toBeFocused();
+});
+
+const responsiveScenarios = [
+  { width: 320, height: 900, scene: '快速解决', theme: 'quick' },
+  { width: 390, height: 900, scene: '学习 / 工作', theme: 'focus' },
+  { width: 768, height: 1024, scene: '清淡一点', theme: 'lighter' },
+  { width: 1024, height: 900, scene: '想吃点好的', theme: 'celebration' },
+  { width: 1440, height: 1000, scene: '深夜加餐', theme: 'late-night' }
+];
+
+for (const { width, height, scene, theme } of responsiveScenarios) {
+  test(`image-led discovery stays proportional and overflow-free at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await completeResponsiveSingleFlow(page, scene);
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+
+    const primary = page.locator('[data-primary-dish-image]');
+    const alternatives = page.locator('[data-alternative-dish-image]');
+    await expect(primary).toBeVisible();
+    await expect(alternatives).toHaveCount(2);
+    await expect.poll(() => primary.evaluate((image) => image.complete && image.naturalWidth > 0)).toBe(true);
+
+    const primaryBox = await primary.boundingBox();
+    expect(primaryBox).not.toBeNull();
+    expect(Math.abs(primaryBox.width / primaryBox.height - (4 / 3))).toBeLessThan(0.01);
+    for (const alternative of await alternatives.all()) {
+      await expect.poll(() => alternative.evaluate((image) => image.complete && image.naturalWidth > 0)).toBe(true);
+      const alternativeBox = await alternative.boundingBox();
+      expect(alternativeBox).not.toBeNull();
+      expect(Math.abs(alternativeBox.width / alternativeBox.height - (4 / 3))).toBeLessThan(0.01);
+      expect(primaryBox.width).toBeGreaterThan(alternativeBox.width * 1.2);
+    }
+
+    const overflow = await page.evaluate(() => ({
+      clientWidth: document.documentElement.clientWidth,
+      scrollWidth: document.documentElement.scrollWidth
+    }));
+    expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth);
+    if (width === 1440) {
+      const app = await page.locator('.app-main').boundingBox();
+      expect(app.width).toBeLessThanOrEqual(1180);
+    }
+  });
+}
+
+test('all six scenario themes are selected only through the root theme attribute', async ({ page }) => {
+  await page.getByLabel('1 人', { exact: true }).check();
+  await desktopAction(page, '下一步').click();
+  for (const [scene, theme] of [
+    ['快速解决', 'quick'],
+    ['学习 / 工作', 'focus'],
+    ['清淡一点', 'lighter'],
+    ['想吃点好的', 'celebration'],
+    ['深夜加餐', 'late-night'],
+    ['今天想省钱', 'quick']
+  ]) {
+    await page.getByLabel(scene, { exact: true }).check();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+  }
+
+  await desktopAction(page, '返回').click();
+  await page.getByLabel('2 人', { exact: true }).check();
+  await desktopAction(page, '下一步').click();
+  await page.getByLabel('一起聚餐', { exact: true }).check();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'gathering');
+  await expect(page.locator('[data-theme]')).toHaveCount(1);
+});
+
+test('reduced motion keeps loading and swap free of long-running animation', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.reload();
+  await page.getByLabel('1 人', { exact: true }).check();
+  await desktopAction(page, '下一步').click();
+  await page.getByLabel('快速解决', { exact: true }).check();
+  await desktopAction(page, '下一步').click();
+  await page.getByLabel('日常预算', { exact: true }).check();
+  await page.evaluate(() => {
+    globalThis.__task10LoadingAnimationDurations = null;
+    const observer = new MutationObserver(() => {
+      const loading = document.querySelector('[data-state="loading"]');
+      if (!loading) return;
+      globalThis.__task10LoadingAnimationDurations = loading.getAnimations({ subtree: true })
+        .map((animation) => Number(animation.effect?.getTiming().duration) || 0);
+      observer.disconnect();
+    });
+    observer.observe(document.querySelector('#result-content'), { childList: true, subtree: true });
+  });
+
+  await desktopAction(page, '生成推荐').click();
+  await expect(page.locator('[data-state="success"]')).toBeVisible();
+  expect(await page.evaluate(() => globalThis.__task10LoadingAnimationDurations)).toEqual([]);
+
+  const title = page.locator('#recommendation-title');
+  const previous = (await title.textContent()).trim();
+  await visibleAction(page, '换一个').click();
+  await expect(title).not.toHaveText(previous);
+  const longAnimations = await page.evaluate(() => document.getAnimations()
+    .map((animation) => Number(animation.effect?.getTiming().duration) || 0)
+    .filter((duration) => duration > 50));
+  expect(longAnimations).toEqual([]);
+});
+
+test('200 percent zoom-equivalent layout keeps controls reachable without overlap', async ({ page }) => {
+  await page.setViewportSize({ width: 720, height: 900 });
+  await completeResponsiveSingleFlow(page, '想吃点好的');
+  const controls = await page.locator('#mobile-actions .button:visible').evaluateAll((buttons) => buttons.map((button) => {
+    const box = button.getBoundingClientRect();
+    return { left: box.left, right: box.right, width: box.width, height: box.height };
+  }));
+  expect(controls.length).toBe(2);
+  expect(controls.every(({ left, right, width, height }) => left >= 0 && right <= 720 && width > 0 && height >= 44)).toBe(true);
+  expect(controls[0].right).toBeLessThanOrEqual(controls[1].left);
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
 });
 
 test('favicon endpoints and the custom 404 page are available', async ({ request, page }) => {

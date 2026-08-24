@@ -1,4 +1,5 @@
 import { PROVIDER_CONFIG } from './config.js';
+import { MEAL_SCENE } from './domain/scenarios.js';
 import { FallbackCandidateProvider } from './providers/candidate-provider.js';
 import { InspirationCandidateProvider } from './providers/inspiration-provider.js';
 import { composeMealPlan } from './recommendation/meal-plan.js';
@@ -40,6 +41,20 @@ const roots = {
   dataInfo: document.querySelector('#data-info-button'),
   dialog: document.querySelector('#dialog-root')
 };
+
+const SCENE_THEME = Object.freeze({
+  [MEAL_SCENE.SOLO_QUICK]: 'quick',
+  [MEAL_SCENE.SOLO_SAVE]: 'quick',
+  [MEAL_SCENE.SOLO_FOCUS]: 'focus',
+  [MEAL_SCENE.SOLO_LIGHTER]: 'lighter',
+  [MEAL_SCENE.SOLO_TREAT]: 'celebration',
+  [MEAL_SCENE.SOLO_LATE_NIGHT]: 'late-night',
+  [MEAL_SCENE.GROUP_GATHERING]: 'gathering',
+  [MEAL_SCENE.GROUP_INDIVIDUAL]: 'gathering',
+  [MEAL_SCENE.GROUP_MIXED_TASTE]: 'gathering',
+  [MEAL_SCENE.GROUP_FAMILY]: 'gathering',
+  [MEAL_SCENE.GROUP_CELEBRATION]: 'celebration'
+});
 
 try {
   clearLegacySensitiveStorage(globalThis.localStorage);
@@ -214,6 +229,7 @@ function renderResult() {
 }
 
 function renderApplication() {
+  document.documentElement.dataset.theme = SCENE_THEME[state.mealScene] ?? 'quick';
   renderInputs();
   renderResult();
 }
