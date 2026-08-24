@@ -60,7 +60,7 @@ function requiredLabel() {
 
 function partyStep(state) {
   return `${progress(state)}<fieldset class="field-group">
-    <legend>用餐人数 ${requiredLabel()}</legend>
+    <legend data-step-heading tabindex="-1">用餐人数 ${requiredLabel()}</legend>
     <p class="field-help">先确定几个人，后面只会展示兼容的场景。</p>
     <div class="chip-list">
       ${PARTY_OPTIONS.map(({ value, bucket, label }) => `<label class="choice-option" for="party-${bucket}">
@@ -79,7 +79,7 @@ function partyStep(state) {
 function sceneStep(state) {
   const scenes = getScenesForPartySize(state.partySize);
   return `${progress(state)}<fieldset class="field-group">
-    <legend>选择用餐场景 ${requiredLabel()}</legend>
+    <legend data-step-heading tabindex="-1">选择用餐场景 ${requiredLabel()}</legend>
     <p class="field-help">场景选项会根据用餐人数调整。</p>
     <div class="scene-grid">
       ${scenes.map((scene, index) => `<label class="scene-card" for="scene-${scene.value}">
@@ -93,7 +93,7 @@ function sceneStep(state) {
 function diningStep(state) {
   const modes = getDiningModesForScene(state.mealScene);
   return `${progress(state)}<fieldset class="field-group">
-    <legend>选择用餐方式 ${requiredLabel()}</legend>
+    <legend data-step-heading tabindex="-1">选择用餐方式 ${requiredLabel()}</legend>
     <p class="field-help">多人用餐需要先选一种组合方式，安全避忌不会因此放宽。</p>
     <div class="scene-grid">
       ${modes.map((mode) => `<label class="scene-card" for="dining-${mode.value}">
@@ -131,7 +131,7 @@ function dinerRegion(state, draft, index) {
 function preferencesStep(state) {
   return `${progress(state)}
     <fieldset class="field-group">
-      <legend>选择预算档位 ${requiredLabel()}</legend>
+      <legend data-step-heading tabindex="-1">选择预算档位 ${requiredLabel()}</legend>
       <p class="field-help">灵感模式仅用相对预算档排序，不代表实时价格。</p>
       <div class="chip-list">
         ${BUDGET_OPTIONS.map(({ value, label }) => `<label class="choice-option" for="budget-${value}">
@@ -145,7 +145,7 @@ function preferencesStep(state) {
 }
 
 function resultStep(state) {
-  return `${progress(state)}<div class="field-group"><h3>条件已确认</h3><p class="field-help">可以在结果中换一个，或返回修改任一步。</p></div>`;
+  return `${progress(state)}<div class="field-group"><h3 data-step-heading tabindex="-1">条件已确认</h3><p class="field-help">可以在结果中换一个，或返回修改任一步。</p></div>`;
 }
 
 function stepMarkup(state) {

@@ -42,8 +42,10 @@ test('build emits a self-contained Pages artifact without repository-only direct
   assert.match(indexHtml, /href="\.\/favicon\.svg"/);
   assert.doesNotMatch(indexHtml, /src\/|data:image\/svg\+xml/);
 
-  const javascript = await readFile(path.join(outputDirectory, 'assets', 'app.js'), 'utf8');
-  assert.match(javascript, /马上推荐/);
+  const javascriptPath = path.join(outputDirectory, 'assets', 'app.js');
+  assert.ok((await stat(javascriptPath)).size > 0);
+  await execFileAsync(process.execPath, ['--check', javascriptPath]);
+  const javascript = await readFile(javascriptPath, 'utf8');
   assert.doesNotMatch(javascript, /from\s+["']\.\//);
 
   const css = await readFile(path.join(outputDirectory, 'assets', 'app.css'), 'utf8');

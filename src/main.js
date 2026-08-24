@@ -12,6 +12,10 @@ import {
   transitionFlow
 } from './presentation/flow-state.js';
 import { createMealPlanViewModel } from './presentation/meal-plan-view-model.js';
+import {
+  commitIfCurrentRequest,
+  requestIsCurrent
+} from './presentation/request-lifecycle.js';
 import { renderInputFlow } from './components/inputs.js';
 import { createDialogController } from './components/dialog.js';
 import {
@@ -70,6 +74,7 @@ const CONDITION_EVENTS = new Set([
   'update_diner_draft',
   'set_diner_draft'
 ]);
+const FOCUS_STEP_EVENTS = new Set(['back', 'next', 'edit_step']);
 
 const STEP_EDIT_LABELS = Object.freeze({
   [FLOW_STEP.PARTY]: '修改人数',
@@ -121,7 +126,14 @@ function dispatch(event, { render = true } = {}) {
     roots.reset.hidden = false;
   }
 
-  if (render) renderApplication();
+  if (render) {
+    renderApplication();
+    if (FOCUS_STEP_EVENTS.has(event.type)) focusCurrentStep();
+  }
+}
+
+function focusCurrentStep() {
+  roots.input.querySelector('[data-step-heading]')?.focus({ preventScroll: true });
 }
 
 function renderInputs() {
@@ -236,7 +248,7 @@ function renderResult() {
     return;
   }
   if (state.status === 'loading') {
-    renderLoadingState(roots.result);
+    renderLoadingState(roots.result, () => editStep(FLOW_STEP.PREFERENCES));
     renderStatusActions(roots.mobileActions, 'loading');
     return;
   }
@@ -247,7 +259,10 @@ function renderResult() {
   }
   if (state.status === 'error') {
     renderStatusActions(roots.mobileActions, 'error');
-    renderErrorState(roots.result, { onRetry: requestRecommendation, onReset: resetApplication });
+    renderErrorState(roots.result, {
+      onRetry: requestRecommendation,
+      onBack: () => editStep(FLOW_STEP.PREFERENCES)
+    });
     return;
   }
   if (state.status === 'success' && state.result?.viewModel) {
@@ -321,7 +336,7 @@ async function requestRecommendation() {
   try {
     const context = createContextInputFromFlow(state);
     const response = await provider.getCandidates(context, { signal: request.signal });
-    if (request.signal.aborted) return;
+    if (!requestIsCurrent(request, activeRequest)) return;
     providerResponse = response;
     updateMode(response.mode);
     renderModeNotice(roots.notice, { value: response.mode, notices: response.notices });
@@ -329,25 +344,26 @@ async function requestRecommendation() {
     const emptyProvider = response.candidates.length === 0
       && response.notices?.some(({ code }) => code === 'INSPIRATION_PROVIDER_UNAVAILABLE');
     if (emptyProvider) {
-      dispatch({ type: 'request_failed' });
+      commitIfCurrentRequest(request, activeRequest, () => dispatch({ type: 'request_failed' }));
       return;
     }
 
     const composed = planFromCandidates(context, response);
     if (composed.ids.length === 0) {
-      dispatch({ type: 'request_empty' });
+      commitIfCurrentRequest(request, activeRequest, () => dispatch({ type: 'request_empty' }));
       return;
     }
 
-    addExcludedCandidates(composed.ids);
-    persistSafePreferences(context, composed.ids);
-    dispatch({
-      type: 'request_succeeded',
-      result: { plan: composed.plan, viewModel: composed.viewModel }
+    commitIfCurrentRequest(request, activeRequest, () => {
+      addExcludedCandidates(composed.ids);
+      persistSafePreferences(context, composed.ids);
+      dispatch({
+        type: 'request_succeeded',
+        result: { plan: composed.plan, viewModel: composed.viewModel }
+      });
     });
   } catch (error) {
-    if (error?.name === 'AbortError') return;
-    dispatch({ type: 'request_failed' });
+    commitIfCurrentRequest(request, activeRequest, () => dispatch({ type: 'request_failed' }));
   } finally {
     if (activeRequest === request) activeRequest = null;
     globalThis.clearTimeout(slowMessage);
@@ -429,7 +445,7 @@ roots.dataInfo.addEventListener('click', () => dialog.open({
   title: '数据与隐私说明',
   trigger: roots.dataInfo,
   bodyHtml: `<p>当前版本只使用仓库内的 175 条静态菜品作为灵感，不代表附近真实可下单的商家。</p>
-    <ul><li>不展示实时价格、距离、ETA、营业或库存。</li><li>现在会先确认人数和场景，不会由“马上推荐”跳过多人安全条件。</li><li>不请求或保存精确位置。</li><li>忌口原文只在本次页面中使用，刷新后不会恢复。</li><li>非敏感口味、人数和近期选择可保存在浏览器本地。</li></ul>
+    <ul><li>不展示实时价格、距离、ETA、营业或库存。</li><li>不请求或保存精确位置。</li><li>忌口原文只在本次页面中使用，刷新后不会恢复。</li><li>非敏感口味、人数和近期选择可保存在浏览器本地。</li></ul>
     <p>接入经确认的实时 Provider 后，界面才会展示由数据源实际提供的字段。</p>`
 }));
 

@@ -28,6 +28,15 @@ async function openSinglePreferences(page, scene = '想吃点好的') {
   await desktopAction(page, '下一步').click();
 }
 
+async function openMultiPreferences(page, diningMode) {
+  await page.getByLabel('2 人', { exact: true }).check();
+  await desktopAction(page, '下一步').click();
+  await page.getByLabel('一起聚餐', { exact: true }).check();
+  await desktopAction(page, '下一步').click();
+  await page.getByLabel(diningMode, { exact: true }).check();
+  await desktopAction(page, '下一步').click();
+}
+
 test('party size is the first required decision and a single diner never sees dining mode', async ({ page }) => {
   await expect(page.getByRole('heading', { name: '今天吃什么？' })).toBeVisible();
   await expect(page.getByText('当前是菜品灵感', { exact: true })).toBeVisible();
@@ -93,6 +102,38 @@ test('dining mode is required for six diners and exposes all four compatible mod
   await expect(exactCount).toHaveValue('6');
 });
 
+for (const diningMode of ['一起吃共享菜', '每个人单独点', '主菜统一，口味各自不同', '还没想好']) {
+  test(`dining mode ${diningMode} composes a real two-diner result`, async ({ page }) => {
+    await openMultiPreferences(page, diningMode);
+    await page.getByLabel('日常预算', { exact: true }).check();
+    await desktopAction(page, '生成推荐').click();
+
+    await expect(page.locator('[data-state="success"]')).toBeVisible();
+    await expect(page.locator('#recommendation-title')).toBeVisible();
+    await expect(page.locator('.source-badge')).toHaveText('菜品灵感');
+  });
+}
+
+test('keyboard navigation moves focus to each newly rendered step', async ({ page }) => {
+  const oneDiner = page.getByLabel('1 人', { exact: true });
+  await oneDiner.focus();
+  await page.keyboard.press('Space');
+  await desktopAction(page, '下一步').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#input-flow legend').first()).toBeFocused();
+
+  const scene = page.getByLabel('快速解决', { exact: true });
+  await scene.focus();
+  await page.keyboard.press('Space');
+  await desktopAction(page, '下一步').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#input-flow legend').first()).toBeFocused();
+
+  await desktopAction(page, '返回').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#input-flow legend').first()).toBeFocused();
+});
+
 test('completed single flow returns one explained static inspiration and supports swap and feedback', async ({ page }) => {
   await openSinglePreferences(page);
   await page.getByLabel('日常预算', { exact: true }).check();
@@ -114,8 +155,46 @@ test('completed single flow returns one explained static inspiration and support
   await expect(page.getByText('已记下：这个方向合适。本次反馈不会上传。')).toBeVisible();
 
   await page.locator('#result-content').getByRole('button', { name: '返回', exact: true }).click();
+  await expect(page.locator('#input-flow legend').first()).toBeFocused();
   await expect(page.getByLabel('日常预算', { exact: true })).toBeChecked();
   await expect(page.getByRole('group', { name: '第 1 位食客偏好' }).getByRole('button', { name: '咸鲜', exact: true })).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('swap rotation never repeats a shown primary and never relaxes exhausted exclusions', async ({ page }) => {
+  test.setTimeout(60_000);
+  await openSinglePreferences(page, '快速解决');
+  await page.getByLabel('预算灵活', { exact: true }).check();
+  await desktopAction(page, '生成推荐').click();
+  await expect(page.locator('[data-state="success"]')).toBeVisible();
+
+  const title = page.locator('#recommendation-title');
+  const swap = page.locator('.result-actions').getByRole('button', { name: '换一个', exact: true });
+  const exhaustedMessage = '暂时没有更多安全候选';
+  const seen = new Set();
+  let exhausted = false;
+
+  for (let attempt = 0; attempt < 200; attempt += 1) {
+    const before = (await title.textContent()).trim();
+    expect(seen.has(before), `primary repeated before exhaustion: ${before}`).toBe(false);
+    seen.add(before);
+    await swap.click();
+    await page.waitForFunction(({ previous, message }) => {
+      const nextTitle = document.querySelector('#recommendation-title')?.textContent?.trim();
+      const toast = document.querySelector('#toast-region')?.textContent?.trim();
+      return nextTitle !== previous || toast === message;
+    }, { previous: before, message: exhaustedMessage }, { timeout: 5_000 });
+    if ((await page.locator('#toast-region').textContent()).trim() === exhaustedMessage) {
+      exhausted = true;
+      break;
+    }
+  }
+
+  expect(exhausted).toBe(true);
+  expect(seen.size).toBeGreaterThan(1);
+  const finalPrimary = (await title.textContent()).trim();
+  await swap.click();
+  await expect(page.getByText(exhaustedMessage, { exact: true })).toBeVisible();
+  await expect(title).toHaveText(finalPrimary);
 });
 
 test('flow restores only non-sensitive preferences', async ({ page }) => {
@@ -142,7 +221,9 @@ test('data dialog traps focus, closes with Escape, and returns focus to its trig
   const trigger = page.getByRole('button', { name: '数据说明' });
   await trigger.focus();
   await trigger.click();
-  await expect(page.getByRole('dialog', { name: '数据与隐私说明' })).toBeVisible();
+  const dialog = page.getByRole('dialog', { name: '数据与隐私说明' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).not.toContainText('马上推荐');
   await expect(page.getByRole('button', { name: '关闭对话框' })).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);

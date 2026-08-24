@@ -14,11 +14,13 @@ export function renderInitialState(root) {
   root.innerHTML = stateMarkup({ kind: 'initial', title: '先选一个状态', body: '不想细选，可以直接点“马上推荐”。' });
 }
 
-export function renderLoadingState(root) {
+export function renderLoadingState(root, onBack) {
   root.innerHTML = `<div class="state-card" data-state="loading" role="status">
     <div class="loading-bars" aria-hidden="true"><span></span><span></span><span></span></div>
     <h3>正在筛选</h3><p>检查忌口、口味和近期选择。</p>
+    <div class="state-actions"><button class="button button-secondary" type="button" data-state-action="back">返回</button></div>
   </div>`;
+  root.querySelector('[data-state-action="back"]')?.addEventListener('click', onBack);
 }
 
 export function renderStatusActions(root, kind) {
@@ -27,15 +29,15 @@ export function renderStatusActions(root, kind) {
     : '';
 }
 
-export function renderEmptyState(root, onEdit) {
-  root.innerHTML = stateMarkup({ kind: 'empty', title: '这些条件没有合适结果', body: '忌口不会被自动放宽。修改一个条件再试。', actions: '<button class="button button-primary" type="button" data-state-action="edit">修改条件</button>' });
-  root.querySelector('[data-state-action="edit"]')?.addEventListener('click', onEdit);
+export function renderEmptyState(root, onBack) {
+  root.innerHTML = stateMarkup({ kind: 'empty', title: '这些条件没有合适结果', body: '忌口不会被自动放宽。修改一个条件再试。', actions: '<button class="button button-primary" type="button" data-state-action="back">返回</button>' });
+  root.querySelector('[data-state-action="back"]')?.addEventListener('click', onBack);
 }
 
-export function renderErrorState(root, { onRetry, onReset }) {
-  root.innerHTML = stateMarkup({ kind: 'error', title: '暂时无法读取推荐数据', body: '数据读取或页面处理遇到问题。可以重试；若仍失败，再重置本次条件。', actions: '<button class="button button-primary" type="button" data-state-action="retry">重试</button><button class="button button-secondary" type="button" data-state-action="reset">重置</button>' });
+export function renderErrorState(root, { onRetry, onBack }) {
+  root.innerHTML = stateMarkup({ kind: 'error', title: '暂时无法读取推荐数据', body: '数据读取或页面处理遇到问题。可以重试，也可返回调整条件。', actions: '<button class="button button-primary" type="button" data-state-action="retry">重试</button><button class="button button-secondary" type="button" data-state-action="back">返回</button>' });
   root.querySelector('[data-state-action="retry"]')?.addEventListener('click', onRetry);
-  root.querySelector('[data-state-action="reset"]')?.addEventListener('click', onReset);
+  root.querySelector('[data-state-action="back"]')?.addEventListener('click', onBack);
 }
 
 export function renderFeedback(root, onFeedback) {
