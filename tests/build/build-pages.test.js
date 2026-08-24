@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { cp, mkdtemp, readFile, readdir, rm, stat, symlink, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, readdir, rm, stat, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
@@ -151,21 +151,137 @@ test('checker rejects a repository-only dish file even when the runtime manifest
 
   await assert.rejects(
     () => execFileAsync(process.execPath, [path.join(temporaryRoot, 'scripts', 'check-dist.mjs')], { cwd: temporaryRoot }),
-    /Command failed/
+    /dist\/assets\/dishes must contain exactly approved dish files/
   );
 });
 
-test('checker rejects a remote image URL in bundled JavaScript', async (t) => {
+test('checker rejects an unapproved local dish reference after query and hash normalization', async (t) => {
   const { outputDirectory, temporaryRoot } = await createRuntimeManifestDriftFixture(t);
 
   await execFileAsync(process.execPath, [
     path.join(temporaryRoot, 'scripts', 'build-pages.mjs'),
     `--out-dir=${outputDirectory}`
   ], { cwd: temporaryRoot });
-  await writeFile(path.join(outputDirectory, 'assets', 'app.js'), 'const dishImage = "https://images.example.test/dish.webp";');
+  await writeFile(
+    path.join(outputDirectory, 'assets', 'app.js'),
+    'const images = ["./assets/dishes/placeholder.svg?version=1#preview", "./assets/dishes/unknown.webp?version=1#preview"];'
+  );
 
   await assert.rejects(
     () => execFileAsync(process.execPath, [path.join(temporaryRoot, 'scripts', 'check-dist.mjs')], { cwd: temporaryRoot }),
-    /Command failed/
+    /assets\/app\.js references an unapproved local dish asset: unknown\.webp/
+  );
+});
+
+test('checker rejects a local dish reference that normalizes outside the dish directory', async (t) => {
+  const { outputDirectory, temporaryRoot } = await createRuntimeManifestDriftFixture(t);
+
+  await execFileAsync(process.execPath, [
+    path.join(temporaryRoot, 'scripts', 'build-pages.mjs'),
+    `--out-dir=${outputDirectory}`
+  ], { cwd: temporaryRoot });
+  await writeFile(path.join(outputDirectory, 'assets', 'app.js'), 'const image = "./assets/dishes/../../src/foo";');
+
+  await assert.rejects(
+    () => execFileAsync(process.execPath, [path.join(temporaryRoot, 'scripts', 'check-dist.mjs')], { cwd: temporaryRoot }),
+    /assets\/app\.js references an invalid local dish asset path: \.\/assets\/dishes\/\.\.\/\.\.\/src\/foo/
+  );
+});
+
+test('checker rejects source map references with query parameters', async (t) => {
+  const { outputDirectory, temporaryRoot } = await createRuntimeManifestDriftFixture(t);
+
+  await execFileAsync(process.execPath, [
+    path.join(temporaryRoot, 'scripts', 'build-pages.mjs'),
+    `--out-dir=${outputDirectory}`
+  ], { cwd: temporaryRoot });
+  await writeFile(path.join(outputDirectory, 'assets', 'app.js'), 'const sourceMap = "app.js.map?v=1";');
+
+  await assert.rejects(
+    () => execFileAsync(process.execPath, [path.join(temporaryRoot, 'scripts', 'check-dist.mjs')], { cwd: temporaryRoot }),
+    /assets\/app\.js must not reference source maps/
+  );
+});
+
+test('checker permits ordinary minified JavaScript map calls', async (t) => {
+  const { outputDirectory, temporaryRoot } = await createRuntimeManifestDriftFixture(t);
+
+  await execFileAsync(process.execPath, [
+    path.join(temporaryRoot, 'scripts', 'build-pages.mjs'),
+    `--out-dir=${outputDirectory}`
+  ], { cwd: temporaryRoot });
+  await writeFile(path.join(outputDirectory, 'assets', 'app.js'), 'const result = values.map((value) => value);');
+
+  await execFileAsync(process.execPath, [path.join(temporaryRoot, 'scripts', 'check-dist.mjs')], { cwd: temporaryRoot });
+});
+
+test('checker permits runtime-selected dish paths while checking literal dish paths', async (t) => {
+  const { outputDirectory, temporaryRoot } = await createRuntimeManifestDriftFixture(t);
+
+  await execFileAsync(process.execPath, [
+    path.join(temporaryRoot, 'scripts', 'build-pages.mjs'),
+    `--out-dir=${outputDirectory}`
+  ], { cwd: temporaryRoot });
+  await writeFile(path.join(outputDirectory, 'assets', 'app.js'), 'const image = `./assets/dishes/${images[key]}`;');
+
+  await execFileAsync(process.execPath, [path.join(temporaryRoot, 'scripts', 'check-dist.mjs')], { cwd: temporaryRoot });
+});
+
+test('checker rejects normalized repository source paths in bundled JavaScript', async (t) => {
+  const { outputDirectory, temporaryRoot } = await createRuntimeManifestDriftFixture(t);
+
+  await execFileAsync(process.execPath, [
+    path.join(temporaryRoot, 'scripts', 'build-pages.mjs'),
+    `--out-dir=${outputDirectory}`
+  ], { cwd: temporaryRoot });
+  await writeFile(path.join(outputDirectory, 'assets', 'app.js'), 'const paths = ["/src/foo", "src=src/foo"];');
+
+  await assert.rejects(
+    () => execFileAsync(process.execPath, [path.join(temporaryRoot, 'scripts', 'check-dist.mjs')], { cwd: temporaryRoot }),
+    /assets\/app\.js must not reference repository-only paths/
+  );
+});
+
+test('checker rejects a dish directory that masquerades as an approved file', async (t) => {
+  const { outputDirectory, temporaryRoot } = await createRuntimeManifestDriftFixture(t);
+
+  await execFileAsync(process.execPath, [
+    path.join(temporaryRoot, 'scripts', 'build-pages.mjs'),
+    `--out-dir=${outputDirectory}`
+  ], { cwd: temporaryRoot });
+  const placeholderPath = path.join(outputDirectory, 'assets', 'dishes', 'placeholder.svg');
+  await rm(placeholderPath);
+  await mkdir(placeholderPath);
+
+  await assert.rejects(
+    () => execFileAsync(process.execPath, [path.join(temporaryRoot, 'scripts', 'check-dist.mjs')], { cwd: temporaryRoot }),
+    /assets\/dishes\/placeholder\.svg must be a regular non-symlink file/
+  );
+});
+
+test('checker permits a non-image external URL that is not a resource reference', async (t) => {
+  const { outputDirectory, temporaryRoot } = await createRuntimeManifestDriftFixture(t);
+
+  await execFileAsync(process.execPath, [
+    path.join(temporaryRoot, 'scripts', 'build-pages.mjs'),
+    `--out-dir=${outputDirectory}`
+  ], { cwd: temporaryRoot });
+  await writeFile(path.join(outputDirectory, 'assets', 'app.js'), 'const supportArticle = "https://example.test/help";');
+
+  await execFileAsync(process.execPath, [path.join(temporaryRoot, 'scripts', 'check-dist.mjs')], { cwd: temporaryRoot });
+});
+
+test('checker rejects a protocol-relative remote image URL in bundled JavaScript', async (t) => {
+  const { outputDirectory, temporaryRoot } = await createRuntimeManifestDriftFixture(t);
+
+  await execFileAsync(process.execPath, [
+    path.join(temporaryRoot, 'scripts', 'build-pages.mjs'),
+    `--out-dir=${outputDirectory}`
+  ], { cwd: temporaryRoot });
+  await writeFile(path.join(outputDirectory, 'assets', 'app.js'), 'const dishImage = "//images.example.test/dish.webp";');
+
+  await assert.rejects(
+    () => execFileAsync(process.execPath, [path.join(temporaryRoot, 'scripts', 'check-dist.mjs')], { cwd: temporaryRoot }),
+    /assets\/app\.js must not reference remote image or resource URLs/
   );
 });
