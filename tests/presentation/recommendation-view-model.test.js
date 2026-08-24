@@ -114,6 +114,29 @@ test('rejects remote dish image URLs at the presentation boundary', () => {
   });
 });
 
+test('rejects an invalid image kind even when the local dish path is approved', () => {
+  const view = createRecommendationViewModel({
+    recommendation: recommendation({
+      candidate: candidate({
+        image: {
+          src: './assets/dishes/rice-bowl.webp',
+          alt: '不应通过的本地图片',
+          kind: 'merchant-product'
+        }
+      })
+    }),
+    alternatives: [],
+    mode: 'inspiration',
+    notices: []
+  });
+
+  assert.deepEqual(view.primary.image, {
+    src: './assets/dishes/placeholder.svg',
+    alt: '菜品灵感占位图',
+    kind: 'placeholder'
+  });
+});
+
 function recommendation(overrides = {}) {
   return {
     candidate: candidate(),

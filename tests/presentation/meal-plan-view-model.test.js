@@ -72,7 +72,12 @@ test('maps all meal-plan kinds to render-safe cards while retaining truthful dia
         { dinerId: 'diner-2', recommendation: unsafe }
       ]
     }),
-    plan('same_cuisine_set', { dinerAssignments: [{ dinerId: 'diner-1', recommendation: safe }] }),
+    plan('same_cuisine_set', {
+      dinerAssignments: [
+        { dinerId: 'diner-1', recommendation: safe },
+        { dinerId: 'diner-2', recommendation: unsafe }
+      ]
+    }),
     plan('compromise', {
       primary: safe,
       alternatives: [unsafe],
@@ -93,6 +98,16 @@ test('maps all meal-plan kinds to render-safe cards while retaining truthful dia
     assert.equal(view.mode.label, '菜品灵感');
   }
 
+  const single = createMealPlanViewModel({ plan: cases[0], mode: 'inspiration', notices: [] });
+  assert.deepEqual(single.primary.reasons, [
+    { code: 'taste_match', message: '符合主要口味偏好' }
+  ]);
+  assert.deepEqual(single.primary.image, {
+    src: './assets/dishes/noodles.webp',
+    alt: '番茄牛腩饭菜品灵感示意图',
+    kind: 'dish-inspiration'
+  });
+
   const individual = createMealPlanViewModel({ plan: cases[2], mode: 'inspiration', notices: [] });
   assert.deepEqual(individual.assignments.map(({ dinerId, ownerLabel }) => ({ dinerId, ownerLabel })), [
     { dinerId: 'diner-1', ownerLabel: '第 1 位' },
@@ -100,6 +115,16 @@ test('maps all meal-plan kinds to render-safe cards while retaining truthful dia
   ]);
   assert.ok(individual.assignments.every(({ card }) => card.reasons.length > 0));
   assert.equal(individual.assignments[1].card.image.kind, 'placeholder');
+
+  const sameCuisine = createMealPlanViewModel({ plan: cases[3], mode: 'inspiration', notices: [] });
+  assert.deepEqual(sameCuisine.assignments.map(({ card }) => card.reasons[0].message), [
+    '符合主要口味偏好',
+    '符合主要口味偏好'
+  ]);
+  assert.deepEqual(sameCuisine.assignments.map(({ card }) => card.image.kind), [
+    'dish-inspiration',
+    'placeholder'
+  ]);
 
   const bundle = createMealPlanViewModel({ plan: cases[1], mode: 'inspiration', notices: [] });
   assert.deepEqual(bundle.bundleItems.map(({ role }) => role), ['shared-main']);

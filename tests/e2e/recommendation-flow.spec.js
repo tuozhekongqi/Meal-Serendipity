@@ -125,6 +125,11 @@ for (const diningMode of ['一起吃共享菜', '每个人单独点', '主菜统
     await expect(page.locator('[data-state="success"]')).toBeVisible();
     await expect(page.locator('#recommendation-title')).toBeVisible();
     await expect(page.locator('.source-badge')).toHaveText('菜品灵感');
+    if (diningMode === '一起吃共享菜') {
+      const bundle = page.locator('.meal-plan-structure[data-plan-kind="shared_bundle"]');
+      await expect(bundle).toBeVisible();
+      await expect(bundle.locator('[data-serving-role]')).toHaveCount(2);
+    }
   });
 }
 
@@ -146,6 +151,34 @@ test('keyboard navigation moves focus to each newly rendered step', async ({ pag
   await desktopAction(page, '返回').focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('#input-flow legend').first()).toBeFocused();
+
+  await page.getByLabel('快速解决', { exact: true }).focus();
+  await page.keyboard.press('Space');
+  await desktopAction(page, '下一步').focus();
+  await page.keyboard.press('Enter');
+  await page.getByLabel('日常预算', { exact: true }).focus();
+  await page.keyboard.press('Space');
+  await desktopAction(page, '生成推荐').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('[data-state="success"]')).toBeVisible();
+  await expect(page.locator('#recommendation-title')).toBeFocused();
+});
+
+test('focus and lighter scenes change the deterministic result for the same fixed conditions', async ({ page }) => {
+  const titles = [];
+  for (const scene of ['学习 / 工作', '清淡一点']) {
+    if (titles.length) {
+      await page.evaluate(() => localStorage.clear());
+      await page.reload();
+    }
+    await openSinglePreferences(page, scene);
+    await page.getByLabel('日常预算', { exact: true }).check();
+    await desktopAction(page, '生成推荐').click();
+    await expect(page.locator('[data-state="success"]')).toBeVisible();
+    titles.push((await page.locator('#recommendation-title').textContent()).trim());
+  }
+
+  expect(titles[0]).not.toBe(titles[1]);
 });
 
 test('single result keeps visible reasons, image hierarchy, placeholder recovery, and retained-condition return', async ({ page }) => {
@@ -296,7 +329,13 @@ test('data dialog traps focus, closes with Escape, and returns focus to its trig
   const dialog = page.getByRole('dialog', { name: '数据与隐私说明' });
   await expect(dialog).toBeVisible();
   await expect(dialog).not.toContainText('马上推荐');
-  await expect(page.getByRole('button', { name: '关闭对话框' })).toBeFocused();
+  const close = page.getByRole('button', { name: '关闭对话框' });
+  const acknowledge = dialog.getByRole('button', { name: '知道了' });
+  await expect(close).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(acknowledge).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(close).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(trigger).toBeFocused();
