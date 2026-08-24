@@ -39,7 +39,8 @@
 - 当前主操作是复制菜名。复制失败时打开可访问对话框供手动复制；它不是外卖平台订单深链。
 - “合适”反馈只更新当前页面文案；“不太合适”会换一个。界面明确说明本次反馈不会上传。
 - 重置会清除本应用的偏好存储并恢复初始状态。
-- 刷新只恢复非敏感口味、人数、当前状态和近期候选历史；忌口原文不写入本地存储。
+- 本地存储包是 `version`、`savedAt` 和 `preferences`；`preferences` 精确只有 `partySize`、`totalBudgetCents`、`maxDistanceMeters`、`maxDeliveryMinutes`、`tastePreferences`、`currentPriority`、`recentHistory`、`contextTags` 和 `location`。`location` 只保留手动区域名与 `source: "manual"`，没有区域名时为 `null`；精确坐标与忌口原文不写入。
+- 刷新后流程回到人数步，可恢复上述安全字段中的人数、汇总口味和近期候选历史等值。`mealScene`、`diningMode`、`inspirationBudgetTier`、`dinerDrafts`、逐人口味/偏好与 `exclusions` **都不会在刷新后恢复**；多人需重新填写每位食客。`currentPriority` 是旧排序上下文字段（当前静态 UI 中为默认 `balanced`），不是当前用餐场景，不得代替 `mealScene` 表述场景恢复。
 - 数据说明对话框解释静态灵感、位置、忌口和本地存储边界，并支持 Escape、焦点锁定和关闭后焦点恢复。
 
 ### 图片真实性

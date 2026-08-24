@@ -201,3 +201,155 @@ The six allowed documents now distinguish product targets, the historical Phase 
 ## Publication status
 
 No push, pull request, deployment, branch merge, Phase 6A integration, Phase 6B work, or external publication was performed.
+
+## Review fix round 1 (2026-08-24)
+
+This review round changes only `tests/e2e/recommendation-flow.spec.js`, `docs/current-modern-ui-checklist.md`, and this report. It does not change production, Provider, recommendation, privacy, analytics, workflow, dependency, Phase 6A, or Phase 6B code. The separately registered same-cuisine fixture minor is intentionally not addressed in this round.
+
+### Keyboard path and mutation evidence
+
+The keyboard-only E2E no longer calls `locator.focus()` to jump to flow controls. It begins at the browser's existing `BODY` focus and uses real `Tab` through the skip link, brand link, data-information button, and one-diner radio. It then uses only `Tab`/`Shift+Tab`, `Space`, and `Enter` to reach and activate party size, next, scene, back/next, budget, all intervening taste controls, exclusions, back, and submit. Every critical control is checked both as the active element and by accessible name. The existing automatic-focus contracts for the newly rendered step legend and the result title remain asserted.
+
+After the normal test first passed, `index.html` was temporarily mutated by adding `tabindex="-1"` to `#data-info-button`, removing that control from sequential focus navigation. The exact focused command then exited 1 at the new `数据说明` `toBeFocused()` assertion (1 failed), proving that a tab-order regression is detected. The mutation was inversely restored; `git diff --exit-code -- index.html` exited 0 with no output. No production diff remains.
+
+```powershell
+npm run build
+npx playwright test tests/e2e/recommendation-flow.spec.js --grep "keyboard navigation" --workers=1
+```
+
+Final restored result: exit 0, Chromium 1/1 passed in 3.2 seconds. The only process output beyond the pass was Playwright's existing `NO_COLOR`/`FORCE_COLOR` warning; the E2E runtime-problem collector recorded no page warning/error, page error, or failed request.
+
+### Refresh/storage claim correction
+
+The checklist now mirrors `createPreferenceStorage`, `storageInput`, and `createFlowState` exactly. The stored envelope is `version`, `savedAt`, and `preferences`. The preferences object contains only `partySize`, `totalBudgetCents`, `maxDistanceMeters`, `maxDeliveryMinutes`, `tastePreferences`, `currentPriority`, `recentHistory`, `contextTags`, and `location`; location retains only a manual area label and `source: "manual"`, or is `null`.
+
+Refresh returns the flow to the party step. It does not restore `mealScene`, `diningMode`, `inspirationBudgetTier`, `dinerDrafts`, per-diner tastes/preferences, or `exclusions`. `currentPriority` is explicitly documented as a legacy ranking-context field (default `balanced` in the current static UI), not the current meal scene.
+
+### Exact runtime and added-line scans
+
+The present-state runtime scan was executed verbatim from the repository root:
+
+```powershell
+git grep -n -I -i -E 'analytics|telemetry|gtag|google-analytics|googletagmanager|mixpanel|segment|amplitude|posthog|plausible|fullstory|sentry|datadog' -- src index.html package.json package-lock.json .github/workflows scripts
+git grep -n -I -E 'FormData|FileReader|sendBeacon|navigator\.send|upload\(|multipart/form-data' -- src index.html package.json package-lock.json .github/workflows scripts
+git grep -n -I -E 'fetch\(|XMLHttpRequest|WebSocket|EventSource|sendBeacon|navigator\.send' -- src index.html
+git grep -n -I -E '(src|href)=["''](https?:)?//|@import[[:space:]]+(url\()?[["'']]?https?://|url\([["'']]?(https?:)?//' -- src index.html
+git grep -n -I -E -- '-----BEGIN (RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{36,255}|sk_live_[A-Za-z0-9]{16,}|xox[baprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{35}' src index.html package.json package-lock.json .github/workflows scripts
+```
+
+Output/exit semantics, in command order: analytics/telemetry/SDK names exited 1 with no matches; upload primitives exited 1 with no matches; network primitives exited 0 with exactly `src/providers/http-provider.js:242: const response = await this.fetch(this.endpoint, {`; external runtime `src`/`href`/CSS resource URLs exited 1 with no matches; high-confidence secret formats exited 1 with no matches. For `git grep`, exit 1 means no matching line, not a scanner error. The one fetch is the unchanged, disabled HTTP Provider boundary; `PROVIDER_CONFIG.endpoint` remains null and `liveProvider` remains null.
+
+The following copyable added-line command separately scanned the whole feature (`origin/main` to working tree) and all Task 12 work (`eb35344` to working tree). Runtime paths deliberately exclude documentation prose so a documented word such as “analytics” is not confused with runtime code.
+
+```powershell
+$scanFailed = $false
+function Test-AddedLines {
+  param([string]$Label, [string]$Base, [string[]]$Paths, [string]$Pattern)
+  $diff = @(git diff --unified=0 $Base -- $Paths)
+  if ($LASTEXITCODE -ne 0) { throw "git diff failed: $Label" }
+  $matches = @($diff | Select-String -Pattern $Pattern)
+  "$Label matches=$($matches.Count)"
+  if ($matches.Count -gt 0) { $matches.Line; $script:scanFailed = $true }
+}
+$runtimePaths = @('src','index.html','package.json','package-lock.json','.github/workflows','scripts')
+$analytics = '(?i)^\+(?!\+\+).*(analytics|telemetry|gtag|google-analytics|googletagmanager|mixpanel|segment|amplitude|posthog|plausible|fullstory|sentry|datadog|analytics[ _-]?endpoint|telemetry[ _-]?endpoint)'
+$upload = '(?i)^\+(?!\+\+).*(FormData|FileReader|sendBeacon|navigator\.send|upload\s*\(|multipart/form-data|<input[^>]+type=["'']file)'
+$network = '(?i)^\+(?!\+\+).*(fetch\s*\(|XMLHttpRequest|WebSocket|EventSource|sendBeacon|navigator\.send)'
+$external = '(?i)^\+(?!\+\+).*((src|href)\s*=\s*["''](https?:)?//|@import\s+(url\()?\s*["'']?https?://|url\(\s*["'']?(https?:)?//)'
+$secretFormats = '(?i)^\+(?!\+\+).*(-----BEGIN (RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{36,255}|sk_live_[A-Za-z0-9]{16,}|xox[baprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{35})'
+$secretAssignments = '(?i)^\+(?!\+\+).*(api[_-]?key|client[_-]?secret|access[_-]?token|auth[_-]?token|password|authorization)\s*[:=]\s*["''][^"'']+["'']'
+foreach ($scope in @(@('whole-feature','origin/main'), @('task12','eb35344'))) {
+  Test-AddedLines "$($scope[0]) analytics-telemetry" $scope[1] $runtimePaths $analytics
+  Test-AddedLines "$($scope[0]) upload" $scope[1] $runtimePaths $upload
+  Test-AddedLines "$($scope[0]) network-primitives" $scope[1] $runtimePaths $network
+  Test-AddedLines "$($scope[0]) external-src-href" $scope[1] $runtimePaths $external
+  Test-AddedLines "$($scope[0]) secret-formats" $scope[1] $runtimePaths $secretFormats
+  Test-AddedLines "$($scope[0]) secret-assignments" $scope[1] $runtimePaths $secretAssignments
+}
+if ($scanFailed) { exit 1 }
+```
+
+The command exited 0. Each of its 12 labeled results was `matches=0`: analytics/telemetry SDKs or endpoints, upload primitives, network primitives (`fetch`, XHR, WebSocket, EventSource, beacon), external `src`/`href`/CSS resources, high-confidence secret formats, and populated secret assignments had no added line in either scope. Repeated Git line-ending warnings were informational and did not change these counts.
+
+### Exact Provider, workflow, dependency, and Phase 6A scans
+
+```powershell
+function Show-ChangedPaths {
+  param([string]$Label, [string]$Base, [string[]]$Paths)
+  $changed = @(git diff --name-only $Base -- $Paths)
+  if ($LASTEXITCODE -ne 0) { throw "git diff failed: $Label" }
+  "$Label count=$($changed.Count)"
+  $changed
+}
+foreach ($scope in @(@('whole-feature','origin/main'), @('task12','eb35344'))) {
+  Show-ChangedPaths "$($scope[0]) provider-contract" $scope[1] @('src/providers','src/config.js','docs/data-source-contract.md','tests/providers')
+  Show-ChangedPaths "$($scope[0]) workflows" $scope[1] @('.github/workflows')
+  Show-ChangedPaths "$($scope[0]) dependencies" $scope[1] @('package.json','package-lock.json')
+  Show-ChangedPaths "$($scope[0]) phase6a" $scope[1] @('docs/phase-6a-*','scripts/audit-phase-6a-boundaries.mjs')
+}
+Test-Path -LiteralPath 'scripts/audit-phase-6a-boundaries.mjs'
+npm ls --omit=dev --all --json
+```
+
+The command exited 0. All eight whole-feature/Task-12 changed-path counts were 0. `Test-Path` returned `False`, so the absent Phase 6A audit script was not recreated. `npm ls` exited 0 and printed only `{ "version": "1.0.0", "name": "meal-serendipity" }`, meaning zero production dependencies. Phase 6A compatibility remains deferred to the controller's detached-worktree audit; this branch was neither merged into nor modified from Phase 6A.
+
+### Exact dist, Git artifact, temporary-output, and process scans
+
+After `npm run build` and `npm run check:dist` both exited 0, the following read-only command was executed after deleting the exact ignored `.last-run.json` generated by the focused pass:
+
+```powershell
+$distFiles = @(Get-ChildItem -LiteralPath 'dist' -Recurse -File | Sort-Object FullName)
+"dist-files count=$($distFiles.Count)"
+$distFiles | ForEach-Object { $_.FullName.Substring((Resolve-Path -LiteralPath 'dist').Path.Length + 1).Replace('\','/') }
+$tracked = @(git ls-files -- dist output playwright-report test-results)
+"tracked-generated count=$($tracked.Count) exit=$LASTEXITCODE"
+$tracked
+$staged = @(git diff --cached --name-only -- dist output playwright-report test-results)
+"staged-generated count=$($staged.Count) exit=$LASTEXITCODE"
+$staged
+$status = @(git status --short --ignored -- dist output playwright-report test-results)
+"ignored-status count=$($status.Count) exit=$LASTEXITCODE"
+$status
+$tempFiles = @()
+foreach ($path in @('output/playwright/test-results','output/playwright/report','playwright-report','test-results')) {
+  if (Test-Path -LiteralPath $path) { $tempFiles += @(Get-ChildItem -LiteralPath $path -Recurse -File -Force) }
+}
+"playwright-temp-files count=$($tempFiles.Count)"
+$processMatches = @(Get-CimInstance Win32_Process | Where-Object {
+  $_.ProcessId -ne $PID -and $_.CommandLine -and (
+    $_.CommandLine -match 'Meal-Serendipity-phase-3-7.*(playwright|serve-dist\.mjs)' -or
+    $_.CommandLine -match '(playwright|ms-playwright).*(chrome-headless-shell|chromium)' -or
+    $_.Name -match '^chrome-headless-shell(\.exe)?$'
+  )
+})
+"playwright-processes count=$($processMatches.Count)"
+$processMatches | Select-Object ProcessId,Name,CommandLine
+```
+
+The command exited 0. It reported the exact 19-file dist allowlist (two HTML, two favicons, app CSS/JS, 12 WebP, and `placeholder.svg`), `tracked-generated count=0`, `staged-generated count=0`, ignored status only `!! dist/`, `playwright-temp-files count=0`, and `playwright-processes count=0`. No staged artifact, report, trace, screenshot, video, temporary browser result, test server, or Playwright Chromium process remains.
+
+### Review-round verification
+
+```text
+npm run check:js
+  PASS — exit 0; 58 JavaScript/MJS files
+
+node --test tests/services/storage.test.js tests/presentation/flow-state.test.js
+  PASS — exit 0; 11/11, 0 failed/skipped/todo
+
+npm run build
+npm run check:dist
+  PASS — both exit 0; generated dist and verified its contract
+
+npx playwright test tests/e2e/recommendation-flow.spec.js --grep "keyboard navigation" --workers=1
+  PASS — exit 0; Chromium 1/1
+
+Markdown local-link + required-claim PowerShell check
+  PASS — exit 0; 7 documents, 4 local links, 0 missing; 16 required claims, 0 missing
+
+git diff --check
+git diff --exit-code -- index.html
+  PASS — no whitespace error; no production mutation remains
+```
+
+The earlier Task 12 full-gate evidence (Node 150/150 and Chromium 23/23) remains recorded above. This review-only test/document correction reran the changed keyboard scenario and directly relevant storage/flow tests; it did not rerun unrelated full suites. No push, pull request, deployment, merge, or external publication was performed in this review round.

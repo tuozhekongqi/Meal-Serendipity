@@ -25,6 +25,23 @@ function visibleAction(page, name) {
   return page.getByRole('button', { name, exact: true }).filter({ visible: true });
 }
 
+async function expectKeyboardFocus(locator, accessibleName) {
+  await expect(locator).toBeFocused();
+  await expect(locator).toHaveAccessibleName(accessibleName);
+}
+
+async function tabThroughPageHeader(page) {
+  const controls = [
+    [page.getByRole('link', { name: '跳到主要内容', exact: true }), '跳到主要内容'],
+    [page.getByRole('link', { name: 'Meal-Serendipity 首页', exact: true }), 'Meal-Serendipity 首页'],
+    [page.getByRole('button', { name: '数据说明', exact: true }), '数据说明']
+  ];
+  for (const [control, accessibleName] of controls) {
+    await page.keyboard.press('Tab');
+    await expectKeyboardFocus(control, accessibleName);
+  }
+}
+
 async function completeResponsiveSingleFlow(page, scene = '想吃点好的') {
   await page.getByLabel('1 人', { exact: true }).check();
   await visibleAction(page, '下一步').click();
@@ -135,30 +152,57 @@ for (const diningMode of ['一起吃共享菜', '每个人单独点', '主菜统
 
 test('keyboard navigation moves focus to each newly rendered step', async ({ page }) => {
   const oneDiner = page.getByLabel('1 人', { exact: true });
-  await oneDiner.focus();
+
+  await expect(page.locator('body')).toBeFocused();
+  await tabThroughPageHeader(page);
+  await page.keyboard.press('Tab');
+  await expectKeyboardFocus(oneDiner, '1 人');
   await page.keyboard.press('Space');
-  await desktopAction(page, '下一步').focus();
+  await expect(oneDiner).toBeChecked();
+  await expectKeyboardFocus(oneDiner, '1 人');
+  await page.keyboard.press('Tab');
+  await expectKeyboardFocus(desktopAction(page, '下一步'), '下一步');
   await page.keyboard.press('Enter');
   await expect(page.locator('#input-flow legend').first()).toBeFocused();
 
   const scene = page.getByLabel('快速解决', { exact: true });
-  await scene.focus();
+  await page.keyboard.press('Tab');
+  await expectKeyboardFocus(scene, '快速解决');
   await page.keyboard.press('Space');
-  await desktopAction(page, '下一步').focus();
+  await expect(scene).toBeChecked();
+  await expect(page.locator('body')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expectKeyboardFocus(scene, '快速解决');
+  await page.keyboard.press('Tab');
+  await expectKeyboardFocus(desktopAction(page, '返回'), '返回');
+  await page.keyboard.press('Tab');
+  await expectKeyboardFocus(desktopAction(page, '下一步'), '下一步');
+  await page.keyboard.press('Shift+Tab');
+  await expectKeyboardFocus(desktopAction(page, '返回'), '返回');
+  await page.keyboard.press('Tab');
+  await expectKeyboardFocus(desktopAction(page, '下一步'), '下一步');
   await page.keyboard.press('Enter');
-  await expect(page.locator('#input-flow legend').first()).toBeFocused();
+  const stepHeading = page.locator('#input-flow legend').first();
+  await expect(stepHeading).toBeFocused();
 
-  await desktopAction(page, '返回').focus();
-  await page.keyboard.press('Enter');
-  await expect(page.locator('#input-flow legend').first()).toBeFocused();
-
-  await page.getByLabel('快速解决', { exact: true }).focus();
+  const budget = page.getByLabel('尽量省一些', { exact: true });
+  await page.keyboard.press('Tab');
+  await expectKeyboardFocus(budget, '尽量省一些');
   await page.keyboard.press('Space');
-  await desktopAction(page, '下一步').focus();
-  await page.keyboard.press('Enter');
-  await page.getByLabel('日常预算', { exact: true }).focus();
-  await page.keyboard.press('Space');
-  await desktopAction(page, '生成推荐').focus();
+  await expect(budget).toBeChecked();
+  await expect(page.locator('body')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expectKeyboardFocus(budget, '尽量省一些');
+  for (const taste of ['辣', '咸鲜', '清淡', '酸', '甜', '浓郁']) {
+    await page.keyboard.press('Tab');
+    await expectKeyboardFocus(page.getByRole('button', { name: taste, exact: true }), taste);
+  }
+  await page.keyboard.press('Tab');
+  await expectKeyboardFocus(page.getByLabel(/需要避开的食材/), /需要避开的食材/);
+  await page.keyboard.press('Tab');
+  await expectKeyboardFocus(desktopAction(page, '返回'), '返回');
+  await page.keyboard.press('Tab');
+  await expectKeyboardFocus(desktopAction(page, '生成推荐'), '生成推荐');
   await page.keyboard.press('Enter');
   await expect(page.locator('[data-state="success"]')).toBeVisible();
   await expect(page.locator('#recommendation-title')).toBeFocused();
