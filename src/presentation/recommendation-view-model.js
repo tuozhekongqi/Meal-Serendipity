@@ -1,8 +1,31 @@
+import { SCENE_CATALOG } from '../domain/scenarios.js';
+
 const LIVE_TRADEOFF_BY_METRIC = Object.freeze({
   price: new Set(['budget_near_limit', 'estimated_total']),
   eta: new Set(['delivery_near_limit']),
   distance: new Set(['distance_near_limit'])
 });
+
+const PLACEHOLDER_IMAGE = Object.freeze({
+  src: './assets/dishes/placeholder.svg',
+  alt: '菜品灵感占位图',
+  kind: 'placeholder'
+});
+
+function safeInspirationImage(image) {
+  return image?.kind === 'dish-inspiration'
+    && /^\.\/assets\/dishes\/[a-z0-9-]+\.(?:webp|svg)$/.test(image.src)
+    ? { ...image }
+    : { ...PLACEHOLDER_IMAGE };
+}
+
+function partyLabel(partySize) {
+  return Number.isInteger(partySize) && partySize > 0 ? `${partySize} 人用餐` : null;
+}
+
+function sceneLabel(mealScene, scenarioCatalog) {
+  return scenarioCatalog.find(({ value }) => value === mealScene)?.label ?? null;
+}
 
 function uniqueNotices(notices = []) {
   const seen = new Set();
@@ -103,22 +126,29 @@ function actionFor(mode, candidate) {
   return { kind: 'copy', label: '复制菜名' };
 }
 
-function toCard(recommendation, mode) {
+function toCard(recommendation, mode, { partySize, mealScene, scenarioCatalog }) {
   const candidate = recommendation.candidate;
   return {
-    id: candidate.id,
+    identity: {
+      label: mode === 'inspiration' ? '菜品灵感 · 非实时商家信息' : '实时推荐'
+    },
+    image: safeInspirationImage(candidate.item.image),
     name: candidate.item.name,
-    description: candidate.item.description,
+    partyLabel: partyLabel(partySize),
+    sceneLabel: sceneLabel(mealScene, scenarioCatalog),
     tags: [...new Set([
       ...(candidate.item.categoryTags ?? []),
       ...(candidate.item.tasteTags ?? [])
     ])].slice(0, 4),
+    description: candidate.item.description,
+    reasons: [...(recommendation.reasons ?? [])],
+    passedConstraints: [...(recommendation.passedConstraints ?? [])],
+    tradeoffs: [...(recommendation.tradeoffs ?? [])],
+    action: actionFor(mode, candidate),
+    id: candidate.id,
     storeName: mode === 'live' ? candidate.store?.name ?? null : null,
     metrics: mode === 'live' ? liveMetrics(recommendation) : [],
     runway: mode === 'live' ? liveRunway(recommendation) : inspirationRunway(recommendation),
-    reasons: [...(recommendation.reasons ?? [])],
-    tradeoffs: [...(recommendation.tradeoffs ?? [])],
-    action: actionFor(mode, candidate)
   };
 }
 
@@ -151,22 +181,26 @@ export function createRecommendationViewModel({
   recommendation,
   alternatives = [],
   mode = recommendation?.candidate?.sourceMode ?? 'inspiration',
-  notices = []
+  notices = [],
+  partySize = null,
+  mealScene = null,
+  scenarioCatalog = SCENE_CATALOG
 }) {
   if (!recommendation?.candidate?.item) {
     throw new TypeError('A recommendation with a candidate item is required.');
   }
   const safeMode = mode === 'live' ? 'live' : 'inspiration';
   const primaryCandidate = recommendation.candidate;
+  const cardContext = { partySize, mealScene, scenarioCatalog };
   return {
     mode: {
       value: safeMode,
       label: safeMode === 'live' ? '实时推荐' : '菜品灵感',
       notices: uniqueNotices(notices)
     },
-    primary: toCard(recommendation, safeMode),
+    primary: toCard(recommendation, safeMode, cardContext),
     alternatives: alternatives.slice(0, 2).map((alternative) => ({
-      ...toCard(alternative, safeMode),
+      ...toCard(alternative, safeMode, cardContext),
       differenceLabel: safeMode === 'live'
         ? liveDifference(primaryCandidate, alternative.candidate)
         : inspirationDifference(primaryCandidate, alternative.candidate)

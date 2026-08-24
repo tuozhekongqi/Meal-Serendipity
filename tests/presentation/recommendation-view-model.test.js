@@ -13,7 +13,8 @@ function candidate({
   pricing = null,
   delivery = null,
   availability = null,
-  orderUrl = null
+  orderUrl = null,
+  image = null
 } = {}) {
   return {
     id,
@@ -24,6 +25,7 @@ function candidate({
       name,
       description: '番茄酸甜，牛腩软烂',
       imageUrl: null,
+      image,
       tasteTags: tastes,
       categoryTags: [category],
       allergenTags: [],
@@ -38,6 +40,79 @@ function candidate({
     metadata: {}
   };
 }
+
+test('uses an approved local dish image and labels the selected party and scene', () => {
+  const view = createRecommendationViewModel({
+    recommendation: recommendation({
+      candidate: candidate({
+        image: {
+          src: './assets/dishes/rice-bowl.webp',
+          alt: '番茄牛腩饭菜品灵感示意图',
+          kind: 'dish-inspiration'
+        }
+      })
+    }),
+    alternatives: [],
+    mode: 'inspiration',
+    notices: [],
+    partySize: 3,
+    mealScene: 'group_gathering'
+  });
+
+  assert.deepEqual(view.primary.image, {
+    src: './assets/dishes/rice-bowl.webp',
+    alt: '番茄牛腩饭菜品灵感示意图',
+    kind: 'dish-inspiration'
+  });
+  assert.deepEqual(view.primary.identity, { label: '菜品灵感 · 非实时商家信息' });
+  assert.equal(view.primary.partyLabel, '3 人用餐');
+  assert.equal(view.primary.sceneLabel, '一起聚餐');
+});
+
+test('uses a fresh neutral placeholder when a dish image is missing', () => {
+  const view = createRecommendationViewModel({
+    recommendation: recommendation(),
+    alternatives: [],
+    mode: 'inspiration',
+    notices: []
+  });
+  const secondView = createRecommendationViewModel({
+    recommendation: recommendation(),
+    alternatives: [],
+    mode: 'inspiration',
+    notices: []
+  });
+
+  assert.deepEqual(view.primary.image, {
+    src: './assets/dishes/placeholder.svg',
+    alt: '菜品灵感占位图',
+    kind: 'placeholder'
+  });
+  assert.notEqual(view.primary.image, secondView.primary.image);
+});
+
+test('rejects remote dish image URLs at the presentation boundary', () => {
+  const view = createRecommendationViewModel({
+    recommendation: recommendation({
+      candidate: candidate({
+        image: {
+          src: 'https://images.example.test/dish.webp',
+          alt: '不应暴露的远程图片',
+          kind: 'dish-inspiration'
+        }
+      })
+    }),
+    alternatives: [],
+    mode: 'inspiration',
+    notices: []
+  });
+
+  assert.deepEqual(view.primary.image, {
+    src: './assets/dishes/placeholder.svg',
+    alt: '菜品灵感占位图',
+    kind: 'placeholder'
+  });
+});
 
 function recommendation(overrides = {}) {
   return {
