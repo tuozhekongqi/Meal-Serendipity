@@ -155,3 +155,62 @@ test('uses a static budget-tier reason without claiming a live price', () => {
   assert.match(message, /预算档/);
   assert.doesNotMatch(message, /实时价格|附近|可下单|保证健康/);
 });
+
+test('individual taste reasons require a real preference match instead of generic scene traits', () => {
+  const candidate = {
+    ...makeLiveCandidate(),
+    sourceMode: 'inspiration',
+    store: null,
+    pricing: null,
+    delivery: null,
+    availability: null,
+    item: { ...makeLiveCandidate().item, tasteTags: ['甜'] }
+  };
+  const context = makeContext({ partySize: 2, tastePreferences: ['辣'] });
+  const unmatched = explainRecommendation(context, {
+    candidate,
+    score: 70,
+    components: { taste: 0, scenario: 1, budget: 1, group: 1 },
+    evidence: {
+      sceneReasonCode: 'individual_taste_match',
+      inspirationBudgetMatched: true,
+      diningModeMatched: true,
+      matchedTraits: ['convenient'],
+      taste: {
+        scope: 'individual',
+        matchedPreferences: [],
+        unmatchedPreferences: ['辣'],
+        matchedDinerCount: 0,
+        preferenceDinerCount: 1
+      }
+    }
+  }, ['exclusion']);
+
+  assert.equal(unmatched.reasonCodes.includes('individual_taste_match'), false);
+  assert.ok(unmatched.tradeoffs.some(({ code }) => code === 'taste_tradeoff'));
+
+  const matched = explainRecommendation(context, {
+    candidate: { ...candidate, item: { ...candidate.item, tasteTags: ['辣'] } },
+    score: 90,
+    components: { taste: 1, scenario: 1, budget: 1, group: 1 },
+    evidence: {
+      sceneReasonCode: 'individual_choice_match',
+      inspirationBudgetMatched: true,
+      diningModeMatched: true,
+      matchedTraits: ['convenient'],
+      taste: {
+        scope: 'individual',
+        matchedPreferences: ['辣'],
+        unmatchedPreferences: [],
+        matchedDinerCount: 1,
+        preferenceDinerCount: 1
+      }
+    }
+  }, ['exclusion']);
+
+  assert.ok(matched.reasonCodes.includes('individual_taste_match'));
+  assert.match(
+    matched.reasons.find(({ code }) => code === 'individual_taste_match').message,
+    /本人|个人/
+  );
+});

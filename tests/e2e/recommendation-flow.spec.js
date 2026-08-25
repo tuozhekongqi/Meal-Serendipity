@@ -75,10 +75,13 @@ test('party size is the first required decision and a single diner never sees di
   await expect(page.getByRole('group', { name: /用餐人数/ })).toBeVisible();
   for (const label of ['1 人', '2 人', '3 人', '4 人以上']) {
     await expect(page.getByLabel(label, { exact: true })).toBeVisible();
+    await expect(page.getByLabel(label, { exact: true })).not.toBeChecked();
   }
+  await expect(desktopAction(page, '下一步')).toBeDisabled();
   await expect(page.getByRole('group', { name: /用餐方式/ })).toHaveCount(0);
 
   await page.getByLabel('1 人', { exact: true }).check();
+  await expect(desktopAction(page, '下一步')).toBeEnabled();
   await desktopAction(page, '下一步').click();
   await expect(page.getByRole('group', { name: /用餐场景/ })).toBeVisible();
   await expect(page.getByRole('group', { name: /用餐方式/ })).toHaveCount(0);
@@ -137,75 +140,129 @@ for (const diningMode of ['一起吃共享菜', '每个人单独点', '主菜统
   test(`dining mode ${diningMode} composes a real two-diner result`, async ({ page }) => {
     await openMultiPreferences(page, diningMode);
     await page.getByLabel('日常预算', { exact: true }).check();
+    await page.getByRole('group', { name: '第 1 位食客偏好' }).getByRole('button', { name: '辣', exact: true }).click();
+    await page.getByRole('group', { name: '第 2 位食客偏好' }).getByRole('button', { name: '清淡', exact: true }).click();
     await desktopAction(page, '生成推荐').click();
 
-    await expect(page.locator('[data-state="success"]')).toBeVisible();
-    await expect(page.locator('#recommendation-title')).toBeVisible();
-    await expect(page.locator('.source-badge')).toHaveText('菜品灵感');
+    const result = page.locator('[data-state="success"]');
+    await expect(result).toBeVisible();
+    await expect(result.locator('#recommendation-title')).toBeVisible();
+    await expect(result.locator('.plan-primary')).toBeVisible();
+    await expect(result.locator('[data-primary-dish-image]')).toHaveCount(1);
+    await expect(result.locator('.plan-evidence').getByRole('heading', { name: '为什么推荐', exact: true })).toBeVisible();
+    await expect(result.locator('.plan-evidence').getByRole('heading', { name: '已通过的约束', exact: true })).toBeVisible();
+    await expect(result.locator('.plan-evidence').getByRole('heading', { name: '需要知道的取舍', exact: true })).toBeVisible();
+    await expect(result.locator('[data-alternative-id]')).toHaveCount(2);
+    await expect(result.locator('.source-badge')).toHaveText('菜品灵感');
     if (diningMode === '一起吃共享菜') {
-      const bundle = page.locator('.meal-plan-structure[data-plan-kind="shared_bundle"]');
+      const bundle = result.locator('.meal-plan-structure[data-plan-kind="shared_bundle"]');
       await expect(bundle).toBeVisible();
       await expect(bundle.locator('[data-serving-role]')).toHaveCount(2);
+      await expect(bundle.locator('.supporting-constraints')).toHaveCount(2);
+      await expect(bundle.locator('.supporting-tradeoffs')).toHaveCount(2);
+    } else if (diningMode === '每个人单独点') {
+      await expect(result).toHaveAttribute('data-plan-kind', 'individual_set');
+      await expect(result.locator('[data-diner-assignment]')).toHaveCount(2);
+      await expect(result.locator('.supporting-constraints')).toHaveCount(2);
+      await expect(result.locator('.supporting-tradeoffs')).toHaveCount(2);
+    } else if (diningMode === '主菜统一，口味各自不同') {
+      await expect(result).toHaveAttribute('data-plan-kind', 'same_cuisine_set');
+      await expect(result.locator('[data-diner-assignment]')).toHaveCount(2);
+      await expect(result.locator('.supporting-constraints')).toHaveCount(2);
+      await expect(result.locator('.supporting-tradeoffs')).toHaveCount(2);
+    } else {
+      await expect(result).toHaveAttribute('data-plan-kind', 'compromise');
+      await expect(result.locator('[data-alternative-id]').filter({ hasText: '共享菜组合' })).toHaveCount(1);
+      await expect(result.locator('[data-alternative-id]').filter({ hasText: '每个人单独点' })).toHaveCount(1);
     }
   });
 }
 
-test('keyboard navigation moves focus to each newly rendered step', async ({ page }) => {
-  const oneDiner = page.getByLabel('1 人', { exact: true });
+test('selecting a safe plan alternative promotes the complete direction locally', async ({ page }) => {
+  await openMultiPreferences(page, '每个人单独点');
+  await page.getByLabel('日常预算', { exact: true }).check();
+  await desktopAction(page, '生成推荐').click();
 
+  const result = page.locator('[data-state="success"]');
+  const primaryHero = result.locator('.plan-primary .recommendation-title-row h4');
+  const oldPrimaryName = (await primaryHero.textContent()).trim();
+  const selected = result.locator('[data-alternative-id]').first();
+  const selectedPlanId = await selected.getAttribute('data-alternative-id');
+  const selectedHeroName = await selected.locator('[data-alternative-hero-name]').getAttribute('data-alternative-hero-name');
+
+  await selected.click();
+
+  await expect(result.locator('.plan-primary .recommendation-title-row h4')).toHaveText(selectedHeroName);
+  await expect(result.locator('#recommendation-title')).toBeFocused();
+  await expect(result.locator(`[data-alternative-id="${selectedPlanId}"]`)).toHaveCount(0);
+  await expect(result.locator('[data-diner-assignment]')).toHaveCount(2);
+  await expect(result.locator('[data-alternative-hero-name]').first()).toHaveAttribute(
+    'data-alternative-hero-name',
+    oldPrimaryName
+  );
+});
+
+test('keyboard selections retain logical focus for non-default party size and multiple diner tastes', async ({ page }) => {
   await expect(page.locator('body')).toBeFocused();
   await tabThroughPageHeader(page);
   await page.keyboard.press('Tab');
-  await expectKeyboardFocus(oneDiner, '1 人');
+  await expectKeyboardFocus(page.getByLabel('1 人', { exact: true }), '1 人');
+
+  const threeDiners = page.getByLabel('3 人', { exact: true });
+  await threeDiners.focus();
   await page.keyboard.press('Space');
-  await expect(oneDiner).toBeChecked();
-  await expectKeyboardFocus(oneDiner, '1 人');
+  await expect(threeDiners).toBeChecked();
+  await expectKeyboardFocus(threeDiners, '3 人');
   await page.keyboard.press('Tab');
   await expectKeyboardFocus(desktopAction(page, '下一步'), '下一步');
   await page.keyboard.press('Enter');
   await expect(page.locator('#input-flow legend').first()).toBeFocused();
 
-  const scene = page.getByLabel('快速解决', { exact: true });
-  await page.keyboard.press('Tab');
-  await expectKeyboardFocus(scene, '快速解决');
+  const scene = page.getByLabel('口味不太一样', { exact: true });
+  await scene.focus();
   await page.keyboard.press('Space');
   await expect(scene).toBeChecked();
-  await expect(page.locator('body')).toBeFocused();
+  await expectKeyboardFocus(scene, '口味不太一样');
   await page.keyboard.press('Tab');
-  await expectKeyboardFocus(scene, '快速解决');
-  await page.keyboard.press('Tab');
-  await expectKeyboardFocus(desktopAction(page, '返回'), '返回');
-  await page.keyboard.press('Tab');
-  await expectKeyboardFocus(desktopAction(page, '下一步'), '下一步');
-  await page.keyboard.press('Shift+Tab');
   await expectKeyboardFocus(desktopAction(page, '返回'), '返回');
   await page.keyboard.press('Tab');
   await expectKeyboardFocus(desktopAction(page, '下一步'), '下一步');
   await page.keyboard.press('Enter');
-  const stepHeading = page.locator('#input-flow legend').first();
-  await expect(stepHeading).toBeFocused();
+  await expect(page.locator('#input-flow legend').first()).toBeFocused();
+
+  const diningMode = page.getByLabel('每个人单独点', { exact: true });
+  await diningMode.focus();
+  await page.keyboard.press('Space');
+  await expect(diningMode).toBeChecked();
+  await expectKeyboardFocus(diningMode, '每个人单独点');
+  await desktopAction(page, '下一步').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#input-flow legend').first()).toBeFocused();
 
   const budget = page.getByLabel('尽量省一些', { exact: true });
-  await page.keyboard.press('Tab');
-  await expectKeyboardFocus(budget, '尽量省一些');
+  await budget.focus();
   await page.keyboard.press('Space');
   await expect(budget).toBeChecked();
-  await expect(page.locator('body')).toBeFocused();
-  await page.keyboard.press('Tab');
   await expectKeyboardFocus(budget, '尽量省一些');
-  for (const taste of ['辣', '咸鲜', '清淡', '酸', '甜', '浓郁']) {
-    await page.keyboard.press('Tab');
-    await expectKeyboardFocus(page.getByRole('button', { name: taste, exact: true }), taste);
+
+  const dinerOne = page.getByRole('group', { name: '第 1 位食客偏好' });
+  const dinerTwo = page.getByRole('group', { name: '第 2 位食客偏好' });
+  for (const [region, taste] of [[dinerOne, '辣'], [dinerOne, '甜'], [dinerTwo, '清淡']]) {
+    const chip = region.getByRole('button', { name: taste, exact: true });
+    await chip.focus();
+    await page.keyboard.press('Space');
+    await expect(chip).toHaveAttribute('aria-pressed', 'true');
+    await expectKeyboardFocus(chip, taste);
+    await expect(page.locator('body')).not.toBeFocused();
   }
-  await page.keyboard.press('Tab');
-  await expectKeyboardFocus(page.getByLabel(/需要避开的食材/), /需要避开的食材/);
-  await page.keyboard.press('Tab');
-  await expectKeyboardFocus(desktopAction(page, '返回'), '返回');
-  await page.keyboard.press('Tab');
-  await expectKeyboardFocus(desktopAction(page, '生成推荐'), '生成推荐');
+
+  await desktopAction(page, '生成推荐').focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('[data-state="success"]')).toBeVisible();
   await expect(page.locator('#recommendation-title')).toBeFocused();
+
+  await page.getByRole('button', { name: '返回修改条件', exact: true }).first().click();
+  await expect(page.locator('#input-flow legend').first()).toBeFocused();
 });
 
 test('focus and lighter scenes change the deterministic result for the same fixed conditions', async ({ page }) => {
@@ -241,6 +298,20 @@ test('single result keeps visible reasons, image hierarchy, placeholder recovery
   await expect(page.locator('.source-badge')).toHaveText('菜品灵感');
   await expect(page.locator('.metric-grid')).toHaveCount(0);
   await expect(page.locator('.store-name')).toHaveCount(0);
+
+  const copyName = (await page.locator('#recommendation-title').textContent()).trim();
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        async writeText(value) {
+          document.documentElement.dataset.copiedDishName = value;
+        }
+      }
+    });
+  });
+  await page.locator('.result-actions').getByRole('button', { name: '复制菜名', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-copied-dish-name', copyName);
 
   const primaryImage = page.locator('[data-primary-dish-image]');
   const alternativeImages = page.locator('[data-alternative-dish-image]');
@@ -373,6 +444,7 @@ test('data dialog traps focus, closes with Escape, and returns focus to its trig
   const dialog = page.getByRole('dialog', { name: '数据与隐私说明' });
   await expect(dialog).toBeVisible();
   await expect(dialog).not.toContainText('马上推荐');
+  await expect(dialog).toContainText('多人逐人口味只用于本次推荐，不会汇总保存或发送给 Provider');
   const close = page.getByRole('button', { name: '关闭对话框' });
   const acknowledge = dialog.getByRole('button', { name: '知道了' });
   await expect(close).toBeFocused();
@@ -490,11 +562,26 @@ test('200 percent zoom-equivalent layout keeps controls reachable without overla
   await completeResponsiveSingleFlow(page, '想吃点好的');
   const controls = await page.locator('#mobile-actions .button:visible').evaluateAll((buttons) => buttons.map((button) => {
     const box = button.getBoundingClientRect();
-    return { left: box.left, right: box.right, width: box.width, height: box.height };
+    return {
+      left: box.left,
+      right: box.right,
+      top: box.top,
+      bottom: box.bottom,
+      width: box.width,
+      height: box.height
+    };
   }));
-  expect(controls.length).toBe(2);
+  expect(controls.length).toBe(3);
   expect(controls.every(({ left, right, width, height }) => left >= 0 && right <= 720 && width > 0 && height >= 44)).toBe(true);
-  expect(controls[0].right).toBeLessThanOrEqual(controls[1].left);
+  for (let left = 0; left < controls.length; left += 1) {
+    for (let right = left + 1; right < controls.length; right += 1) {
+      const horizontalOverlap = controls[left].left < controls[right].right
+        && controls[right].left < controls[left].right;
+      const verticalOverlap = controls[left].top < controls[right].bottom
+        && controls[right].top < controls[left].bottom;
+      expect(horizontalOverlap && verticalOverlap).toBe(false);
+    }
+  }
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });

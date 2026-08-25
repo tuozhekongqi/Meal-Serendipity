@@ -200,13 +200,15 @@
 - `TasteChips` / `ExclusionPicker`：具备可访问的选中状态。
 - `ContextSummary`：提交前用一句话汇总条件。
 
+阶段 3.7 当前流程使用更具体的输入契约：人数初始不预选，必填选择完成前下一步禁用；多人使用匿名食客槽位。单选与口味筹码触发局部重绘后，焦点按稳定控件 ID 回到刚操作的控件，不允许落到 `body`。只有前进、返回或结果切换才把焦点移动到新步骤或结果标题。
+
 ### 推荐与反馈
 
-- `RecommendationCard`：唯一主推荐。
+- `RecommendationCard`：唯一主推荐；多人模式用带真实英雄菜品的方案摘要承载主决定。
 - `DecisionRunway`：预算、ETA、距离、口味状态。
 - `ReasonList`：结构化原因，不展示算法内部权重。
 - `TradeoffNotice`：明确软条件取舍。
-- `AlternativeCard`：更快、更便宜、更新鲜。
+- `AlternativeCard`：单人承载安全菜品替代，多人承载完整方案替代；按钮文案“选为当前方案”必须实际整体提升该方向，不能只显示 toast。
 - `EmptyResult`：解释无候选并建议只放宽一个软条件。
 - `ModeNotice`：明确实时模式或灵感模式。
 - `PlatformHandoff`：平台跳转、复制关键词和失败后备。
@@ -242,6 +244,7 @@
 - 使用 `<main>`、唯一 `<h1>`、顺序正确的标题和真实 `<form>`。
 - 每个输入有可见 `<label>` 或等效可访问名称。
 - 选择按钮使用 `aria-pressed`，当前步骤/页面使用 `aria-current`。
+- 会替换输入子树的选择操作必须通过稳定控件身份恢复逻辑焦点；不能把单选或口味筹码变化后的 `body` 焦点当作预期行为。
 - 键盘焦点使用 3px `--color-focus` 环，不移除 outline 后只用颜色代替。
 - 对话框使用 `role="dialog"`、`aria-modal="true"`，支持 Escape、焦点锁定和关闭后焦点恢复。
 - 错误摘要与字段错误关联；重要状态使用 `aria-live`。

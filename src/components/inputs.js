@@ -119,7 +119,7 @@ function dinerRegion(state, draft, index) {
     <legend>第 ${index + 1} 位食客偏好</legend>
     <p class="field-help">匿名记录；口味最多选 3 个，避忌只用于本次推荐。</p>
     <div class="chip-list" aria-label="第 ${index + 1} 位食客口味">
-      ${TASTES.map((taste) => `<button class="choice-chip" type="button" data-diner-taste="${escapeHtml(taste)}" data-diner-id="${draft.id}" aria-pressed="${tastes.includes(taste)}">${escapeHtml(taste)}</button>`).join('')}
+      ${TASTES.map((taste, tasteIndex) => `<button id="taste-${draft.id}-${tasteIndex}" class="choice-chip" type="button" data-diner-taste="${escapeHtml(taste)}" data-diner-id="${draft.id}" aria-pressed="${tastes.includes(taste)}">${escapeHtml(taste)}</button>`).join('')}
     </div>
     <div class="field">
       <label for="${draft.id}-exclusions">需要避开的食材 <span class="optional-label">选填</span></label>

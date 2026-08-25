@@ -162,6 +162,38 @@ test('quick and celebration scenes choose different inspiration candidates from 
   assert.equal(celebration[0].candidate.id, 'inspiration:expressive-plate');
 });
 
+test('changing taste changes a real-scene ranking without erasing the shared scene signal', () => {
+  const spicy = {
+    ...convenientBowl,
+    id: 'inspiration:z-spicy-bowl',
+    item: { ...convenientBowl.item, id: 'z-spicy-bowl', tasteTags: ['辣'] }
+  };
+  const sweet = {
+    ...convenientBowl,
+    id: 'inspiration:a-sweet-bowl',
+    item: { ...convenientBowl.item, id: 'a-sweet-bowl', tasteTags: ['甜'] }
+  };
+  const base = {
+    mealScene: 'solo_quick',
+    inspirationBudgetTier: 'economy'
+  };
+
+  const spicyFirst = rankCandidates(
+    makeContext({ ...base, tastePreferences: ['辣'] }),
+    [sweet, spicy]
+  );
+  const sweetFirst = rankCandidates(
+    makeContext({ ...base, tastePreferences: ['甜'] }),
+    [sweet, spicy]
+  );
+
+  assert.equal(spicyFirst[0].candidate.id, 'inspiration:z-spicy-bowl');
+  assert.equal(sweetFirst[0].candidate.id, 'inspiration:a-sweet-bowl');
+  assert.equal(spicyFirst[0].components.taste, 1);
+  assert.equal(spicyFirst[1].components.taste, 0);
+  assert.equal(spicyFirst[0].components.scenario, spicyFirst[1].components.scenario);
+});
+
 test('save scene prefers matching static price tier without creating live pricing', () => {
   const tierFour = { ...expressivePlate, id: 'inspiration:tier-four', metadata: { ...expressivePlate.metadata, priceTier: 4 } };
   const tierOne = { ...convenientBowl, id: 'inspiration:tier-one', metadata: { ...convenientBowl.metadata, priceTier: 1 } };

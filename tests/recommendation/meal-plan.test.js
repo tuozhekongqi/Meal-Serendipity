@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { composeMealPlan } from '../../src/recommendation/meal-plan.js';
+import {
+  composeMealPlan,
+  mealPlanCandidateIds,
+  promoteMealPlanAlternative
+} from '../../src/recommendation/meal-plan.js';
 import {
   makeContext,
   makeInspirationCandidate,
@@ -17,7 +21,7 @@ const dinerProfiles = [
 
 test('single mode returns the literal top-ranked recommendation and context summary', () => {
   const plan = composeMealPlan(
-    makeContext({ mealScene: 'solo_quick', diningMode: null }),
+    makeContext({ mealScene: 'solo_quick', diningMode: null, tastePreferences: ['辣'] }),
     makeMealPlanCandidates(),
     { now: NOW }
   );
@@ -62,6 +66,25 @@ test('shared mode uses diner exclusion union and returns a literal complementary
   )));
   assert.equal(
     plan.items.some(({ recommendation }) => recommendation.candidate.id === 'inspiration:peanut-noodles'),
+    false
+  );
+});
+
+test('shared plan taste coverage is derived across all selected dishes and diners', () => {
+  const plan = composeMealPlan(makeContext({
+    partySize: 2,
+    tastePreferences: [],
+    mealScene: 'group_gathering',
+    diningMode: 'shared',
+    inspirationBudgetTier: 'everyday',
+    dinerProfiles: dinerProfiles.slice(0, 2)
+  }), makeMealPlanCandidates().slice(0, 2), { now: NOW });
+
+  assert.ok(plan.primary.planEvidence.reasons.some(({ code, message }) => (
+    code === 'plan_taste_coverage' && message.includes('2/2')
+  )));
+  assert.equal(
+    plan.primary.planEvidence.tradeoffs.some(({ code }) => code === 'plan_taste_gap'),
     false
   );
 });
@@ -127,7 +150,8 @@ test('shared mode degrades honestly when three safe candidates have only one ser
   assert.deepEqual(plan.diagnostics, {
     missingDinerIds: [],
     degradedFrom: 'shared_bundle',
-    reason: 'insufficient_complementary_roles'
+    reason: 'insufficient_complementary_roles',
+    alternativeShortageCount: 2
   });
 });
 
@@ -155,6 +179,54 @@ test('individual mode preserves diner ownership and removes candidates between l
     { dinerId: 'diner-2', id: 'inspiration:peanut-noodles' },
     { dinerId: 'diner-3', id: 'inspiration:savory-rice' }
   ]);
+});
+
+test('individual real-scene assignments change when diners exchange taste preferences', () => {
+  const spicy = makeInspirationCandidate({
+    id: 'inspiration:a-spicy',
+    item: { id: 'a-spicy', name: '香辣饭', tasteTags: ['辣'] },
+    metadata: {
+      servingRoles: ['individual-main'],
+      supportedDiningModes: ['individual'],
+      discoveryTraits: { convenient: 1, varietyFriendly: 1, stable: 1 }
+    }
+  });
+  const sweet = makeInspirationCandidate({
+    id: 'inspiration:b-sweet',
+    item: { id: 'b-sweet', name: '甜香饭', tasteTags: ['甜'] },
+    metadata: {
+      servingRoles: ['individual-main'],
+      supportedDiningModes: ['individual'],
+      discoveryTraits: { convenient: 1, varietyFriendly: 1, stable: 1 }
+    }
+  });
+  const contextFor = (firstTaste, secondTaste) => makeContext({
+    partySize: 2,
+    mealScene: 'group_individual',
+    diningMode: 'individual',
+    inspirationBudgetTier: 'everyday',
+    tastePreferences: [],
+    dinerProfiles: [
+      { id: 'diner-1', tastePreferences: [firstTaste], exclusions: [] },
+      { id: 'diner-2', tastePreferences: [secondTaste], exclusions: [] }
+    ]
+  });
+
+  const sweetThenSpicy = composeMealPlan(contextFor('甜', '辣'), [spicy, sweet], { now: NOW });
+  const spicyThenSweet = composeMealPlan(contextFor('辣', '甜'), [spicy, sweet], { now: NOW });
+
+  assert.deepEqual(
+    sweetThenSpicy.dinerAssignments.map(({ recommendation }) => recommendation.candidate.id),
+    ['inspiration:b-sweet', 'inspiration:a-spicy']
+  );
+  assert.deepEqual(
+    spicyThenSweet.dinerAssignments.map(({ recommendation }) => recommendation.candidate.id),
+    ['inspiration:a-spicy', 'inspiration:b-sweet']
+  );
+  assert.ok(sweetThenSpicy.dinerAssignments.every(({ recommendation }) => (
+    recommendation.components.taste === 1
+      && recommendation.reasonCodes.includes('individual_taste_match')
+  )));
 });
 
 test('shared-main-personal mode assigns literal unique dishes from the first safe cuisine', () => {
@@ -204,7 +276,8 @@ test('same-cuisine shortages degrade explicitly and never fill diners with dupli
   assert.deepEqual(plan.diagnostics, {
     missingDinerIds: ['diner-2', 'diner-3'],
     degradedFrom: 'same_cuisine_set',
-    reason: 'insufficient_same_cuisine_candidates'
+    reason: 'insufficient_same_cuisine_candidates',
+    alternativeShortageCount: 2
   });
 });
 
@@ -394,8 +467,182 @@ test('individual shortages preserve null ownership instead of silently duplicati
   assert.deepEqual(plan.diagnostics, {
     missingDinerIds: ['diner-3'],
     degradedFrom: 'individual_set',
-    reason: 'insufficient_unique_candidates'
+    reason: 'insufficient_unique_candidates',
+    alternativeShortageCount: 2
   });
+});
+
+function directionCandidateIds(direction) {
+  return [
+    direction.hero?.candidate.id,
+    ...(direction.items ?? []).map(({ recommendation }) => recommendation?.candidate.id),
+    ...(direction.dinerAssignments ?? []).map(({ recommendation }) => recommendation?.candidate.id)
+  ].filter(Boolean);
+}
+
+test('individual mode returns a labelled primary plan and two disjoint plan alternatives when supply permits', () => {
+  const context = makeContext({
+    partySize: 2,
+    mealScene: 'group_individual',
+    diningMode: 'individual',
+    inspirationBudgetTier: 'everyday',
+    tastePreferences: [],
+    dinerProfiles: dinerProfiles.slice(0, 2)
+  });
+
+  const plan = composeMealPlan(context, makeMealPlanCandidates(), { now: NOW });
+
+  assert.equal(plan.primary.planKind, 'individual_set');
+  assert.equal(plan.primary.title, '每个人单独点');
+  assert.equal(plan.primary.hero.candidate.id, plan.primary.candidate.id);
+  assert.equal(plan.primary.dinerAssignments.length, 2);
+  assert.ok(plan.primary.planEvidence.reasons.length > 0);
+  assert.ok(plan.primary.planEvidence.passedConstraints.includes('exclusion'));
+  assert.equal(plan.alternatives.length, 2);
+  assert.ok(plan.alternatives.every((alternative) => (
+    alternative.planKind === 'individual_set'
+      && alternative.dinerAssignments.length === 2
+      && alternative.hero?.candidate?.item
+  )));
+
+  const directionSets = [plan.primary, ...plan.alternatives].map((direction) => (
+    new Set(directionCandidateIds(direction))
+  ));
+  for (let left = 0; left < directionSets.length; left += 1) {
+    for (let right = left + 1; right < directionSets.length; right += 1) {
+      assert.equal([...directionSets[left]].some((id) => directionSets[right].has(id)), false);
+    }
+  }
+});
+
+test('same-cuisine mode returns full plan alternatives rather than raw dish alternatives', () => {
+  const candidates = makeMealPlanCandidates().map((candidate, index) => ({
+    ...candidate,
+    id: `inspiration:cuisine-${index + 1}`,
+    item: { ...candidate.item, id: `cuisine-${index + 1}`, name: `菜系菜 ${index + 1}` },
+    metadata: { ...candidate.metadata, cuisineTags: ['家常'] }
+  }));
+  const plan = composeMealPlan(makeContext({
+    partySize: 2,
+    mealScene: 'group_mixed_taste',
+    diningMode: 'shared_main_personal',
+    inspirationBudgetTier: 'everyday',
+    tastePreferences: [],
+    dinerProfiles: dinerProfiles.slice(0, 2)
+  }), candidates, { now: NOW });
+
+  assert.equal(plan.primary.planKind, 'same_cuisine_set');
+  assert.equal(plan.primary.title, '同菜系不同菜');
+  assert.equal(plan.primary.dinerAssignments.length, 2);
+  assert.equal(plan.alternatives.length, 2);
+  assert.ok(plan.alternatives.every((alternative) => (
+    alternative.planKind === 'same_cuisine_set'
+      && alternative.dinerAssignments.length === 2
+      && new Set(alternative.dinerAssignments.map(({ recommendation }) => (
+        recommendation.candidate.metadata.cuisineTags[0]
+      ))).size === 1
+  )));
+});
+
+test('plan alternative shortages are explicit and never filled with duplicate directions', () => {
+  const candidates = makeMealPlanCandidates().slice(0, 2);
+  const plan = composeMealPlan(makeContext({
+    partySize: 2,
+    mealScene: 'group_individual',
+    diningMode: 'individual',
+    inspirationBudgetTier: 'everyday',
+    tastePreferences: [],
+    dinerProfiles: dinerProfiles.slice(0, 2)
+  }), candidates, { now: NOW });
+
+  assert.equal(plan.primary.planKind, 'individual_set');
+  assert.deepEqual(plan.alternatives, []);
+  assert.equal(plan.diagnostics.alternativeShortageCount, 2);
+  assert.equal(new Set(directionCandidateIds(plan.primary)).size, 2);
+});
+
+test('undecided mode offers actual shared and individual plan directions', () => {
+  const plan = composeMealPlan(makeContext({
+    partySize: 2,
+    mealScene: 'group_mixed_taste',
+    diningMode: 'undecided',
+    inspirationBudgetTier: 'everyday',
+    tastePreferences: [],
+    dinerProfiles: dinerProfiles.slice(0, 2)
+  }), makeMealPlanCandidates(), { now: NOW });
+
+  assert.equal(plan.primary.planKind, 'compromise');
+  assert.deepEqual(plan.alternatives.map(({ planKind }) => planKind), [
+    'shared_bundle',
+    'individual_set'
+  ]);
+  assert.equal(plan.alternatives[0].items.length, 2);
+  assert.equal(plan.alternatives[1].dinerAssignments.length, 2);
+  assert.ok(plan.alternatives.every(({ hero }) => hero?.candidate?.item));
+
+  const directionSets = [plan.primary, ...plan.alternatives].map((direction) => (
+    new Set(directionCandidateIds(direction))
+  ));
+  for (let left = 0; left < directionSets.length; left += 1) {
+    for (let right = left + 1; right < directionSets.length; right += 1) {
+      assert.equal([...directionSets[left]].some((id) => directionSets[right].has(id)), false);
+    }
+  }
+});
+
+test('undecided shortages do not fabricate duplicate plan alternatives', () => {
+  const plan = composeMealPlan(makeContext({
+    partySize: 2,
+    mealScene: 'group_mixed_taste',
+    diningMode: 'undecided',
+    inspirationBudgetTier: 'everyday',
+    tastePreferences: [],
+    dinerProfiles: dinerProfiles.slice(0, 2)
+  }), makeMealPlanCandidates().slice(0, 1), { now: NOW });
+
+  assert.equal(plan.primary.planKind, 'compromise');
+  assert.deepEqual(plan.alternatives, []);
+  assert.equal(plan.diagnostics.alternativeShortageCount, 2);
+});
+
+test('promoting an alternative rotates complete plan directions without mutation', () => {
+  const plan = composeMealPlan(makeContext({
+    partySize: 2,
+    mealScene: 'group_individual',
+    diningMode: 'individual',
+    inspirationBudgetTier: 'everyday',
+    tastePreferences: [],
+    dinerProfiles: dinerProfiles.slice(0, 2)
+  }), makeMealPlanCandidates(), { now: NOW });
+  const originalPrimaryId = plan.primary.planId;
+  const selected = plan.alternatives[0];
+
+  const promoted = promoteMealPlanAlternative(plan, selected.planId);
+
+  assert.notEqual(promoted, plan);
+  assert.equal(plan.primary.planId, originalPrimaryId);
+  assert.equal(promoted.primary.planId, selected.planId);
+  assert.equal(promoted.alternatives[0].planId, originalPrimaryId);
+  assert.deepEqual(promoted.dinerAssignments, promoted.primary.dinerAssignments);
+  assert.deepEqual(promoted.items, promoted.primary.items);
+  assert.equal(promoted.kind, promoted.primary.planKind);
+  assert.deepEqual(promoted.diagnostics, promoted.primary.diagnostics);
+});
+
+test('mealPlanCandidateIds returns every unique candidate represented by complete directions', () => {
+  const plan = composeMealPlan(makeContext({
+    partySize: 2,
+    mealScene: 'group_mixed_taste',
+    diningMode: 'undecided',
+    inspirationBudgetTier: 'everyday',
+    tastePreferences: [],
+    dinerProfiles: dinerProfiles.slice(0, 2)
+  }), makeMealPlanCandidates(), { now: NOW });
+  const expected = [...new Set(
+    [plan.primary, ...plan.alternatives].flatMap(directionCandidateIds)
+  )];
+
+  assert.deepEqual(mealPlanCandidateIds(plan), expected);
 });
 
 test('composeMealPlan keeps time injection mandatory through recommend', () => {

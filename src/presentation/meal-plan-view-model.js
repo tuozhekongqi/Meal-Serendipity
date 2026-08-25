@@ -36,12 +36,66 @@ function card(recommendation, mode, contextSummary) {
 }
 
 function diagnosticsView(diagnostics = {}) {
-  return {
+  const view = {
     missingDinerIds: Array.isArray(diagnostics.missingDinerIds)
       ? [...diagnostics.missingDinerIds]
       : [],
     degradedFrom: typeof diagnostics.degradedFrom === 'string' ? diagnostics.degradedFrom : null,
     reason: typeof diagnostics.reason === 'string' ? diagnostics.reason : null
+  };
+  return Number.isInteger(diagnostics.alternativeShortageCount)
+    ? { ...view, alternativeShortageCount: Math.max(0, diagnostics.alternativeShortageCount) }
+    : view;
+}
+
+function assignmentViews(assignments, mode, contextSummary) {
+  return (assignments ?? []).map(({ dinerId, recommendation }, index) => ({
+    dinerId,
+    ownerLabel: `第 ${index + 1} 位`,
+    card: card(recommendation, mode, contextSummary)
+  }));
+}
+
+function bundleViews(items, mode, contextSummary) {
+  return (items ?? []).map(({ role, recommendation }) => ({
+    role,
+    card: card(recommendation, mode, contextSummary)
+  }));
+}
+
+function evidenceView(evidence = {}) {
+  return {
+    reasons: Array.isArray(evidence.reasons) ? [...evidence.reasons] : [],
+    passedConstraints: Array.isArray(evidence.passedConstraints)
+      ? [...evidence.passedConstraints]
+      : [],
+    tradeoffs: Array.isArray(evidence.tradeoffs) ? [...evidence.tradeoffs] : []
+  };
+}
+
+function planSummaryView(direction) {
+  if (!direction?.planKind || direction.planKind === 'single') return null;
+  return {
+    planId: direction.planId,
+    title: direction.title,
+    summary: direction.summary,
+    ...evidenceView(direction.planEvidence)
+  };
+}
+
+function alternativeView(direction, mode, contextSummary) {
+  if (!direction?.planKind) return card(direction, mode, contextSummary);
+  return {
+    planId: direction.planId,
+    kind: direction.planKind,
+    title: direction.title,
+    summary: direction.summary,
+    differenceLabel: direction.differenceLabel,
+    hero: card(direction.hero, mode, contextSummary),
+    planSummary: planSummaryView(direction),
+    bundleItems: bundleViews(direction.items, mode, contextSummary),
+    assignments: assignmentViews(direction.dinerAssignments, mode, contextSummary),
+    diagnostics: diagnosticsView(direction.diagnostics)
   };
 }
 
@@ -51,29 +105,23 @@ export function createMealPlanViewModel({ plan, mode = 'inspiration', notices = 
   }
 
   const contextSummary = plan.contextSummary ?? {};
-  const primary = card(plan.primary, mode, contextSummary);
-  const alternatives = (plan.alternatives ?? []).slice(0, 2).map((alternative) => card(
-    alternative,
-    mode,
-    contextSummary
-  ));
+  const primaryDirection = plan.primary ?? null;
+  const primary = card(primaryDirection?.hero ?? primaryDirection, mode, contextSummary);
+  const items = primaryDirection?.items ?? plan.items ?? [];
+  const assignments = primaryDirection?.dinerAssignments ?? plan.dinerAssignments ?? [];
 
   return {
-    kind: plan.kind,
+    kind: primaryDirection?.planKind ?? plan.kind,
     mode: modeView(mode, notices),
     partyLabel: partyLabel(contextSummary.partySize),
     sceneLabel: sceneLabel(contextSummary.mealScene),
     primary,
-    alternatives,
-    bundleItems: (plan.items ?? []).map(({ role, recommendation }) => ({
-      role,
-      card: card(recommendation, mode, contextSummary)
-    })),
-    assignments: (plan.dinerAssignments ?? []).map(({ dinerId, recommendation }, index) => ({
-      dinerId,
-      ownerLabel: `第 ${index + 1} 位`,
-      card: card(recommendation, mode, contextSummary)
-    })),
-    diagnostics: diagnosticsView(plan.diagnostics)
+    planSummary: planSummaryView(primaryDirection),
+    alternatives: (plan.alternatives ?? []).slice(0, 2).map((alternative) => (
+      alternativeView(alternative, mode, contextSummary)
+    )),
+    bundleItems: bundleViews(items, mode, contextSummary),
+    assignments: assignmentViews(assignments, mode, contextSummary),
+    diagnostics: diagnosticsView(primaryDirection?.diagnostics ?? plan.diagnostics)
   };
 }

@@ -104,19 +104,38 @@ function contextSummary(viewModel, card) {
   return labels.length ? `<p class="result-context-summary">${labels.map(escapeHtml).join(' · ')}</p>` : '';
 }
 
-function primaryCard(card) {
+function evidenceGrid(card, className = '') {
+  return `<div class="reason-grid${className ? ` ${className}` : ''}">
+    ${evidenceBlock('为什么推荐', reasonMessages(card), { emptyMessage: '暂无额外推荐理由。' })}
+    ${evidenceBlock('已通过的约束', constraintMessages(card), { className: 'passed', emptyMessage: '暂无额外约束说明。' })}
+    ${evidenceBlock('需要知道的取舍', tradeoffMessages(card), { className: 'tradeoff', emptyMessage: '没有额外取舍。' })}
+  </div>`;
+}
+
+function primaryCard(card, {
+  headingTag = 'h3',
+  headingId = 'recommendation-title',
+  includeEvidence = true
+} = {}) {
   if (!card) return '';
+  const headingAttributes = headingId ? ` id="${headingId}" tabindex="-1"` : '';
   return `${imageMarkup(card.image, 'primary')}
-    <div class="recommendation-title-row"><div><h3 id="recommendation-title" tabindex="-1">${escapeHtml(card.name)}</h3>${card.storeName ? `<p class="store-name">${escapeHtml(card.storeName)}</p>` : ''}</div></div>
+    <div class="recommendation-title-row"><div><${headingTag}${headingAttributes}>${escapeHtml(card.name)}</${headingTag}>${card.storeName ? `<p class="store-name">${escapeHtml(card.storeName)}</p>` : ''}</div></div>
     <div class="primary-card-labels">${card.partyLabel ? `<span>${escapeHtml(card.partyLabel)}</span>` : ''}${card.sceneLabel ? `<span>${escapeHtml(card.sceneLabel)}</span>` : ''}</div>
     <div class="tag-list" aria-label="菜品标签">${(card.tags ?? []).map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}</div>
     <p class="dish-description">${escapeHtml(card.description)}</p>
     ${metrics(card.metrics)}
-    <div class="reason-grid">
-      ${evidenceBlock('为什么推荐', reasonMessages(card), { emptyMessage: '暂无额外推荐理由。' })}
-      ${evidenceBlock('已通过的约束', constraintMessages(card), { className: 'passed', emptyMessage: '暂无额外约束说明。' })}
-      ${evidenceBlock('需要知道的取舍', tradeoffMessages(card), { className: 'tradeoff', emptyMessage: '没有额外取舍。' })}
-    </div>`;
+    ${includeEvidence ? evidenceGrid(card) : ''}`;
+}
+
+function planPrimaryCard(card, planSummary) {
+  if (!card || !planSummary) return '';
+  return `<section class="plan-primary" aria-labelledby="recommendation-title">
+    <h3 id="recommendation-title" tabindex="-1">${escapeHtml(planSummary.title)}</h3>
+    <p class="plan-summary-copy">${escapeHtml(planSummary.summary)}</p>
+    ${primaryCard(card, { headingTag: 'h4', headingId: null, includeEvidence: false })}
+    ${evidenceGrid(planSummary, 'plan-evidence')}
+  </section>`;
 }
 
 function supportingCard(card, heading) {
@@ -125,12 +144,16 @@ function supportingCard(card, heading) {
     <p>暂时没有符合全部条件的菜品。</p>
   </article>`;
   const reasons = reasonMessages(card);
+  const constraints = constraintMessages(card);
+  const tradeoffs = tradeoffMessages(card);
   return `<article class="supporting-meal-card">
     ${heading ? `<h5>${escapeHtml(heading)}</h5>` : ''}
     ${imageMarkup(card.image, 'supporting')}
     ${heading ? `<h6>${escapeHtml(card.name)}</h6>` : `<h5>${escapeHtml(card.name)}</h5>`}
     <p>${escapeHtml(card.description)}</p>
     <section class="supporting-reasons"><strong>为什么推荐</strong>${reasons.length ? textList(reasons) : '<p>暂无额外推荐理由。</p>'}</section>
+    <section class="supporting-constraints"><strong>已通过的约束</strong>${constraints.length ? textList(constraints, 'passed') : '<p>暂无额外约束说明。</p>'}</section>
+    <section class="supporting-tradeoffs"><strong>需要知道的取舍</strong>${tradeoffs.length ? textList(tradeoffs, 'tradeoff') : '<p>没有额外取舍。</p>'}</section>
   </article>`;
 }
 
@@ -190,13 +213,29 @@ function alternatives(items = []) {
   if (!visible.length) return '';
   return `<section class="alternatives-section" aria-labelledby="alternatives-title">
     <div class="alternatives-heading"><h3 id="alternatives-title">如果想换</h3></div>
-    <div class="alternatives-list">${visible.map((item) => `<button class="alternative-card" type="button" data-alternative-id="${escapeHtml(item.id)}">
-      ${imageMarkup(item.image, 'alternative')}
-      <span><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml((item.tags ?? []).slice(0, 2).join(' · '))}</span></span>
-      <span class="alternative-label">${escapeHtml(item.differenceLabel ?? '另一个合适选择')}</span>
-      ${reasonMessages(item).length ? `<span class="alternative-reasons">${reasonMessages(item).map(escapeHtml).join('；')}</span>` : ''}
-    </button>`).join('')}</div>
+    <div class="alternatives-list">${visible.map((item) => {
+      const hero = item.hero ?? item;
+      const alternativeId = item.planId ?? item.id;
+      const title = item.title ?? hero.name;
+      const detail = item.planId && item.kind !== 'single'
+        ? [hero.name, item.summary].filter(Boolean).join(' · ')
+        : item.summary ?? (hero.tags ?? []).slice(0, 2).join(' · ');
+      return `<button class="alternative-card" type="button" data-alternative-id="${escapeHtml(alternativeId)}">
+        ${imageMarkup(hero.image, 'alternative')}
+        <span><strong>${escapeHtml(title)}</strong><span data-alternative-hero-name="${escapeHtml(hero.name)}">${escapeHtml(detail)}</span></span>
+        <span class="alternative-label">${escapeHtml(item.differenceLabel ?? '另一个合适选择')}</span>
+        ${reasonMessages(hero).length ? `<span class="alternative-reasons">${reasonMessages(hero).map(escapeHtml).join('；')}</span>` : ''}
+        <span class="alternative-action">选为当前方案</span>
+      </button>`;
+    }).join('')}</div>
   </section>`;
+}
+
+function alternativeShortageMarkup(diagnostics = {}) {
+  const missing = diagnostics.alternativeShortageCount ?? 0;
+  if (missing <= 0) return '';
+  const available = 2 - missing;
+  return `<p class="alternative-shortage" role="note">安全候选只足够提供 ${available} 个完整替代方案；未使用重复菜品补足。</p>`;
 }
 
 function firstAvailableCard(viewModel) {
@@ -224,7 +263,8 @@ function attachSafeImageFallback(root) {
 export function renderRecommendation(root, viewModel, {
   onSwap = () => {},
   onBack = () => {},
-  onAlternative = () => {}
+  onAlternative = () => {},
+  onPrimaryAction = () => {}
 } = {}) {
   const leadCard = firstAvailableCard(viewModel);
   const mode = viewModel.mode ?? { value: 'inspiration', label: '菜品灵感' };
@@ -236,14 +276,19 @@ export function renderRecommendation(root, viewModel, {
       <span class="source-badge ${mode.value === 'live' ? 'live' : ''}">${escapeHtml(mode.label)}</span>
     </div>
     ${contextSummary(viewModel, leadCard)}
-    ${viewModel.primary ? primaryCard(viewModel.primary) : `<h3 id="recommendation-title" tabindex="-1">${escapeHtml(planTitle)}</h3>`}
+    ${viewModel.planSummary
+      ? planPrimaryCard(viewModel.primary, viewModel.planSummary)
+      : viewModel.primary ? primaryCard(viewModel.primary) : `<h3 id="recommendation-title" tabindex="-1">${escapeHtml(planTitle)}</h3>`}
     ${multiPersonMarkup(viewModel)}
     <div class="result-actions">
-      <button class="button button-primary" type="button" data-result-action="swap">换一个</button>
+      ${leadCard?.action?.label ? `<button class="button button-primary" type="button" data-result-action="primary">${escapeHtml(leadCard.action.label)}</button>` : ''}
+      <button class="button button-secondary" type="button" data-result-action="swap">换一个</button>
       <button class="button button-secondary" type="button" data-result-action="back">返回修改条件</button>
     </div>
+    ${alternativeShortageMarkup(viewModel.diagnostics)}
     ${alternatives(viewModel.alternatives)}
   </article>`;
+  root.querySelector('[data-result-action="primary"]')?.addEventListener('click', () => onPrimaryAction(leadCard));
   root.querySelector('[data-result-action="swap"]')?.addEventListener('click', onSwap);
   root.querySelector('[data-result-action="back"]')?.addEventListener('click', onBack);
   root.querySelectorAll('[data-alternative-id]').forEach((button) => button.addEventListener('click', () => onAlternative(button.dataset.alternativeId)));

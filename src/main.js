@@ -2,7 +2,11 @@ import { PROVIDER_CONFIG } from './config.js';
 import { MEAL_SCENE } from './domain/scenarios.js';
 import { FallbackCandidateProvider } from './providers/candidate-provider.js';
 import { InspirationCandidateProvider } from './providers/inspiration-provider.js';
-import { composeMealPlan } from './recommendation/meal-plan.js';
+import {
+  composeMealPlan,
+  mealPlanCandidateIds,
+  promoteMealPlanAlternative
+} from './recommendation/meal-plan.js';
 import { createPreferenceStorage } from './services/storage.js';
 import { clearLegacySensitiveStorage } from './services/legacy-storage.js';
 import {
@@ -108,25 +112,23 @@ function resetRecommendationSession() {
   excludedCandidateIds = [];
 }
 
-function aggregateDinerTastes(dinerDrafts) {
-  return [...new Set(dinerDrafts.flatMap(({ tastePreferences }) => tastePreferences))].slice(0, 10);
+function activeInputControlId() {
+  const active = document.activeElement;
+  return active instanceof HTMLElement && roots.input.contains(active) && active.id
+    ? active.id
+    : null;
+}
+
+function restoreInputControlFocus(controlId) {
+  if (!controlId) return;
+  document.getElementById(controlId)?.focus({ preventScroll: true });
 }
 
 function dispatch(event, { render = true } = {}) {
+  const controlId = render && CONDITION_EVENTS.has(event.type)
+    ? activeInputControlId()
+    : null;
   state = transitionFlow(state, event);
-
-  if (['update_diner_draft', 'set_diner_draft'].includes(event.type)) {
-    state = transitionFlow(state, {
-      type: 'set_tastes',
-      value: aggregateDinerTastes(state.dinerDrafts)
-    });
-    if (state.partySize === 1) {
-      state = transitionFlow(state, {
-        type: 'set_exclusions',
-        value: state.dinerDrafts[0]?.exclusions ?? []
-      });
-    }
-  }
 
   if (CONDITION_EVENTS.has(event.type) || event.type === 'edit_step') {
     resetRecommendationSession();
@@ -135,7 +137,11 @@ function dispatch(event, { render = true } = {}) {
 
   if (render) {
     renderApplication();
-    if (FOCUS_STEP_EVENTS.has(event.type)) focusCurrentStep();
+    if (FOCUS_STEP_EVENTS.has(event.type)) {
+      focusCurrentStep();
+    } else {
+      restoreInputControlFocus(controlId);
+    }
   }
 }
 
@@ -169,8 +175,12 @@ function renderEditingState() {
   </div>`;
 }
 
-function mobileResultActions() {
-  roots.mobileActions.innerHTML = '<button type="button" class="button button-primary" data-mobile-result="swap">换一个</button><button type="button" class="button button-secondary" data-mobile-result="back">返回修改条件</button>';
+function mobileResultActions(viewModel) {
+  const primaryAction = viewModel.primary?.action?.label
+    ? `<button type="button" class="button button-primary" data-mobile-result="primary">${escapeHtml(viewModel.primary.action.label)}</button>`
+    : '';
+  roots.mobileActions.innerHTML = `${primaryAction}<button type="button" class="button button-secondary" data-mobile-result="swap">换一个</button><button type="button" class="button button-secondary" data-mobile-result="back">返回修改条件</button>`;
+  roots.mobileActions.querySelector('[data-mobile-result="primary"]')?.addEventListener('click', () => handlePrimaryAction(viewModel.primary));
   roots.mobileActions.querySelector('[data-mobile-result="swap"]')?.addEventListener('click', swapRecommendation);
   roots.mobileActions.querySelector('[data-mobile-result="back"]')?.addEventListener('click', () => editStep(FLOW_STEP.PREFERENCES));
 }
@@ -182,10 +192,11 @@ function renderMealPlan(viewModel, { focus = true } = {}) {
   const card = renderRecommendation(roots.result, viewModel, {
     onSwap: swapRecommendation,
     onBack: () => editStep(FLOW_STEP.PREFERENCES),
-    onAlternative: () => showToast(roots.toast, '可用“换一个”重新组合整个用餐方案')
+    onAlternative: selectAlternative,
+    onPrimaryAction: handlePrimaryAction
   });
   renderFeedback(card, handleFeedback);
-  mobileResultActions();
+  mobileResultActions(viewModel);
 
   if (focus) {
     roots.result.querySelector('#recommendation-title')?.focus({ preventScroll: true });
@@ -234,15 +245,6 @@ function renderApplication() {
   renderResult();
 }
 
-function visibleCandidateIds(viewModel) {
-  return [...new Set([
-    viewModel.primary?.id,
-    ...viewModel.alternatives.map(({ id }) => id),
-    ...viewModel.bundleItems.map(({ card }) => card?.id),
-    ...viewModel.assignments.map(({ card }) => card?.id)
-  ].filter(Boolean))];
-}
-
 function addExcludedCandidates(ids) {
   excludedCandidateIds = [...new Set([...excludedCandidateIds, ...ids])];
 }
@@ -253,7 +255,7 @@ function storageInput(context, recentHistory) {
     totalBudgetCents: context.totalBudgetCents,
     maxDistanceMeters: context.maxDistanceMeters,
     maxDeliveryMinutes: context.maxDeliveryMinutes,
-    tastePreferences: context.tastePreferences,
+    tastePreferences: context.partySize === 1 ? context.tastePreferences : [],
     currentPriority: context.currentPriority,
     recentHistory,
     contextTags: context.contextTags,
@@ -276,7 +278,29 @@ function planFromCandidates(context, response) {
     mode: response.mode,
     notices: response.notices
   });
-  return { plan, viewModel, ids: visibleCandidateIds(viewModel) };
+  return { plan, viewModel, ids: mealPlanCandidateIds(plan) };
+}
+
+function selectAlternative(planId) {
+  const currentPlan = state.result?.plan;
+  const currentViewModel = state.result?.viewModel;
+  if (!currentPlan || !currentViewModel) return;
+
+  const plan = promoteMealPlanAlternative(currentPlan, planId);
+  if (plan === currentPlan) {
+    showToast(roots.toast, '这个替代方案已不可用');
+    return;
+  }
+
+  const viewModel = createMealPlanViewModel({
+    plan,
+    mode: currentViewModel.mode.value,
+    notices: currentViewModel.mode.notices
+  });
+  dispatch({
+    type: 'request_succeeded',
+    result: { plan, viewModel }
+  });
 }
 
 async function requestRecommendation() {
@@ -364,6 +388,7 @@ async function copyDishName(name) {
 }
 
 function handlePrimaryAction(primary) {
+  if (!primary?.action) return;
   if (primary.action.kind === 'order' && primary.action.url) {
     window.open(primary.action.url, '_blank', 'noopener,noreferrer');
     return;
@@ -402,7 +427,7 @@ roots.dataInfo.addEventListener('click', () => dialog.open({
   title: '数据与隐私说明',
   trigger: roots.dataInfo,
   bodyHtml: `<p>当前版本只使用仓库内的 175 条静态菜品作为灵感，不代表附近真实可下单的商家。</p>
-    <ul><li>不展示实时价格、距离、ETA、营业或库存。</li><li>不请求或保存精确位置。</li><li>忌口原文只在本次页面中使用，刷新后不会恢复。</li><li>非敏感口味、人数和近期选择可保存在浏览器本地。</li></ul>
+    <ul><li>不展示实时价格、距离、ETA、营业或库存。</li><li>不请求或保存精确位置。</li><li>忌口原文只在本次页面中使用，刷新后不会恢复。</li><li>多人逐人口味只用于本次推荐，不会汇总保存或发送给 Provider。</li><li>合法单人口味、人数和近期选择可保存在浏览器本地。</li></ul>
     <p>接入经确认的实时 Provider 后，界面才会展示由数据源实际提供的字段。</p>`
 }));
 

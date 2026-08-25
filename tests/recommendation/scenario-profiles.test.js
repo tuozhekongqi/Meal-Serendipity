@@ -15,17 +15,24 @@ test('every approved scene has normalized scoring weights and a theme', () => {
       Object.values(profile.scoreWeights).reduce((sum, value) => sum + value, 0),
       100
     );
+    assert.ok(profile.scoreWeights.taste > 0, `${scene} must score explicit taste evidence`);
+    assert.ok(
+      profile.scoreWeights.scenario > profile.scoreWeights.taste,
+      `${scene} must keep its scene signal stronger than taste`
+    );
     assert.ok(profile.reasonCode);
     assert.ok(profile.theme);
   }
 });
 
-test('scenario evidence reports matching traits, static price tier, and dining mode', () => {
+test('scenario evidence reports matching taste, traits, static price tier, and dining mode', () => {
   const result = scoreScenarioEvidence({
     mealScene: 'group_celebration',
     inspirationBudgetTier: 'generous',
-    diningMode: 'shared'
+    diningMode: 'shared',
+    tastePreferences: ['咸鲜']
   }, {
+    item: { tasteTags: ['咸鲜'] },
     metadata: {
       discoveryTraits: { expressive: 1, shareable: 1, varietyFriendly: 0 },
       priceTier: 3,
@@ -33,11 +40,18 @@ test('scenario evidence reports matching traits, static price tier, and dining m
     }
   });
 
-  assert.deepEqual(result.components, { scenario: 0.85, budget: 1, group: 1 });
+  assert.deepEqual(result.components, { scenario: 0.85, taste: 1, budget: 1, group: 1 });
   assert.deepEqual(result.evidence, {
     sceneReasonCode: 'celebration_expression_match',
     inspirationBudgetMatched: true,
     diningModeMatched: true,
-    matchedTraits: ['expressive', 'shareable']
+    matchedTraits: ['expressive', 'shareable'],
+    taste: {
+      scope: 'single',
+      matchedPreferences: ['咸鲜'],
+      unmatchedPreferences: [],
+      matchedDinerCount: 1,
+      preferenceDinerCount: 1
+    }
   });
 });

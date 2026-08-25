@@ -1,5 +1,13 @@
 import { recommend } from './recommend.js';
 
+const PLAN_TITLES = Object.freeze({
+  single: '本餐首选',
+  shared_bundle: '共享菜组合',
+  individual_set: '每个人单独点',
+  same_cuisine_set: '同菜系不同菜',
+  compromise: '先用折中方向'
+});
+
 function unique(values) {
   return [...new Set(values.filter(Boolean))];
 }
@@ -17,19 +25,6 @@ function diagnostics(overrides = {}) {
     missingDinerIds: [],
     degradedFrom: null,
     reason: null,
-    ...overrides
-  };
-}
-
-function basePlan(kind, context, overrides = {}) {
-  return {
-    kind,
-    primary: null,
-    alternatives: [],
-    items: [],
-    dinerAssignments: [],
-    contextSummary: contextSummary(context),
-    diagnostics: diagnostics(),
     ...overrides
   };
 }
@@ -84,26 +79,21 @@ function withDinerPreferences(context, profile, exclusions) {
   return {
     ...context,
     tastePreferences: [...profile.tastePreferences],
+    tasteEvidenceScope: 'individual',
     exclusions: [...exclusions]
   };
 }
 
-function withUnionExclusions(context, profiles = dinerProfiles(context)) {
+function withGroupPreferences(context, profiles = dinerProfiles(context)) {
   return {
     ...context,
+    tastePreferences: context.mealScene ? [] : [...(context.tastePreferences ?? [])],
+    tastePreferenceGroups: profiles
+      .map(({ tastePreferences }) => [...tastePreferences])
+      .filter((preferences) => preferences.length > 0),
+    tasteEvidenceScope: 'group',
     exclusions: unionExclusions(context, profiles)
   };
-}
-
-function composeSingle(context, candidates, options) {
-  const result = recommendationResult(context, candidates, options);
-  return basePlan('single', context, {
-    primary: result.primary,
-    alternatives: result.alternatives,
-    diagnostics: diagnostics({
-      reason: result.primary === null ? 'no_eligible_candidates' : null
-    })
-  });
 }
 
 function servingRole(recommendation) {
@@ -136,27 +126,205 @@ function selectComplementaryItems(result, partySize) {
   return selected;
 }
 
-function composeShared(context, candidates, options) {
-  const result = recommendationResult(withUnionExclusions(context), candidates, options);
+function recommendationsIn({ hero, items = [], dinerAssignments = [] }) {
+  const byCandidateId = new Map();
+  for (const recommendation of [
+    hero,
+    ...items.map(({ recommendation: item }) => item),
+    ...dinerAssignments.map(({ recommendation }) => recommendation)
+  ]) {
+    if (recommendation?.candidate?.id) byCandidateId.set(recommendation.candidate.id, recommendation);
+  }
+  return [...byCandidateId.values()];
+}
+
+function sharedPassedConstraints(recommendations) {
+  if (recommendations.length === 0) return [];
+  const remaining = new Set(recommendations[0].passedConstraints ?? []);
+  for (const recommendation of recommendations.slice(1)) {
+    const passed = new Set(recommendation.passedConstraints ?? []);
+    for (const constraint of remaining) {
+      if (!passed.has(constraint)) remaining.delete(constraint);
+    }
+  }
+  return [...remaining];
+}
+
+function uniqueMessages(values) {
+  const seen = new Set();
+  return values.filter(({ code, message }) => {
+    const key = `${code ?? ''}:${message ?? ''}`;
+    if (!message || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function tasteCoverage(context, recommendations, dinerAssignments) {
+  const profiles = dinerProfiles(context)
+    .filter(({ tastePreferences }) => tastePreferences.length > 0);
+  const preferenceDinerCount = profiles.length;
+  if (preferenceDinerCount === 0) return null;
+
+  const matches = (recommendation, preferences) => {
+    const tasteTags = new Set(recommendation?.candidate?.item?.tasteTags ?? []);
+    return preferences.some((preference) => tasteTags.has(preference));
+  };
+  const assignmentsByDiner = new Map(
+    dinerAssignments.map(({ dinerId, recommendation }) => [dinerId, recommendation])
+  );
+  const matchedDinerCount = profiles.filter((profile) => (
+    dinerAssignments.length > 0
+      ? matches(assignmentsByDiner.get(profile.id), profile.tastePreferences)
+      : recommendations.some((recommendation) => matches(recommendation, profile.tastePreferences))
+  )).length;
+  return {
+    matchedDinerCount,
+    preferenceDinerCount
+  };
+}
+
+function structuralReason(planKind, items, dinerAssignments) {
+  if (planKind === 'shared_bundle') {
+    return {
+      code: 'shared_structure_complete',
+      message: `这组方向由 ${items.length} 道不同角色的安全菜品组成`
+    };
+  }
+  if (planKind === 'individual_set') {
+    return {
+      code: 'individual_assignment_complete',
+      message: `已为 ${dinerAssignments.length} 位食客保留逐人归属和不同菜品`
+    };
+  }
+  if (planKind === 'same_cuisine_set') {
+    const cuisine = dinerAssignments.find(({ recommendation }) => recommendation)
+      ?.recommendation?.candidate?.metadata?.cuisineTags?.[0];
+    return {
+      code: 'same_cuisine_structure_complete',
+      message: cuisine
+        ? `所有已分配菜品都使用可核实的“${cuisine}”菜系标签，且菜品不重复`
+        : '已分配菜品保留逐人归属且不重复'
+    };
+  }
+  if (planKind === 'compromise') {
+    return {
+      code: 'compromise_direction',
+      message: '这是一个可继续调整的折中方向，不会把未完成的组合说成已满足'
+    };
+  }
+  return { code: 'single_direction', message: '这是当前条件下的首选菜品方向' };
+}
+
+function buildPlanEvidence(context, planKind, hero, items, dinerAssignments) {
+  const recommendations = recommendationsIn({ hero, items, dinerAssignments });
+  const reasons = [structuralReason(planKind, items, dinerAssignments)];
+  const tradeoffs = uniqueMessages(recommendations.flatMap(({ tradeoffs: values = [] }) => values));
+  const coverage = tasteCoverage(context, recommendations, dinerAssignments);
+
+  if (coverage?.matchedDinerCount > 0) {
+    reasons.push({
+      code: 'plan_taste_coverage',
+      message: `方案中的菜品已命中 ${coverage.matchedDinerCount}/${coverage.preferenceDinerCount} 位已填写的口味`
+    });
+  }
+  if (coverage && coverage.matchedDinerCount < coverage.preferenceDinerCount) {
+    tradeoffs.unshift({
+      code: 'plan_taste_gap',
+      message: `仍有 ${coverage.preferenceDinerCount - coverage.matchedDinerCount} 位已填写的口味未在方案中命中`
+    });
+  }
+
+  return {
+    reasons,
+    passedConstraints: sharedPassedConstraints(recommendations),
+    tradeoffs: uniqueMessages(tradeoffs)
+  };
+}
+
+function directionSummary(planKind, context, items, dinerAssignments, directionDiagnostics) {
+  if (planKind === 'single') return '一道首选菜品，可直接作为这顿的决定。';
+  if (planKind === 'shared_bundle') return `${items.length} 道互补菜品，作为 ${context.partySize} 人共享的搭配方向。`;
+  if (planKind === 'individual_set') return `${dinerAssignments.length} 份不重复菜品，每份都保留对应食客。`;
+  if (planKind === 'same_cuisine_set') {
+    const cuisine = dinerAssignments.find(({ recommendation }) => recommendation)
+      ?.recommendation?.candidate?.metadata?.cuisineTags?.[0];
+    return `${cuisine ? `${cuisine}方向，` : ''}${dinerAssignments.length} 份不同菜品按食客分配。`;
+  }
+  if (directionDiagnostics.reason === 'dining_mode_undecided') {
+    return '先给出一个共同折中菜品；也可直接切换到共享或分人方案。';
+  }
+  return '安全候选不足以完成原定结构，已保留可用部分并明确标出缺口。';
+}
+
+function directionId(planKind, hero, items, dinerAssignments) {
+  const ids = recommendationsIn({ hero, items, dinerAssignments })
+    .map(({ candidate }) => candidate.id);
+  return `plan:${planKind}:${ids.join('+')}`;
+}
+
+function createDirection(context, {
+  planKind,
+  hero,
+  items = [],
+  dinerAssignments = [],
+  directionDiagnostics = diagnostics(),
+  title = PLAN_TITLES[planKind],
+  differenceLabel = null
+}) {
+  if (!hero) return null;
+  return {
+    ...hero,
+    planId: directionId(planKind, hero, items, dinerAssignments),
+    planKind,
+    title,
+    summary: directionSummary(planKind, context, items, dinerAssignments, directionDiagnostics),
+    differenceLabel,
+    hero,
+    items,
+    dinerAssignments,
+    planEvidence: buildPlanEvidence(context, planKind, hero, items, dinerAssignments),
+    diagnostics: directionDiagnostics
+  };
+}
+
+function candidateIdsInDirection(direction) {
+  return recommendationsIn(direction).map(({ candidate }) => candidate.id);
+}
+
+function composeSingleDirections(context, candidates, options) {
+  const result = recommendationResult(context, candidates, options);
+  return rankedRecommendations(result).slice(0, 3).map((recommendation) => createDirection(context, {
+    planKind: 'single',
+    hero: recommendation,
+    title: recommendation.candidate.item.name,
+    differenceLabel: '另一道安全菜品'
+  }));
+}
+
+function composeSharedDirection(context, candidates, options) {
+  const profiles = dinerProfiles(context);
+  const result = recommendationResult(withGroupPreferences(context, profiles), candidates, options);
   const items = selectComplementaryItems(result, context.partySize);
   const hasEnoughItems = items.length >= Math.min(2, context.partySize);
   const hasComplementaryRoles = new Set(items.map(({ role }) => role)).size === items.length;
   const hasBundle = hasEnoughItems && hasComplementaryRoles;
-
-  return basePlan(hasBundle ? 'shared_bundle' : 'compromise', context, {
-    primary: result.primary,
-    alternatives: result.alternatives,
+  const directionDiagnostics = diagnostics(hasBundle ? {} : {
+    degradedFrom: 'shared_bundle',
+    reason: hasEnoughItems
+      ? 'insufficient_complementary_roles'
+      : 'insufficient_shared_candidates'
+  });
+  return createDirection(context, {
+    planKind: hasBundle ? 'shared_bundle' : 'compromise',
+    hero: items[0]?.recommendation ?? result.primary,
     items,
-    diagnostics: diagnostics(hasBundle ? {} : {
-      degradedFrom: 'shared_bundle',
-      reason: hasEnoughItems
-        ? 'insufficient_complementary_roles'
-        : 'insufficient_shared_candidates'
-    })
+    directionDiagnostics,
+    differenceLabel: '另一组共享搭配'
   });
 }
 
-function composeIndividual(context, candidates, options) {
+function composeIndividualDirection(context, candidates, options) {
   const profiles = dinerProfiles(context);
   let remaining = candidates;
   const assignments = [];
@@ -178,14 +346,17 @@ function composeIndividual(context, candidates, options) {
     .filter(({ recommendation }) => recommendation === null)
     .map(({ dinerId }) => dinerId);
   const complete = missingDinerIds.length === 0;
-
-  return basePlan(complete ? 'individual_set' : 'compromise', context, {
+  const directionDiagnostics = diagnostics(complete ? {} : {
+    missingDinerIds,
+    degradedFrom: 'individual_set',
+    reason: 'insufficient_unique_candidates'
+  });
+  return createDirection(context, {
+    planKind: complete ? 'individual_set' : 'compromise',
+    hero: assignments.find(({ recommendation }) => recommendation)?.recommendation ?? null,
     dinerAssignments: assignments,
-    diagnostics: diagnostics(complete ? {} : {
-      missingDinerIds,
-      degradedFrom: 'individual_set',
-      reason: 'insufficient_unique_candidates'
-    })
+    directionDiagnostics,
+    differenceLabel: '另一组逐人搭配'
   });
 }
 
@@ -196,7 +367,7 @@ function firstCuisineRecommendation(result) {
   )) ?? null;
 }
 
-function composeSameCuisine(context, candidates, options) {
+function composeSameCuisineDirection(context, candidates, options) {
   const profiles = dinerProfiles(context);
   const exclusions = unionExclusions(context, profiles);
   let remaining = candidates;
@@ -224,41 +395,132 @@ function composeSameCuisine(context, candidates, options) {
     .filter(({ recommendation }) => recommendation === null)
     .map(({ dinerId }) => dinerId);
   if (missingDinerIds.length === 0) {
-    return basePlan('same_cuisine_set', context, { dinerAssignments: assignments });
+    return createDirection(context, {
+      planKind: 'same_cuisine_set',
+      hero: assignments[0].recommendation,
+      dinerAssignments: assignments,
+      differenceLabel: '换一组同菜系菜品'
+    });
   }
 
-  const compromise = recommendationResult(
-    withUnionExclusions(context, profiles),
-    remaining,
-    options
-  );
-
-  return basePlan('compromise', context, {
-    primary: compromise.primary,
-    alternatives: compromise.alternatives,
+  const compromise = recommendationResult(withGroupPreferences(context, profiles), remaining, options);
+  return createDirection(context, {
+    planKind: 'compromise',
+    hero: compromise.primary
+      ?? assignments.find(({ recommendation }) => recommendation)?.recommendation
+      ?? null,
     dinerAssignments: assignments,
-    diagnostics: diagnostics({
+    directionDiagnostics: diagnostics({
       missingDinerIds,
       degradedFrom: 'same_cuisine_set',
       reason: cuisineTag === null
         ? 'missing_cuisine_tag'
         : 'insufficient_same_cuisine_candidates'
-    })
+    }),
+    differenceLabel: '改用可完成的折中方向'
   });
 }
 
-function composeUndecided(context, candidates, options) {
-  const result = recommendationResult(withUnionExclusions(context), candidates, options);
-  return basePlan('compromise', context, {
-    primary: result.primary,
-    alternatives: result.alternatives,
-    diagnostics: diagnostics({ reason: 'dining_mode_undecided' })
+function composeCompromiseDirection(context, candidates, options) {
+  const profiles = dinerProfiles(context);
+  const result = recommendationResult(withGroupPreferences(context, profiles), candidates, options);
+  return createDirection(context, {
+    planKind: 'compromise',
+    hero: result.primary,
+    directionDiagnostics: diagnostics({ reason: 'dining_mode_undecided' })
   });
+}
+
+function composeDisjointDirections(context, candidates, options, composer) {
+  const directions = [];
+  let remaining = candidates;
+  for (let index = 0; index < 3; index += 1) {
+    const direction = composer(context, remaining, options);
+    if (!direction) break;
+    directions.push(direction);
+    const usedIds = candidateIdsInDirection(direction);
+    if (usedIds.length === 0) break;
+    remaining = withoutCandidateIds(remaining, usedIds);
+  }
+  return directions;
+}
+
+function planFromDirections(context, requestedKind, directions) {
+  const rawPrimary = directions[0] ?? null;
+  const alternatives = directions.slice(1, 3);
+  let planDiagnostics = rawPrimary?.diagnostics ?? diagnostics({
+    reason: 'no_eligible_candidates'
+  });
+  if (rawPrimary && alternatives.length < 2) {
+    planDiagnostics = {
+      ...planDiagnostics,
+      alternativeShortageCount: 2 - alternatives.length
+    };
+  }
+  const primary = rawPrimary ? { ...rawPrimary, diagnostics: planDiagnostics } : null;
+
+  return {
+    kind: primary?.planKind ?? requestedKind,
+    primary,
+    alternatives,
+    items: primary?.items ?? [],
+    dinerAssignments: primary?.dinerAssignments ?? [],
+    contextSummary: contextSummary(context),
+    diagnostics: planDiagnostics
+  };
 }
 
 /**
- * Compose one or more meal recommendations while leaving filtering, ranking,
- * and explanations exclusively to recommend().
+ * Return every literal candidate represented by the primary direction and its
+ * alternatives, preserving display order and removing duplicates.
+ *
+ * @param {ReturnType<typeof composeMealPlan>} plan
+ */
+export function mealPlanCandidateIds(plan) {
+  return unique(
+    [plan.primary, ...(plan.alternatives ?? [])]
+      .filter(Boolean)
+      .flatMap(candidateIdsInDirection)
+  );
+}
+
+/**
+ * Promote one already-composed safe alternative locally. No scoring or
+ * candidate filtering is repeated; the complete direction moves as a unit.
+ *
+ * @param {ReturnType<typeof composeMealPlan>} plan
+ * @param {string} planId
+ */
+export function promoteMealPlanAlternative(plan, planId) {
+  const selectedIndex = plan.alternatives?.findIndex(({ planId: id }) => id === planId) ?? -1;
+  if (selectedIndex < 0) return plan;
+
+  const selected = plan.alternatives[selectedIndex];
+  const remaining = plan.alternatives.filter((_, index) => index !== selectedIndex);
+  const alternatives = [plan.primary, ...remaining].filter(Boolean).slice(0, 2);
+  const {
+    alternativeShortageCount: _ignoredShortage,
+    ...baseDiagnostics
+  } = selected.diagnostics ?? diagnostics();
+  const planDiagnostics = alternatives.length < 2
+    ? { ...baseDiagnostics, alternativeShortageCount: 2 - alternatives.length }
+    : baseDiagnostics;
+  const primary = { ...selected, diagnostics: planDiagnostics };
+
+  return {
+    ...plan,
+    kind: primary.planKind,
+    primary,
+    alternatives,
+    items: primary.items ?? [],
+    dinerAssignments: primary.dinerAssignments ?? [],
+    diagnostics: planDiagnostics
+  };
+}
+
+/**
+ * Compose one primary meal-plan direction and up to two complete plan-level
+ * alternatives. Filtering, scoring, and explanations remain inside recommend().
  *
  * @param {import('../domain/models.js').UserContext} context
  * @param {import('../domain/models.js').Candidate[]} candidates
@@ -266,11 +528,38 @@ function composeUndecided(context, candidates, options) {
  */
 export function composeMealPlan(context, candidates, options = {}) {
   const available = availableCandidates(candidates, options);
-  if (context.partySize === 1) return composeSingle(context, available, options);
-  if (context.diningMode === 'shared') return composeShared(context, available, options);
-  if (context.diningMode === 'individual') return composeIndividual(context, available, options);
-  if (context.diningMode === 'shared_main_personal') {
-    return composeSameCuisine(context, available, options);
+  if (context.partySize === 1) {
+    return planFromDirections(context, 'single', composeSingleDirections(context, available, options));
   }
-  return composeUndecided(context, available, options);
+  if (context.diningMode === 'shared') {
+    return planFromDirections(
+      context,
+      'shared_bundle',
+      composeDisjointDirections(context, available, options, composeSharedDirection)
+    );
+  }
+  if (context.diningMode === 'individual') {
+    return planFromDirections(
+      context,
+      'individual_set',
+      composeDisjointDirections(context, available, options, composeIndividualDirection)
+    );
+  }
+  if (context.diningMode === 'shared_main_personal') {
+    return planFromDirections(
+      context,
+      'same_cuisine_set',
+      composeDisjointDirections(context, available, options, composeSameCuisineDirection)
+    );
+  }
+
+  const primary = composeCompromiseDirection(context, available, options);
+  let remaining = primary
+    ? withoutCandidateIds(available, candidateIdsInDirection(primary))
+    : available;
+  const shared = composeSharedDirection(context, remaining, options);
+  if (shared) remaining = withoutCandidateIds(remaining, candidateIdsInDirection(shared));
+  const individual = composeIndividualDirection(context, remaining, options);
+  const alternatives = [shared, individual].filter(Boolean);
+  return planFromDirections(context, 'compromise', [primary, ...alternatives]);
 }

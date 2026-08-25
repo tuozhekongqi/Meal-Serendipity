@@ -18,7 +18,9 @@ const REASON_MESSAGES = Object.freeze({
   [REASON_CODE.LIGHTER_SCENE_MATCH]: '菜品标注偏清淡，搭配更轻盈',
   [REASON_CODE.SAVING_SCENE_MATCH]: '菜品结构更简单实在，符合节省一餐的选择倾向',
   [REASON_CODE.SHAREABLE_MATCH]: '菜品结构适合多人共享和搭配',
-  [REASON_CODE.INDIVIDUAL_TASTE_MATCH]: '菜品方便按个人口味分别选择',
+  [REASON_CODE.INDIVIDUAL_CHOICE_MATCH]: '菜品便于按每位食客分别安排',
+  [REASON_CODE.INDIVIDUAL_TASTE_MATCH]: '这道菜命中了这位食客本人选择的口味',
+  [REASON_CODE.GROUP_TASTE_COVERAGE]: '这个方向覆盖了部分已填写的多人口味',
   [REASON_CODE.SAME_CUISINE_VARIETY]: '同一菜系下有多种菜品搭配方式',
   [REASON_CODE.FAMILY_TABLE_MATCH]: '菜品口味相对温和，也便于全家共享搭配',
   [REASON_CODE.CELEBRATION_EXPRESSION_MATCH]: '菜品呈现与组合更有仪式感，适合庆祝时搭配',
@@ -34,7 +36,7 @@ const SCENARIO_REASON_CODES = new Set([
   REASON_CODE.LIGHTER_SCENE_MATCH,
   REASON_CODE.SAVING_SCENE_MATCH,
   REASON_CODE.SHAREABLE_MATCH,
-  REASON_CODE.INDIVIDUAL_TASTE_MATCH,
+  REASON_CODE.INDIVIDUAL_CHOICE_MATCH,
   REASON_CODE.SAME_CUISINE_VARIETY,
   REASON_CODE.FAMILY_TABLE_MATCH,
   REASON_CODE.CELEBRATION_EXPRESSION_MATCH
@@ -49,8 +51,8 @@ const TRADEOFF_MESSAGES = Object.freeze({
   taste_tradeoff: '与主要口味偏好的匹配较弱'
 });
 
-function addReason(reasons, code) {
-  reasons.push({ code, message: REASON_MESSAGES[code] });
+function addReason(reasons, code, message = REASON_MESSAGES[code]) {
+  reasons.push({ code, message });
 }
 
 function addTradeoff(tradeoffs, code) {
@@ -79,7 +81,22 @@ export function explainRecommendation(context, scored, passedConstraints) {
   const reasons = [];
   const tradeoffs = [];
 
-  if (components.taste >= 0.7) addReason(reasons, REASON_CODE.TASTE_MATCH);
+  const tasteEvidence = evidence?.taste;
+  if (tasteEvidence?.matchedPreferences?.length > 0) {
+    if (tasteEvidence.scope === 'individual') {
+      addReason(reasons, REASON_CODE.INDIVIDUAL_TASTE_MATCH);
+    } else if (tasteEvidence.scope === 'group') {
+      addReason(
+        reasons,
+        REASON_CODE.GROUP_TASTE_COVERAGE,
+        `这个方向覆盖了 ${tasteEvidence.matchedDinerCount}/${tasteEvidence.preferenceDinerCount} 位已填写的口味`
+      );
+    } else if (components.taste >= 0.7) {
+      addReason(reasons, REASON_CODE.TASTE_MATCH);
+    }
+  } else if (!tasteEvidence && components.taste >= 0.7) {
+    addReason(reasons, REASON_CODE.TASTE_MATCH);
+  }
   if (components.context === 1) addReason(reasons, REASON_CODE.CONTEXT_MATCH);
   if (components.quality >= 0.8) addReason(reasons, REASON_CODE.QUALITY);
   if (components.novelty === 1) addReason(reasons, REASON_CODE.NEW_CHOICE);
@@ -130,7 +147,9 @@ export function explainRecommendation(context, scored, passedConstraints) {
     addTradeoff(tradeoffs, 'estimated_total');
   }
 
-  if ((context.tastePreferences ?? []).length > 0 && components.taste < 0.4) {
+  const hasTastePreference = (context.tastePreferences ?? []).length > 0
+    || (tasteEvidence?.preferenceDinerCount ?? 0) > 0;
+  if (hasTastePreference && components.taste < 0.4) {
     addTradeoff(tradeoffs, 'taste_tradeoff');
   }
 

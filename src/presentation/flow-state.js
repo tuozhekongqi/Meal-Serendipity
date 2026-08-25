@@ -18,12 +18,13 @@ export const FLOW_STEP = Object.freeze({
 const BUDGET_TIERS = new Set(Object.values(INSPIRATION_BUDGET_TIER));
 const DINING_MODES = new Set(Object.values(DINING_MODE));
 
-function normalizePartySize(value, fallback = 1) {
+function normalizePartySize(value, fallback = null) {
   const partySize = Number(value);
   return Number.isInteger(partySize) && partySize >= 1 && partySize <= 50 ? partySize : fallback;
 }
 
 function partySizeBucketFor(partySize) {
+  if (partySize === null) return null;
   if (partySize === 1) return PARTY_SIZE_BUCKET.ONE;
   if (partySize === 2) return PARTY_SIZE_BUCKET.TWO;
   if (partySize === 3) return PARTY_SIZE_BUCKET.THREE;
@@ -47,11 +48,13 @@ function normalizeDraft(draft, index) {
 }
 
 function createDinerDrafts(partySize, drafts = []) {
-  return Array.from({ length: partySize }, (_, index) => normalizeDraft(drafts[index], index));
+  const count = Number.isInteger(partySize) && partySize > 0 ? partySize : 0;
+  return Array.from({ length: count }, (_, index) => normalizeDraft(drafts[index], index));
 }
 
 function sceneIsAvailable(mealScene, partySize) {
-  return getScenesForPartySize(partySize).some(({ value }) => value === mealScene);
+  return partySize !== null
+    && getScenesForPartySize(partySize).some(({ value }) => value === mealScene);
 }
 
 function diningModeIsAvailable(diningMode, mealScene) {
@@ -92,7 +95,9 @@ export function createFlowState(restoredPreferences = {}) {
     totalBudgetCents: restoredPreferences.totalBudgetCents ?? null,
     maxDistanceMeters: restoredPreferences.maxDistanceMeters ?? null,
     maxDeliveryMinutes: restoredPreferences.maxDeliveryMinutes ?? null,
-    tastePreferences: normalizeList(restoredPreferences.tastePreferences ?? restoredPreferences.tastes, 10),
+    tastePreferences: partySize === 1
+      ? normalizeList(restoredPreferences.tastePreferences ?? restoredPreferences.tastes, 10)
+      : [],
     exclusions: [],
     currentPriority: restoredPreferences.currentPriority ?? 'balanced',
     recentHistory: normalizeList(restoredPreferences.recentHistory, 20),
@@ -102,6 +107,7 @@ export function createFlowState(restoredPreferences = {}) {
 }
 
 export function getVisibleSteps(state) {
+  if (state.partySize === null) return [FLOW_STEP.PARTY];
   return state.partySize === 1
     ? [FLOW_STEP.PARTY, FLOW_STEP.SCENE, FLOW_STEP.PREFERENCES]
     : [FLOW_STEP.PARTY, FLOW_STEP.SCENE, FLOW_STEP.DINING, FLOW_STEP.PREFERENCES];
@@ -110,13 +116,17 @@ export function getVisibleSteps(state) {
 function selectPartySize(state, event) {
   const partySize = normalizePartySize(event.partySize, state.partySize);
   const changedAudience = (state.partySize === 1) !== (partySize === 1);
+  const dinerDrafts = createDinerDrafts(partySize, state.dinerDrafts);
   return editing(state, {
     step: FLOW_STEP.PARTY,
     partySize,
     partySizeBucket: partySizeBucketFor(partySize),
     mealScene: changedAudience ? null : state.mealScene,
     diningMode: changedAudience ? null : state.diningMode,
-    dinerDrafts: createDinerDrafts(partySize, state.dinerDrafts)
+    tastePreferences: partySize === 1
+      ? [...(dinerDrafts[0]?.tastePreferences ?? state.tastePreferences)]
+      : [],
+    dinerDrafts
   });
 }
 
@@ -150,7 +160,16 @@ function updateDinerDraft(state, event) {
       exclusions: event.exclusions === undefined ? draft.exclusions : normalizeList(event.exclusions, 30)
     };
   });
-  return editing(state, { dinerDrafts });
+  const patch = { dinerDrafts };
+  if (state.partySize === 1 && dinerDrafts[0]?.id === dinerId) {
+    if (event.tastePreferences !== undefined) {
+      patch.tastePreferences = [...dinerDrafts[0].tastePreferences];
+    }
+    if (event.exclusions !== undefined) {
+      patch.exclusions = [...dinerDrafts[0].exclusions];
+    }
+  }
+  return editing(state, patch);
 }
 
 function moveRelative(state, direction) {
@@ -173,7 +192,9 @@ export function transitionFlow(state, event = {}) {
     case 'set_budget':
       return editing(state, { inspirationBudgetTier: BUDGET_TIERS.has(event.value) ? event.value : null });
     case 'set_tastes':
-      return editing(state, { tastePreferences: normalizeList(event.value, 10) });
+      return editing(state, {
+        tastePreferences: state.partySize === 1 ? normalizeList(event.value, 10) : []
+      });
     case 'set_exclusions':
       return editing(state, { exclusions: normalizeList(event.value, 30) });
     case 'update_diner_draft':
@@ -211,7 +232,7 @@ export function createContextInputFromFlow(state) {
     totalBudgetCents: state.totalBudgetCents,
     maxDistanceMeters: state.maxDistanceMeters,
     maxDeliveryMinutes: state.maxDeliveryMinutes,
-    tastePreferences: state.tastePreferences,
+    tastePreferences: state.partySize === 1 ? state.tastePreferences : [],
     exclusions: state.exclusions,
     currentPriority: state.currentPriority,
     recentHistory: state.recentHistory,

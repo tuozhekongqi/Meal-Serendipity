@@ -3,19 +3,38 @@ import test from 'node:test';
 
 import { renderRecommendation } from '../../src/components/recommendation-card.js';
 
-function interactiveElement() {
+function interactiveElement(dataset = {}) {
+  const listeners = new Map();
   return {
-    addEventListener() {}
+    dataset,
+    addEventListener(type, handler) { listeners.set(type, handler); },
+    click() { listeners.get('click')?.(); }
   };
 }
 
-function rootStub(images = []) {
-  const element = interactiveElement();
+function rootStub(images = [], alternativeIds = []) {
+  const result = interactiveElement();
+  const controls = {
+    primary: interactiveElement(),
+    swap: interactiveElement(),
+    back: interactiveElement(),
+    alternatives: alternativeIds.map((alternativeId) => (
+      interactiveElement({ alternativeId })
+    ))
+  };
   return {
     innerHTML: '',
-    querySelector() { return element; },
+    controls,
+    querySelector(selector) {
+      if (selector === '[data-result-action="primary"]') return controls.primary;
+      if (selector === '[data-result-action="swap"]') return controls.swap;
+      if (selector === '[data-result-action="back"]') return controls.back;
+      return result;
+    },
     querySelectorAll(selector) {
-      return selector === '[data-dish-image]' ? images : [];
+      if (selector === '[data-dish-image]') return images;
+      if (selector === '[data-alternative-id]') return controls.alternatives;
+      return [];
     }
   };
 }
@@ -117,6 +136,33 @@ test('single result keeps the image-led hierarchy, visible evidence, recovery ac
   assert.doesNotMatch(markup, /商家名称|实时价格|距离|ETA|库存|可下单/);
 });
 
+test('primary copy and safe alternatives are real controls with their advertised callbacks', () => {
+  const primary = card();
+  const root = rootStub([], ['plan:alternative']);
+  let primaryAction = null;
+  let selectedAlternativeId = null;
+
+  renderRecommendation(root, viewModel({
+    primary,
+    alternatives: [{
+      planId: 'plan:alternative',
+      title: '另一组安全搭配',
+      summary: '完整替代方案',
+      hero: card({ id: 'dish:alternative' })
+    }]
+  }), {
+    onPrimaryAction(value) { primaryAction = value; },
+    onAlternative(value) { selectedAlternativeId = value; }
+  });
+
+  assert.match(root.innerHTML, /data-result-action="primary"[^>]*>复制菜名</);
+  assert.match(root.innerHTML, /data-alternative-id="plan:alternative"[^]*选为当前方案/);
+  root.controls.primary.click();
+  root.controls.alternatives[0].click();
+  assert.equal(primaryAction, primary);
+  assert.equal(selectedAlternativeId, 'plan:alternative');
+});
+
 test('shared bundle exposes each serving role and each item reason', () => {
   const markup = render(viewModel({
     kind: 'shared_bundle',
@@ -148,6 +194,51 @@ test('individual set preserves every diner owner heading and its own reasons', (
   assert.match(markup, /第 1 位偏好清淡/);
   assert.match(markup, /第 2 位/);
   assert.match(markup, /第 2 位偏好辣味/);
+});
+
+test('multi-person result renders a plan hero, plan evidence, assignment constraints, tradeoffs, and plan alternatives', () => {
+  const primary = card({ id: 'dish:hero', name: '香辣主图菜' });
+  const assignment = card({ id: 'dish:assignment', name: '清香豆腐' });
+  const alternativeHero = card({ id: 'dish:alternative-plan', name: '另一组主图菜' });
+  const markup = render(viewModel({
+    kind: 'individual_set',
+    primary,
+    planSummary: {
+      title: '每个人单独点',
+      summary: '已按两位食客分别安排。',
+      reasons: [{ code: 'assignment_complete', message: '两份菜品都保留了对应食客。' }],
+      passedConstraints: ['exclusion'],
+      tradeoffs: [{ code: 'plan_taste_gap', message: '仍有一位未命中已选口味。' }]
+    },
+    assignments: [
+      { dinerId: 'diner-1', ownerLabel: '第 1 位', card: assignment }
+    ],
+    alternatives: [{
+      planId: 'plan:alternative',
+      kind: 'individual_set',
+      title: '另一组逐人搭配',
+      summary: '两份不同的安全菜品。',
+      differenceLabel: '换一组菜品',
+      hero: alternativeHero,
+      assignments: [],
+      bundleItems: []
+    }]
+  }));
+
+  assertOrdered(markup, [
+    '每个人单独点',
+    'data-primary-dish-image',
+    '两份菜品都保留了对应食客',
+    '已通过的约束',
+    '仍有一位未命中已选口味',
+    '第 1 位',
+    '另一组逐人搭配',
+    '选为当前方案'
+  ]);
+  assert.ok((markup.match(/忌口与过敏原已避开/g) ?? []).length >= 2);
+  assert.ok((markup.match(/灵感模式价格需在平台确认/g) ?? []).length >= 1);
+  assert.match(markup, /data-alternative-id="plan:alternative"/);
+  assert.equal((markup.match(/data-primary-dish-image/g) ?? []).length, 1);
 });
 
 test('same-cuisine set keeps its plan identity, diner ownership, and reasons', () => {

@@ -8,10 +8,37 @@ import {
   getVisibleSteps,
   transitionFlow
 } from '../../src/presentation/flow-state.js';
+import { toProviderRequest } from '../../src/services/context.js';
+import { createPreferenceStorage } from '../../src/services/storage.js';
 
 function send(state, event) {
   return transitionFlow(state, event);
 }
+
+function memoryStorage() {
+  const values = new Map();
+  return {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value),
+    removeItem: (key) => values.delete(key),
+    values
+  };
+}
+
+test('fresh flow leaves required party size unanswered while restored explicit choices remain valid', () => {
+  const fresh = createFlowState();
+  const restored = createFlowState({ partySize: 3 });
+
+  assert.equal(fresh.partySize, null);
+  assert.equal(fresh.partySizeBucket, null);
+  assert.deepEqual(fresh.dinerDrafts, []);
+  assert.deepEqual(getVisibleSteps(fresh), [FLOW_STEP.PARTY]);
+  assert.equal(restored.partySize, 3);
+  assert.equal(restored.partySizeBucket, '3');
+  assert.deepEqual(restored.dinerDrafts.map(({ id }) => id), [
+    'diner-1', 'diner-2', 'diner-3'
+  ]);
+});
 
 test('single flow skips dining mode and back preserves conditions', () => {
   let state = createFlowState();
@@ -89,7 +116,7 @@ test('condition edits clear stale request results while keeping the active editi
   assert.deepEqual(state.exclusions, ['香菜']);
 });
 
-test('context input normalizes anonymous drafts without mutating or persisting reducer state', () => {
+test('context input normalizes anonymous drafts without mutating reducer state', () => {
   let state = createFlowState({
     totalBudgetCents: 4800,
     currentPriority: 'balanced',
@@ -117,7 +144,7 @@ test('context input normalizes anonymous drafts without mutating or persisting r
   assert.equal(context.mealScene, 'group_individual');
   assert.equal(context.diningMode, 'individual');
   assert.equal(context.inspirationBudgetTier, 'generous');
-  assert.deepEqual(context.tastePreferences, ['辣', '甜']);
+  assert.deepEqual(context.tastePreferences, []);
   assert.deepEqual(context.exclusions, ['花生']);
   assert.deepEqual(context.dinerProfiles, [
     { id: 'diner-1', tastePreferences: [], exclusions: [] },
@@ -125,6 +152,44 @@ test('context input normalizes anonymous drafts without mutating or persisting r
   ]);
   assert.equal('status' in context, false);
   assert.equal('result' in context, false);
+});
+
+test('multi-person flow keeps diner tastes out of context top level, storage, and Provider projection', () => {
+  let state = createFlowState();
+  state = send(state, { type: 'select_party_size', partySize: 2 });
+  state = send(state, { type: 'select_scene', mealScene: 'group_individual' });
+  state = send(state, { type: 'select_dining_mode', diningMode: 'individual' });
+  state = send(state, { type: 'set_tastes', value: ['accidental-live-union'] });
+  state = send(state, {
+    type: 'update_diner_draft',
+    dinerId: 'diner-1',
+    tastePreferences: ['diner-one-only']
+  });
+  state = send(state, {
+    type: 'update_diner_draft',
+    dinerId: 'diner-2',
+    tastePreferences: ['diner-two-only']
+  });
+
+  const context = createContextInputFromFlow(state);
+  const backend = memoryStorage();
+  createPreferenceStorage({ storage: backend }).save(context);
+  const stored = [...backend.values.values()][0];
+  const providerRequest = toProviderRequest(context, {
+    requestId: 'flow-privacy',
+    requestedAt: '2026-08-17T03:00:00.000Z'
+  });
+  const projected = JSON.stringify(providerRequest);
+
+  assert.deepEqual(context.tastePreferences, []);
+  assert.deepEqual(context.dinerProfiles.map(({ tastePreferences }) => tastePreferences), [
+    ['diner-one-only'],
+    ['diner-two-only']
+  ]);
+  for (const value of ['accidental-live-union', 'diner-one-only', 'diner-two-only']) {
+    assert.equal(stored.includes(value), false);
+    assert.equal(projected.includes(value), false);
+  }
 });
 
 test('request lifecycle enters result states and back returns to retained preferences', () => {

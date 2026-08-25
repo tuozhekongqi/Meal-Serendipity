@@ -165,6 +165,9 @@
 .result-header { margin-bottom:var(--space-4); }
 .result-identity { margin:0; color:var(--color-text-secondary); font-size:var(--text-label); }
 .result-context-summary { margin-bottom:var(--space-5); color:var(--color-text-tertiary); font-family:var(--font-mono); font-size:var(--text-caption); }
+.plan-primary > h3 { margin-bottom:var(--space-2); text-wrap:balance; }
+.plan-summary-copy { max-width:42rem; margin-bottom:var(--space-5); color:var(--color-text-secondary); }
+.plan-evidence { margin-top:var(--space-3); }
 .dish-image { display:block; max-width:100%; height:auto; aspect-ratio:4/3; object-fit:cover; background:var(--color-secondary-surface); }
 .primary-dish-image { width:calc(100% + (2 * var(--result-gutter))); max-width:none; margin:0 calc(-1 * var(--result-gutter)) var(--space-6); border-top:1px solid var(--color-border); border-bottom:1px solid var(--color-border); }
 .recommendation-title-row h3 { text-wrap:balance; }
@@ -186,7 +189,9 @@
 .supporting-meal-card h5, .supporting-meal-card h6 { margin:var(--space-3) 0 var(--space-2); font-family:var(--font-display); font-size:var(--text-subtitle); }
 .supporting-meal-card > p { color:var(--color-text-secondary); }
 .supporting-dish-image { width:min(100%,30rem); }
-.supporting-reasons { display:grid; gap:var(--space-2); color:var(--color-text-secondary); font-size:var(--text-label); }
+.supporting-reasons, .supporting-constraints, .supporting-tradeoffs { display:grid; gap:var(--space-2); color:var(--color-text-secondary); font-size:var(--text-label); }
+.supporting-constraints, .supporting-tradeoffs { margin-top:var(--space-3); }
+.supporting-meal-card .reason-list { margin:0; }
 .degraded-plan { padding:var(--space-5); margin:var(--space-6) 0; border-left:2px solid var(--color-warning); background:var(--color-warning-soft); }
 .degraded-plan .reason-list { border-left-color:var(--color-warning); }
 
@@ -201,5 +206,7 @@
 .alternative-card strong { color:var(--color-text); font-size:1rem; line-height:1.4; overflow-wrap:anywhere; }
 .alternative-label { align-self:start; white-space:normal; }
 .alternative-reasons { color:var(--color-text-secondary)!important; font-size:var(--text-caption); line-height:1.5; }
+.alternative-action { color:var(--color-accent)!important; font-weight:700; }
+.alternative-shortage { margin-top:var(--space-4); color:var(--color-text-secondary); font-size:var(--text-label); }
 
 .feedback-box { margin-bottom:var(--space-2); }

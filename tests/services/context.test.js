@@ -7,14 +7,14 @@ const NOW = '2026-08-17T03:00:00.000Z';
 
 test('context normalizes bounded preference arrays and numeric constraints', () => {
   const result = createUserContext({
-    partySize: '2',
+    partySize: '1',
     totalBudgetCents: '5000',
     tastes: ['辣', '辣', ' 甜 '],
     exclusions: ['花生', '花生'],
     currentPriority: 'fastest'
   });
 
-  assert.equal(result.partySize, 2);
+  assert.equal(result.partySize, 1);
   assert.equal(result.totalBudgetCents, 5000);
   assert.deepEqual(result.tastePreferences, ['辣', '甜']);
   assert.deepEqual(result.exclusions, ['花生']);
@@ -53,6 +53,43 @@ test('context keeps manual locations coarse instead of coercing null coordinates
   assert.equal(result.location.latitude, null);
   assert.equal(result.location.longitude, null);
   assert.equal(result.location.accuracyMeters, null);
+});
+
+test('multi-person tastes remain diner-local and never enter the provider preference field', () => {
+  const context = createUserContext({
+    partySize: 2,
+    tastePreferences: ['union-taste-must-not-cross-boundary'],
+    dinerProfiles: [
+      { tastePreferences: ['diner-one-private-taste'] },
+      { tastePreferences: ['diner-two-private-taste'] }
+    ]
+  });
+  const request = toProviderRequest(context, {
+    requestId: 'multi-person-privacy',
+    requestedAt: NOW
+  });
+  const serialized = JSON.stringify(request);
+
+  assert.deepEqual(context.tastePreferences, []);
+  assert.deepEqual(context.dinerProfiles.map(({ tastePreferences }) => tastePreferences), [
+    ['diner-one-private-taste'],
+    ['diner-two-private-taste']
+  ]);
+  assert.deepEqual(request.preferences.tastes, []);
+  assert.equal(serialized.includes('union-taste-must-not-cross-boundary'), false);
+  assert.equal(serialized.includes('diner-one-private-taste'), false);
+  assert.equal(serialized.includes('diner-two-private-taste'), false);
+});
+
+test('single-diner legacy taste preferences keep the existing provider contract', () => {
+  const context = createUserContext({ partySize: 1, tastes: ['辣'] });
+  const request = toProviderRequest(context, {
+    requestId: 'single-person-contract',
+    requestedAt: NOW
+  });
+
+  assert.deepEqual(context.tastePreferences, ['辣']);
+  assert.deepEqual(request.preferences.tastes, ['辣']);
 });
 
 test('context normalizes party, scenario, dining mode, budget tier and anonymous diners', () => {

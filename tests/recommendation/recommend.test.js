@@ -97,11 +97,19 @@ test('carries scored scenario evidence into recommendation reasons without chang
     sceneReasonCode: 'quick_reliable_match',
     inspirationBudgetMatched: true,
     diningModeMatched: true,
-    matchedTraits: ['convenient', 'stable']
+    matchedTraits: ['convenient', 'stable'],
+    taste: {
+      scope: 'single',
+      matchedPreferences: ['咸鲜'],
+      unmatchedPreferences: [],
+      matchedDinerCount: 1,
+      preferenceDinerCount: 1
+    }
   });
   assert.ok(result.primary.reasonCodes.includes('quick_reliable_match'));
   assert.ok(result.primary.reasonCodes.includes('inspiration_budget_match'));
   assert.ok(result.primary.reasonCodes.includes('dining_mode_match'));
+  assert.ok(result.primary.reasonCodes.includes('taste_match'));
   assert.ok(result.primary.tradeoffs.some(({ code }) => code === 'live_data_unavailable'));
 });
 

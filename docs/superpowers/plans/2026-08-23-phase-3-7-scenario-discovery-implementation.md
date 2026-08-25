@@ -1327,3 +1327,19 @@ When implementation is complete, pause and report:
 8. Provider, privacy, analytics, network-upload, and Phase 6B boundary audit.
 9. Known limitations, especially static price tiers, absence of real merchant data, and any manual mobile-network smoke test still pending.
 10. Confirmation that nothing was pushed, no PR was created, nothing was deployed, and the worktree is clean.
+
+---
+
+## 2026-08-25 Final-review amendments
+
+The following verified contracts supersede narrower examples in the original task sequence without changing its pure domain/presentation architecture:
+
+- Fresh flow state uses `partySize: null`, `partySizeBucket: null`, and no diner drafts. A restored valid party size remains supported, but a new user must explicitly choose before Next is enabled.
+- Every valid scenario profile has an explicit positive taste weight while scene influence remains stronger. Evidence includes exact matched/unmatched preferences and scope; an individual taste reason requires an actual match, while the scene-only structure reason is `individual_choice_match`.
+- `composeMealPlan()` returns one complete direction and up to two complete, disjoint plan-level alternatives for single, shared, individual, and same-cuisine modes. Undecided returns a compromise primary plus real shared and individual directions. Safe-supply shortages are explicit and never padded with duplicates.
+- Every multi-person primary has a hero-backed plan summary, plan evidence, and visible assignment/bundle reasons, passed constraints, and tradeoffs. `promoteMealPlanAlternative()` rotates an already-composed direction locally; it does not fetch or rerun Provider code.
+- Multi-person tastes remain only in anonymous `dinerProfiles`. Flow projection, normalized top-level context, local storage, and `toProviderRequest()` contain no aggregated multi-person taste values. The existing single-diner top-level taste contract remains intact.
+- Radio and taste-chip rerenders restore focus by stable control ID. Step navigation, back navigation, and successful results continue to focus the new heading.
+- The advertised copy action is rendered and wired. Alternative cards are genuine selection controls rather than toast-only placeholders.
+
+Final verification counts and commit evidence are recorded in `docs/current-modern-ui-checklist.md`; the original task examples remain historical planning evidence and must not be read as newer test totals.

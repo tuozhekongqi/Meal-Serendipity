@@ -2,6 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { createMealPlanViewModel } from '../../src/presentation/meal-plan-view-model.js';
+import { composeMealPlan } from '../../src/recommendation/meal-plan.js';
+import {
+  makeContext,
+  makeMealPlanCandidates,
+  NOW
+} from '../recommendation/fixtures.js';
 
 function recommendation({
   id = 'inspiration:one',
@@ -155,4 +161,39 @@ test('maps all meal-plan kinds to render-safe cards while retaining truthful dia
   });
   assert.equal(compromise.alternatives[0].image.kind, 'placeholder');
   assert.equal(compromise.assignments[0].card, null);
+});
+
+test('maps a real individual plan to a hero-backed plan summary and selectable plan alternatives', () => {
+  const planResult = composeMealPlan(makeContext({
+    partySize: 2,
+    mealScene: 'group_individual',
+    diningMode: 'individual',
+    inspirationBudgetTier: 'everyday',
+    tastePreferences: [],
+    dinerProfiles: [
+      { id: 'diner-1', tastePreferences: ['辣'], exclusions: [] },
+      { id: 'diner-2', tastePreferences: ['清淡'], exclusions: [] }
+    ]
+  }), makeMealPlanCandidates(), { now: NOW });
+
+  const view = createMealPlanViewModel({
+    plan: planResult,
+    mode: 'inspiration',
+    notices: []
+  });
+
+  assert.equal(view.kind, 'individual_set');
+  assert.equal(view.planSummary.title, '每个人单独点');
+  assert.ok(view.primary.image.src.startsWith('./assets/dishes/'));
+  assert.equal(view.assignments.length, 2);
+  assert.ok(view.assignments.every(({ card }) => (
+    card.passedConstraints.includes('exclusion') && card.tradeoffs.length > 0
+  )));
+  assert.equal(view.alternatives.length, 2);
+  assert.ok(view.alternatives.every((alternative) => (
+    alternative.planId
+      && alternative.kind === 'individual_set'
+      && alternative.hero.image.src.startsWith('./assets/dishes/')
+      && alternative.assignments.length === 2
+  )));
 });

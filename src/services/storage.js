@@ -7,12 +7,18 @@ function normalizedStringList(value, limit = 10) {
 
 function safePreferences(context = {}) {
   const areaLabel = context.location?.areaLabel ? String(context.location.areaLabel).trim() : null;
+  const parsedPartySize = Number(context.partySize);
+  const partySize = Number.isInteger(parsedPartySize) && parsedPartySize >= 1
+    ? parsedPartySize
+    : 1;
   return {
-    partySize: context.partySize ?? 1,
+    partySize,
     totalBudgetCents: context.totalBudgetCents ?? null,
     maxDistanceMeters: context.maxDistanceMeters ?? null,
     maxDeliveryMinutes: context.maxDeliveryMinutes ?? null,
-    tastePreferences: normalizedStringList(context.tastePreferences),
+    tastePreferences: partySize === 1
+      ? normalizedStringList(context.tastePreferences)
+      : [],
     currentPriority: context.currentPriority ?? 'balanced',
     recentHistory: normalizedStringList(context.recentHistory, 20),
     contextTags: normalizedStringList(context.contextTags),

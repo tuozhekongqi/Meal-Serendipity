@@ -93,7 +93,9 @@ export function createUserContext(input = {}) {
     totalBudgetCents: finiteInteger(input.totalBudgetCents, null),
     maxDistanceMeters: finiteInteger(input.maxDistanceMeters, null, { min: 1 }),
     maxDeliveryMinutes: finiteInteger(input.maxDeliveryMinutes, null, { min: 1 }),
-    tastePreferences: normalizedList(input.tastePreferences ?? input.tastes, 10),
+    tastePreferences: partySize === 1
+      ? normalizedList(input.tastePreferences ?? input.tastes, 10)
+      : [],
     exclusions: normalizedList(input.exclusions, 30),
     currentPriority: priority,
     recentHistory: normalizedList(input.recentHistory, 20, 160),
