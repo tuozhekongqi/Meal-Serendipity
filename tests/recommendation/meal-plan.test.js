@@ -493,7 +493,8 @@ test('individual mode returns a labelled primary plan and two disjoint plan alte
   const plan = composeMealPlan(context, makeMealPlanCandidates(), { now: NOW });
 
   assert.equal(plan.primary.planKind, 'individual_set');
-  assert.equal(plan.primary.title, '每个人单独点');
+  assert.equal(plan.primary.title, '每人单独选择');
+  assert.equal(plan.primary.summary, '2 份不重复菜品，每份都保留对应用餐者。');
   assert.equal(plan.primary.hero.candidate.id, plan.primary.candidate.id);
   assert.equal(plan.primary.dinerAssignments.length, 2);
   assert.ok(plan.primary.planEvidence.reasons.length > 0);

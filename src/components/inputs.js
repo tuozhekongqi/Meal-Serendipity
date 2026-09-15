@@ -16,16 +16,16 @@ const PARTY_OPTIONS = Object.freeze([
 ]);
 
 const BUDGET_OPTIONS = Object.freeze([
-  { value: INSPIRATION_BUDGET_TIER.ECONOMY, label: '尽量省一些' },
-  { value: INSPIRATION_BUDGET_TIER.EVERYDAY, label: '日常预算' },
-  { value: INSPIRATION_BUDGET_TIER.GENEROUS, label: '吃得丰盛' },
-  { value: INSPIRATION_BUDGET_TIER.OPEN, label: '预算灵活' }
+  { value: INSPIRATION_BUDGET_TIER.ECONOMY, label: '节省预算' },
+  { value: INSPIRATION_BUDGET_TIER.EVERYDAY, label: '日常选择' },
+  { value: INSPIRATION_BUDGET_TIER.GENEROUS, label: '丰盛一些' },
+  { value: INSPIRATION_BUDGET_TIER.OPEN, label: '暂不限制' }
 ]);
 
 const STEP_LABELS = Object.freeze({
   [FLOW_STEP.PARTY]: '人数',
   [FLOW_STEP.SCENE]: '场景',
-  [FLOW_STEP.DINING]: '方式',
+  [FLOW_STEP.DINING]: '用餐方式',
   [FLOW_STEP.PREFERENCES]: '偏好'
 });
 
@@ -46,9 +46,10 @@ function parseList(value) {
 function progress(state) {
   const steps = getVisibleSteps(state);
   const currentIndex = state.step === FLOW_STEP.RESULT ? steps.length : steps.indexOf(state.step);
-  return `<div class="progress-block">
-    <div class="progress-copy"><span>当前进度</span><span>${Math.min(currentIndex + 1, steps.length)} / ${steps.length}</span></div>
-    <ol class="progress-list" aria-label="推荐流程进度">
+  const complete = state.step === FLOW_STEP.RESULT;
+  return `<div class="progress-block" data-progress-complete="${complete}">
+    <div class="progress-copy"><span>选择进度</span><span>${Math.min(currentIndex + 1, steps.length)} / ${steps.length}</span></div>
+    <ol class="progress-list" aria-label="用餐选择进度">
       ${steps.map((step, index) => `<li${step === state.step ? ' aria-current="step"' : ''} data-progress-state="${index < currentIndex ? 'complete' : index === currentIndex ? 'current' : 'upcoming'}">${STEP_LABELS[step]}</li>`).join('')}
     </ol>
   </div>`;
@@ -61,7 +62,7 @@ function requiredLabel() {
 function partyStep(state) {
   return `${progress(state)}<fieldset class="field-group">
     <legend data-step-heading tabindex="-1">用餐人数 ${requiredLabel()}</legend>
-    <p class="field-help">先确定几个人，后面只会展示兼容的场景。</p>
+    <p class="field-help">选择用餐人数，后续场景会随人数调整。</p>
     <div class="chip-list">
       ${PARTY_OPTIONS.map(({ value, bucket, label }) => `<label class="choice-option" for="party-${bucket}">
         <input id="party-${bucket}" name="partySize" type="radio" value="${value}" data-party-bucket="${bucket}" ${state.partySizeBucket === bucket ? 'checked' : ''}>
@@ -69,9 +70,9 @@ function partyStep(state) {
       </label>`).join('')}
     </div>
     ${state.partySizeBucket === PARTY_SIZE_BUCKET.FOUR_PLUS ? `<div class="field">
-      <label for="exact-party-size">准确用餐人数</label>
+      <label for="exact-party-size">实际用餐人数</label>
       <input id="exact-party-size" name="exactPartySize" type="number" min="4" max="50" step="1" required value="${state.partySize}" aria-describedby="exact-party-size-help">
-      <small id="exact-party-size-help">请输入 4 至 50 人的准确人数。</small>
+      <small id="exact-party-size-help">请输入 4 至 50 人。</small>
     </div>` : ''}
   </fieldset>`;
 }
@@ -79,8 +80,8 @@ function partyStep(state) {
 function sceneStep(state) {
   const scenes = getScenesForPartySize(state.partySize);
   return `${progress(state)}<fieldset class="field-group">
-    <legend data-step-heading tabindex="-1">选择用餐场景 ${requiredLabel()}</legend>
-    <p class="field-help">场景选项会根据用餐人数调整。</p>
+    <legend data-step-heading tabindex="-1">用餐场景 ${requiredLabel()}</legend>
+    <p class="field-help">选择最接近本次用餐的情形。</p>
     <div class="scene-grid">
       ${scenes.map((scene, index) => `<label class="scene-card" for="scene-${scene.value}">
         <input id="scene-${scene.value}" name="mealScene" type="radio" value="${scene.value}" aria-label="${escapeHtml(scene.label)}" ${state.mealScene === scene.value ? 'checked' : ''}>
@@ -93,8 +94,8 @@ function sceneStep(state) {
 function diningStep(state) {
   const modes = getDiningModesForScene(state.mealScene);
   return `${progress(state)}<fieldset class="field-group">
-    <legend data-step-heading tabindex="-1">选择用餐方式 ${requiredLabel()}</legend>
-    <p class="field-help">多人用餐需要先选一种组合方式，安全避忌不会因此放宽。</p>
+    <legend data-step-heading tabindex="-1">用餐方式 ${requiredLabel()}</legend>
+    <p class="field-help">选择菜品如何在多人之间安排；忌口条件始终保留。</p>
     <div class="scene-grid">
       ${modes.map((mode) => `<label class="scene-card" for="dining-${mode.value}">
         <input id="dining-${mode.value}" name="diningMode" type="radio" value="${mode.value}" aria-label="${escapeHtml(mode.label)}" ${state.diningMode === mode.value ? 'checked' : ''}>
@@ -116,13 +117,13 @@ function dinerRegion(state, draft, index) {
   const tastes = tastesFor(state, draft);
   const exclusions = exclusionsFor(state, draft);
   return `<fieldset class="field-group diner-preferences" data-diner-region data-diner-id="${draft.id}">
-    <legend>第 ${index + 1} 位食客偏好</legend>
-    <p class="field-help">匿名记录；口味最多选 3 个，避忌只用于本次推荐。</p>
-    <div class="chip-list" aria-label="第 ${index + 1} 位食客口味">
+    <legend>第 ${index + 1} 位用餐者</legend>
+    <p class="field-help">无需填写姓名；最多选择 3 种口味，忌口仅用于本次筛选。</p>
+    <div class="chip-list" aria-label="第 ${index + 1} 位用餐者口味">
       ${TASTES.map((taste, tasteIndex) => `<button id="taste-${draft.id}-${tasteIndex}" class="choice-chip" type="button" data-diner-taste="${escapeHtml(taste)}" data-diner-id="${draft.id}" aria-pressed="${tastes.includes(taste)}">${escapeHtml(taste)}</button>`).join('')}
     </div>
     <div class="field">
-      <label for="${draft.id}-exclusions">需要避开的食材 <span class="optional-label">选填</span></label>
+      <label for="${draft.id}-exclusions">忌口或过敏食材 <span class="optional-label">选填</span></label>
       <input id="${draft.id}-exclusions" name="${draft.id}-exclusions" type="text" value="${escapeHtml(exclusions.join('、'))}" placeholder="例如：花生、香菜" autocomplete="off" maxlength="240" data-diner-exclusions="${draft.id}">
     </div>
   </fieldset>`;
@@ -131,8 +132,8 @@ function dinerRegion(state, draft, index) {
 function preferencesStep(state) {
   return `${progress(state)}
     <fieldset class="field-group">
-      <legend data-step-heading tabindex="-1">选择预算档位 ${requiredLabel()}</legend>
-      <p class="field-help">灵感模式仅用相对预算档排序，不代表实时价格。</p>
+      <legend data-step-heading tabindex="-1">预算倾向 ${requiredLabel()}</legend>
+      <p class="field-help">仅用于比较菜品类型，不代表实际价格。</p>
       <div class="chip-list">
         ${BUDGET_OPTIONS.map(({ value, label }) => `<label class="choice-option" for="budget-${value}">
           <input id="budget-${value}" name="inspirationBudgetTier" type="radio" value="${value}" ${state.inspirationBudgetTier === value ? 'checked' : ''}>
@@ -141,11 +142,11 @@ function preferencesStep(state) {
       </div>
     </fieldset>
     ${state.dinerDrafts.map((draft, index) => dinerRegion(state, draft, index)).join('')}
-    <p class="privacy-note"><span>不会保存食客称呼或忌口原文；严重过敏请同时向商家确认。</span></p>`;
+    <p class="privacy-note"><span>不保存用餐者称呼和本次忌口。如有严重过敏，请在用餐前再次确认配料。</span></p>`;
 }
 
 function resultStep(state) {
-  return `${progress(state)}<div class="field-group"><h3 data-step-heading tabindex="-1">条件已确认</h3><p class="field-help">可以在结果中换一个，或返回修改任一步。</p></div>`;
+  return progress(state);
 }
 
 function stepMarkup(state) {

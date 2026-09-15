@@ -46,10 +46,10 @@ function card({
   image = './assets/dishes/tomato-beef-rice.webp'
 } = {}) {
   return {
-    identity: { label: '菜品灵感 · 非实时商家信息' },
+    identity: { label: '菜品参考' },
     image: {
       src: image,
-      alt: `${name}菜品灵感示意图`,
+      alt: `${name}示意图`,
       kind: 'dish-inspiration'
     },
     name,
@@ -71,7 +71,7 @@ function card({
 function viewModel(overrides = {}) {
   return {
     kind: 'single',
-    mode: { value: 'inspiration', label: '菜品灵感', notices: [] },
+    mode: { value: 'inspiration', label: '菜品参考', notices: [] },
     partyLabel: '2 人用餐',
     sceneLabel: '一起聚餐',
     primary: card(),
@@ -113,19 +113,19 @@ test('single result keeps the image-led hierarchy, visible evidence, recovery ac
   }));
 
   assertOrdered(markup, [
-    '菜品灵感 · 非实时商家信息',
+    '菜品参考',
     '2 人用餐 · 一起聚餐',
     'data-primary-dish-image',
     'id="recommendation-title" tabindex="-1">番茄牛腩饭',
-    '为什么推荐',
+    '菜品介绍',
+    '推荐依据',
     '咸鲜口味与本次偏好一致',
-    '已通过的约束',
-    '需要知道的取舍',
+    '食用提示',
     '换一个',
-    '返回修改条件',
-    '如果想换'
+    '修改条件',
+    '备选菜品'
   ]);
-  assert.match(markup, /<img[^>]*src="\.\/assets\/dishes\/tomato-beef-rice\.webp"[^>]*alt="番茄牛腩饭菜品灵感示意图"[^>]*width="\d+"[^>]*height="\d+"[^>]*loading="eager"[^>]*decoding="async"[^>]*data-image-kind="dish-inspiration"[^>]*data-primary-dish-image/);
+  assert.match(markup, /<img[^>]*src="\.\/assets\/dishes\/tomato-beef-rice\.webp"[^>]*alt="番茄牛腩饭示意图"[^>]*width="\d+"[^>]*height="\d+"[^>]*loading="eager"[^>]*decoding="async"[^>]*data-image-kind="dish-inspiration"[^>]*data-primary-dish-image/);
   assert.equal((markup.match(/data-alternative-id=/g) ?? []).length, 2);
   assert.equal((markup.match(/data-alternative-dish-image/g) ?? []).length, 2);
   assert.match(markup, /清汤牛肉面/);
@@ -134,6 +134,23 @@ test('single result keeps the image-led hierarchy, visible evidence, recovery ac
   assert.match(markup, /同样通过忌口检查/);
   assert.doesNotMatch(markup, /不应出现的第三项/);
   assert.doesNotMatch(markup, /商家名称|实时价格|距离|ETA|库存|可下单/);
+  assert.doesNotMatch(markup, /灵感模式|平台确认/);
+});
+
+test('single result presents introductions, recommendation evidence, eating guidance, and named alternatives', () => {
+  const markup = render(viewModel({
+    alternatives: [
+      card({ id: 'dish:alternative-a', name: '清汤牛肉面', reason: '口味较清淡' }),
+      card({ id: 'dish:alternative-b', name: '香菇鸡肉饭', reason: '符合咸鲜偏好' })
+    ]
+  }));
+
+  assert.match(markup, /菜品介绍/);
+  assert.match(markup, /推荐依据/);
+  assert.match(markup, /食用提示/);
+  assert.match(markup, /备选菜品/);
+  assert.match(markup, /清汤牛肉面[^]*酸甜浓郁，适合配米饭。[^]*推荐依据[^]*口味较清淡/);
+  assert.doesNotMatch(markup, /为什么推荐|已通过的约束|需要知道的取舍|另一道安全菜品|非实时商家信息/);
 });
 
 test('primary copy and safe alternatives are real controls with their advertised callbacks', () => {
@@ -156,7 +173,7 @@ test('primary copy and safe alternatives are real controls with their advertised
   });
 
   assert.match(root.innerHTML, /data-result-action="primary"[^>]*>复制菜名</);
-  assert.match(root.innerHTML, /data-alternative-id="plan:alternative"[^]*选为当前方案/);
+  assert.match(root.innerHTML, /data-alternative-id="plan:alternative"[^]*选择这个方案/);
   root.controls.primary.click();
   root.controls.alternatives[0].click();
   assert.equal(primaryAction, primary);
@@ -189,7 +206,7 @@ test('individual set preserves every diner owner heading and its own reasons', (
     ]
   }));
 
-  assert.match(markup, /分人安排/);
+  assert.match(markup, /每人一份/);
   assert.match(markup, /第 1 位/);
   assert.match(markup, /第 1 位偏好清淡/);
   assert.match(markup, /第 2 位/);
@@ -229,14 +246,14 @@ test('multi-person result renders a plan hero, plan evidence, assignment constra
     '每个人单独点',
     'data-primary-dish-image',
     '两份菜品都保留了对应食客',
-    '已通过的约束',
-    '仍有一位未命中已选口味',
+    '食用提示',
     '第 1 位',
     '另一组逐人搭配',
-    '选为当前方案'
+    '选择这个方案'
   ]);
-  assert.ok((markup.match(/忌口与过敏原已避开/g) ?? []).length >= 2);
-  assert.ok((markup.match(/灵感模式价格需在平台确认/g) ?? []).length >= 1);
+  assert.doesNotMatch(markup, /仍有一位未命中已选口味/);
+  assert.ok((markup.match(/已按你填写的忌口信息筛选/g) ?? []).length >= 2);
+  assert.doesNotMatch(markup, /灵感模式价格需在平台确认/);
   assert.match(markup, /data-alternative-id="plan:alternative"/);
   assert.equal((markup.match(/data-primary-dish-image/g) ?? []).length, 1);
 });
@@ -271,12 +288,12 @@ test('degraded compromise names the incomplete promise and missing diner while e
     }
   }));
 
-  assert.match(markup, /需要折中/);
-  assert.match(markup, /未能完成“同菜系不同菜”的安排/);
+  assert.match(markup, /折中方案/);
+  assert.match(markup, /暂时无法完成同菜系不同菜的安排/);
   assert.match(markup, /第 2 位/);
   assert.match(markup, /暂时没有符合全部条件的菜品/);
-  assert.match(markup, /同菜系的安全候选不足/);
-  assert.match(markup, /返回修改条件/);
+  assert.match(markup, /符合条件的同菜系菜品不足/);
+  assert.match(markup, /修改条件/);
 });
 
 test('dish image error falls back to the placeholder once without retaining an error listener', () => {
@@ -284,6 +301,7 @@ test('dish image error falls back to the placeholder once without retaining an e
   let listenerRemoved = 0;
   const image = {
     src: './assets/dishes/tomato-beef-rice.webp',
+    alt: '番茄牛腩饭示意图',
     dataset: { imageKind: 'dish-inspiration' },
     addEventListener(type, handler) {
       if (type === 'error') errorHandler = handler;
@@ -302,6 +320,7 @@ test('dish image error falls back to the placeholder once without retaining an e
   firstHandler();
   assert.equal(image.src, './assets/dishes/placeholder.svg');
   assert.equal(image.dataset.imageKind, 'placeholder');
+  assert.equal(image.alt, '暂无对应菜品图片');
   assert.equal(errorHandler, null);
   assert.equal(listenerRemoved, 1);
   firstHandler();

@@ -262,11 +262,11 @@ function recommend(userContext, candidates, options = {}) {
 
 - [x] 人数是第一项必填决定；新流程不预选人数，显式选择前下一步禁用，4 人以上继续收集 4–50 的准确人数。
 - [x] 单人流程为人数 → 场景 → 偏好 → 结果；多人在场景后必须显式选择用餐方式。
-- [x] 四种多人方式均生成真实结果：共享菜、每人单点、同菜系不同菜、还没想好。
+- [x] 四种多人方式均生成真实结果：共享菜品、每人单独选择、同一菜系分别选菜、暂未决定。
 - [x] 结果结构保留 `single`、`shared_bundle`、`individual_set`、`same_cuisine_set` 和带真实诊断的 `compromise`。
-- [x] 逐人偏好与结果使用匿名食客 ID；候选不足保留空缺，不复制菜品或放宽忌口。
+- [x] 逐人偏好与结果使用匿名用餐者 ID；候选不足保留空缺，不复制菜品或放宽忌口。
 - [x] 所有有效场景都包含显式口味评分证据；逐人理由只来自实际命中，共享覆盖度跨整套已选菜品计算。
-- [x] 每种多人模式都有带主图和方案证据的首选，并在供给允许时提供两个完整、不重复的方案级替代；“还没想好”提供共享与分人两个真实方向。
+- [x] 每种多人模式都有带主图和方案证据的首选，并在供给允许时提供两个完整、不重复的方案级替代；“暂未决定”提供共享与分人两个真实方向。
 - [x] 替代按钮在本地整体提升安全方案，复制菜名按钮执行真实动作；候选短缺明确展示，不伪造替代。
 - [x] 多人逐人口味不合并到顶层上下文、存储或 Provider 投影；合法单人口味兼容契约保持不变。
 - [x] 单选和多次口味筹码变更按稳定控件 ID 恢复焦点，前进、返回和结果标题焦点行为保持不变。
@@ -283,11 +283,11 @@ function recommend(userContext, candidates, options = {}) {
 **本地验收结果：**
 
 ```text
-npm run check:js   PASS — 58 files
-npm test           PASS — 169/169
+npm run check:js   PASS — 59 files
+npm test           PASS — 175/175
 npm run build      PASS
 npm run check:dist PASS
-npm run test:e2e   PASS — Chromium 24/24
+npm run test:e2e   PASS — Chromium 25/25
 git diff --check   PASS
 ```
 

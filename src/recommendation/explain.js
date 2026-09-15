@@ -1,7 +1,7 @@
 import { REASON_CODE, SOURCE_MODE } from '../domain/models.js';
 
 const REASON_MESSAGES = Object.freeze({
-  [REASON_CODE.TASTE_MATCH]: '符合你的主要口味偏好',
+  [REASON_CODE.TASTE_MATCH]: '符合你选择的主要口味',
   [REASON_CODE.WITHIN_BUDGET]: '已知总价在预算内',
   [REASON_CODE.FAST_DELIVERY]: '预计配送时间明显低于上限',
   [REASON_CODE.NEARBY]: '配送距离明显低于上限',
@@ -9,23 +9,23 @@ const REASON_MESSAGES = Object.freeze({
   [REASON_CODE.AVAILABLE]: '菜品当前可售并可下单',
   [REASON_CODE.FRESH_DATA]: '实时数据仍在有效期内',
   [REASON_CODE.QUALITY]: '商家质量信息较好',
-  [REASON_CODE.NEW_CHOICE]: '近期没有选择过这项',
-  [REASON_CODE.CONTEXT_MATCH]: '符合你当前选择的用餐状态',
-  [REASON_CODE.QUICK_RELIABLE_MATCH]: '这类菜做选择简单，也更符合快速解决的一餐',
-  [REASON_CODE.FOCUS_FRIENDLY_MATCH]: '菜品口味相对平稳，也有适合专注时段的饱腹感',
-  [REASON_CODE.TREAT_EXPRESSION_MATCH]: '菜品呈现更有表达感，适合给自己一点犒赏',
-  [REASON_CODE.LATE_NIGHT_COMFORT_MATCH]: '菜品具备夜间和舒适口感的特点，选择也更省心',
-  [REASON_CODE.LIGHTER_SCENE_MATCH]: '菜品标注偏清淡，搭配更轻盈',
-  [REASON_CODE.SAVING_SCENE_MATCH]: '菜品结构更简单实在，符合节省一餐的选择倾向',
+  [REASON_CODE.NEW_CHOICE]: '近期没有选择过这道菜',
+  [REASON_CODE.CONTEXT_MATCH]: '符合本次用餐场景',
+  [REASON_CODE.QUICK_RELIABLE_MATCH]: '准备和搭配相对直接，适合快速用餐',
+  [REASON_CODE.FOCUS_FRIENDLY_MATCH]: '口味相对温和，适合作为学习或工作时的一餐',
+  [REASON_CODE.TREAT_EXPRESSION_MATCH]: '风味和呈现更丰富，适合认真吃一顿',
+  [REASON_CODE.LATE_NIGHT_COMFORT_MATCH]: '口感偏温暖或满足，适合夜间加餐',
+  [REASON_CODE.LIGHTER_SCENE_MATCH]: '口味偏清淡，搭配相对轻盈',
+  [REASON_CODE.SAVING_SCENE_MATCH]: '菜品档位符合节省预算的倾向',
   [REASON_CODE.SHAREABLE_MATCH]: '菜品结构适合多人共享和搭配',
-  [REASON_CODE.INDIVIDUAL_CHOICE_MATCH]: '菜品便于按每位食客分别安排',
-  [REASON_CODE.INDIVIDUAL_TASTE_MATCH]: '这道菜命中了这位食客本人选择的口味',
-  [REASON_CODE.GROUP_TASTE_COVERAGE]: '这个方向覆盖了部分已填写的多人口味',
+  [REASON_CODE.INDIVIDUAL_CHOICE_MATCH]: '便于为每位用餐者分别安排',
+  [REASON_CODE.INDIVIDUAL_TASTE_MATCH]: '符合这位用餐者选择的口味',
+  [REASON_CODE.GROUP_TASTE_COVERAGE]: '覆盖了部分已填写的多人口味',
   [REASON_CODE.SAME_CUISINE_VARIETY]: '同一菜系下有多种菜品搭配方式',
   [REASON_CODE.FAMILY_TABLE_MATCH]: '菜品口味相对温和，也便于全家共享搭配',
-  [REASON_CODE.CELEBRATION_EXPRESSION_MATCH]: '菜品呈现与组合更有仪式感，适合庆祝时搭配',
-  [REASON_CODE.INSPIRATION_BUDGET_MATCH]: '静态菜品预算档符合你选择的预算倾向',
-  [REASON_CODE.DINING_MODE_MATCH]: '菜品提供的用餐形式符合你选择的点餐方式'
+  [REASON_CODE.CELEBRATION_EXPRESSION_MATCH]: '菜品组合更丰富，适合约会或庆祝',
+  [REASON_CODE.INSPIRATION_BUDGET_MATCH]: '菜品档位符合你的预算倾向',
+  [REASON_CODE.DINING_MODE_MATCH]: '适合你选择的用餐方式'
 });
 
 const SCENARIO_REASON_CODES = new Set([

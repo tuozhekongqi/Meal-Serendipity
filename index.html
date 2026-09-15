@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#F3F4F3">
-  <meta name="description" content="Meal-Serendipity 帮你快速决定今天吃什么，并说明推荐理由。">
-  <title>Meal-Serendipity · 今天吃什么</title>
+  <meta name="description" content="Meal-Serendipity 根据人数、场景、预算和口味提供清晰的用餐参考。">
+  <title>Meal-Serendipity · 人间有味是清欢</title>
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <link rel="stylesheet" href="./src/styles/tokens.css">
   <link rel="stylesheet" href="./src/styles/base.css">
@@ -21,26 +21,26 @@
         <span>Meal<span>·</span>Serendipity</span>
       </a>
       <div class="header-actions">
-        <span class="mode-pill" id="header-mode"><span aria-hidden="true"></span>菜品灵感</span>
-        <button class="button button-quiet button-small" type="button" id="data-info-button">数据说明</button>
+        <span class="mode-pill" id="header-mode"><span aria-hidden="true"></span>菜品参考</span>
+        <button class="button button-quiet button-small" type="button" id="data-info-button">数据与隐私</button>
       </div>
     </div>
   </header>
   <main id="main-content" class="app-main">
     <section class="hero" aria-labelledby="page-title">
-      <p class="eyebrow">30 秒做决定</p>
-      <h1 id="page-title">今天吃什么？</h1>
-      <p class="hero-copy">从人数和场景开始，再补充每位食客的匿名偏好。</p>
+      <p class="eyebrow">用餐推荐</p>
+      <h1 id="page-title">人间有味是清欢</h1>
+      <p class="hero-copy">从人数与场景出发，再按预算与口味收拢选择。</p>
     </section>
     <div class="decision-layout">
       <section class="decision-panel" aria-labelledby="decision-title">
         <div class="section-heading">
-          <div><p class="section-kicker">开始选择</p><h2 id="decision-title">这次怎么吃？</h2></div>
-          <button class="button button-quiet button-small" type="button" id="reset-button" hidden>重置</button>
+          <div><p class="section-kicker">本次用餐</p><h2 id="decision-title">循味而选</h2></div>
+          <button class="button button-quiet button-small" type="button" id="reset-button" hidden>重新选择</button>
         </div>
         <div id="mode-notice" class="mode-notice" role="status">
           <span class="notice-icon" aria-hidden="true">i</span>
-          <p><strong>当前是菜品灵感</strong><span>不含实时商家、价格、距离或配送时间。</span></p>
+          <p><strong>菜品参考</strong><span>来自项目内置清单，实际配料请在用餐前确认。</span></p>
         </div>
         <form id="recommendation-form" novalidate>
           <div id="input-flow"></div>

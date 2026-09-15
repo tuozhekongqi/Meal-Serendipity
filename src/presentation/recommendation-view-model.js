@@ -1,4 +1,5 @@
 import { SCENE_CATALOG } from '../domain/scenarios.js';
+import { DISH_IMAGE_MANIFEST } from '../data/dish-discovery-metadata.js';
 
 const LIVE_TRADEOFF_BY_METRIC = Object.freeze({
   price: new Set(['budget_near_limit', 'estimated_total']),
@@ -8,15 +9,59 @@ const LIVE_TRADEOFF_BY_METRIC = Object.freeze({
 
 const PLACEHOLDER_IMAGE = Object.freeze({
   src: './assets/dishes/placeholder.svg',
-  alt: '菜品灵感占位图',
+  alt: '暂无对应菜品图片',
   kind: 'placeholder'
 });
 
+const APPROVED_DISH_IMAGE_SRCS = new Set(Object.values(DISH_IMAGE_MANIFEST)
+  .filter((filename) => filename !== DISH_IMAGE_MANIFEST.placeholder)
+  .map((filename) => `./assets/dishes/${filename}`));
+
+const DISPLAY_NAME_OVERRIDES = Object.freeze({
+  低脂轻食沙拉: '轻食沙拉'
+});
+
+const DISPLAY_CATEGORY_OVERRIDES = Object.freeze({
+  漂亮饭: '精致餐',
+  锅仔: '锅物'
+});
+
+const DISPLAY_DESCRIPTION_OVERRIDES = Object.freeze({
+  '软烂好消化，肠胃友好': '米粥软糯，皮蛋与瘦肉咸香',
+  '蔬菜鸡胸配粗粮，低卡又顶饱': '蔬菜、鸡胸肉与粗粮搭配，口感清爽',
+  '高蛋白低脂肪，健身减脂标配': '鸡胸肉搭配糙米和蔬菜，口味清爽',
+  '清汤寡淡热量低，热乎又轻盈': '清汤煮制，食材选择灵活，口味较清淡',
+  '鲜嫩清淡，营养满分': '鱼肉鲜嫩，清蒸风味清爽',
+  '冰凉酸爽，暑气全消': '口感冰凉，带有清爽酸味',
+  '果香清爽，低卡饱腹': '牛油果与鸡胸肉搭配，口感清爽',
+  '低卡爽口，酸辣开胃': '口感爽脆，带有酸辣风味',
+  '外焦里糯，胶原拉满': '外层焦香，内部软糯',
+  '冰爽Q滑，暑气全消': '口感冰凉顺滑，带有红糖甜味',
+  '薄饼卷蔬，轻负担': '薄饼包裹蔬菜和鸡肉，口感清爽',
+  '汤浓胶厚，滋补一盅': '鸡汤浓郁，花胶口感软糯',
+  '啃骨吸髓，追剧标配': '卤香浓郁，适合作为小食慢慢享用'
+});
+
+
 function safeInspirationImage(image) {
   return image?.kind === 'dish-inspiration'
-    && /^\.\/assets\/dishes\/[a-z0-9-]+\.(?:webp|svg)$/.test(image.src)
+    && APPROVED_DISH_IMAGE_SRCS.has(image.src)
+    && typeof image.alt === 'string'
+    && image.alt.trim()
     ? { ...image }
     : { ...PLACEHOLDER_IMAGE };
+}
+
+function displayName(value) {
+  return DISPLAY_NAME_OVERRIDES[value] ?? value;
+}
+
+function displayCategory(value) {
+  return DISPLAY_CATEGORY_OVERRIDES[value] ?? value;
+}
+
+function displayDescription(value) {
+  return DISPLAY_DESCRIPTION_OVERRIDES[value] ?? value;
 }
 
 function partyLabel(partySize) {
@@ -130,17 +175,17 @@ function toCard(recommendation, mode, { partySize, mealScene, scenarioCatalog })
   const candidate = recommendation.candidate;
   return {
     identity: {
-      label: mode === 'inspiration' ? '菜品灵感 · 非实时商家信息' : '实时推荐'
+      label: mode === 'inspiration' ? '菜品参考' : '实时推荐'
     },
     image: safeInspirationImage(candidate.item.image),
-    name: candidate.item.name,
+    name: displayName(candidate.item.name),
     partyLabel: partyLabel(partySize),
     sceneLabel: sceneLabel(mealScene, scenarioCatalog),
     tags: [...new Set([
-      ...(candidate.item.categoryTags ?? []),
+      ...(candidate.item.categoryTags ?? []).map(displayCategory),
       ...(candidate.item.tasteTags ?? [])
     ])].slice(0, 4),
-    description: candidate.item.description,
+    description: displayDescription(candidate.item.description),
     reasons: [...(recommendation.reasons ?? [])],
     passedConstraints: [...(recommendation.passedConstraints ?? [])],
     tradeoffs: [...(recommendation.tradeoffs ?? [])],
@@ -195,7 +240,7 @@ export function createRecommendationViewModel({
   return {
     mode: {
       value: safeMode,
-      label: safeMode === 'live' ? '实时推荐' : '菜品灵感',
+      label: safeMode === 'live' ? '实时推荐' : '菜品参考',
       notices: uniqueNotices(notices)
     },
     primary: toCard(recommendation, safeMode, cardContext),

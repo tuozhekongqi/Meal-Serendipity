@@ -47,7 +47,7 @@ test('uses an approved local dish image and labels the selected party and scene'
       candidate: candidate({
         image: {
           src: './assets/dishes/rice-bowl.webp',
-          alt: '番茄牛腩饭菜品灵感示意图',
+          alt: '番茄牛腩饭示意图',
           kind: 'dish-inspiration'
         }
       })
@@ -61,12 +61,12 @@ test('uses an approved local dish image and labels the selected party and scene'
 
   assert.deepEqual(view.primary.image, {
     src: './assets/dishes/rice-bowl.webp',
-    alt: '番茄牛腩饭菜品灵感示意图',
+    alt: '番茄牛腩饭示意图',
     kind: 'dish-inspiration'
   });
-  assert.deepEqual(view.primary.identity, { label: '菜品灵感 · 非实时商家信息' });
+  assert.deepEqual(view.primary.identity, { label: '菜品参考' });
   assert.equal(view.primary.partyLabel, '3 人用餐');
-  assert.equal(view.primary.sceneLabel, '一起聚餐');
+  assert.equal(view.primary.sceneLabel, '多人聚餐');
 });
 
 test('uses a fresh neutral placeholder when a dish image is missing', () => {
@@ -85,7 +85,7 @@ test('uses a fresh neutral placeholder when a dish image is missing', () => {
 
   assert.deepEqual(view.primary.image, {
     src: './assets/dishes/placeholder.svg',
-    alt: '菜品灵感占位图',
+    alt: '暂无对应菜品图片',
     kind: 'placeholder'
   });
   assert.notEqual(view.primary.image, secondView.primary.image);
@@ -109,7 +109,7 @@ test('rejects remote dish image URLs at the presentation boundary', () => {
 
   assert.deepEqual(view.primary.image, {
     src: './assets/dishes/placeholder.svg',
-    alt: '菜品灵感占位图',
+    alt: '暂无对应菜品图片',
     kind: 'placeholder'
   });
 });
@@ -132,9 +132,70 @@ test('rejects an invalid image kind even when the local dish path is approved', 
 
   assert.deepEqual(view.primary.image, {
     src: './assets/dishes/placeholder.svg',
-    alt: '菜品灵感占位图',
+    alt: '暂无对应菜品图片',
     kind: 'placeholder'
   });
+});
+
+test('rejects a well-formed local dish path that is not in the approved manifest', () => {
+  const view = createRecommendationViewModel({
+    recommendation: recommendation({
+      candidate: candidate({
+        image: {
+          src: './assets/dishes/not-approved.webp',
+          alt: '未审核图片',
+          kind: 'dish-inspiration'
+        }
+      })
+    }),
+    alternatives: [],
+    mode: 'inspiration',
+    notices: []
+  });
+
+  assert.deepEqual(view.primary.image, {
+    src: './assets/dishes/placeholder.svg',
+    alt: '暂无对应菜品图片',
+    kind: 'placeholder'
+  });
+});
+
+test('replaces unsupported display claims and internal category jargon without changing candidate data', () => {
+  const source = candidate({ name: '低脂轻食沙拉', category: '漂亮饭' });
+  source.item.description = '高蛋白低脂肪，健身减脂标配';
+  const view = createRecommendationViewModel({
+    recommendation: recommendation({ candidate: source }),
+    alternatives: [],
+    mode: 'inspiration',
+    notices: []
+  });
+
+  assert.equal(view.primary.name, '轻食沙拉');
+  assert.equal(view.primary.description, '鸡胸肉搭配糙米和蔬菜，口味清爽');
+  assert.deepEqual(view.primary.tags, ['精致餐', '咸鲜', '清淡']);
+  assert.equal(source.item.name, '低脂轻食沙拉');
+  assert.equal(source.item.description, '高蛋白低脂肪，健身减脂标配');
+});
+
+test('replaces wellness and lifestyle claims with concrete dish descriptions', () => {
+  const cases = [
+    ['花胶鸡汤饭', '汤浓胶厚，滋补一盅', '鸡汤浓郁，花胶口感软糯'],
+    ['卤鸭锁骨', '啃骨吸髓，追剧标配', '卤香浓郁，适合作为小食慢慢享用']
+  ];
+
+  for (const [name, original, expected] of cases) {
+    const source = candidate({ name });
+    source.item.description = original;
+    const view = createRecommendationViewModel({
+      recommendation: recommendation({ candidate: source }),
+      alternatives: [],
+      mode: 'inspiration',
+      notices: []
+    });
+
+    assert.equal(view.primary.description, expected);
+    assert.equal(source.item.description, original);
+  }
 });
 
 function recommendation(overrides = {}) {
@@ -174,7 +235,7 @@ test('inspiration presentation never exposes live merchant, metrics, or ordering
     notices: []
   });
 
-  assert.equal(view.mode.label, '菜品灵感');
+  assert.equal(view.mode.label, '菜品参考');
   assert.equal(view.primary.storeName, null);
   assert.deepEqual(view.primary.metrics, []);
   assert.deepEqual(view.primary.action, { kind: 'copy', label: '复制菜名' });

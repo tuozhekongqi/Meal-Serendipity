@@ -45,8 +45,8 @@ test('empty state says exclusions stayed strict and wires both condition recover
   assert.match(emptyRoot.innerHTML, /data-state="empty"/);
   assert.match(emptyRoot.innerHTML, /state-visual neutral/);
   assert.match(emptyRoot.innerHTML, /state-symbol[^>]*>−</);
-  assert.match(emptyRoot.innerHTML, /这些条件没有合适结果/);
-  assert.match(emptyRoot.innerHTML, /忌口和过敏原没有被放宽/);
+  assert.match(emptyRoot.innerHTML, /暂时没有符合全部条件的菜品/);
+  assert.match(emptyRoot.innerHTML, /已保留所有忌口条件/);
   assert.match(emptyRoot.innerHTML, /data-state-action="edit"[^>]*>修改条件</);
   assert.match(emptyRoot.innerHTML, /data-state-action="back"[^>]*>返回上一步</);
   emptyRoot.click('[data-state-action="edit"]');
@@ -66,9 +66,9 @@ test('error state retains conditions and wires retry plus return through the rea
   assert.match(errorRoot.innerHTML, /data-state="error"/);
   assert.match(errorRoot.innerHTML, /state-visual error/);
   assert.match(errorRoot.innerHTML, /state-symbol[^>]*>!</);
-  assert.match(errorRoot.innerHTML, /本次条件仍会保留/);
+  assert.match(errorRoot.innerHTML, /本次选择已经保留/);
   assert.match(errorRoot.innerHTML, /data-state-action="retry"[^>]*>重试</);
-  assert.match(errorRoot.innerHTML, /data-state-action="back"[^>]*>返回</);
+  assert.match(errorRoot.innerHTML, /data-state-action="back"[^>]*>修改条件</);
   assert.doesNotMatch(errorRoot.innerHTML, /重置本次条件/);
   errorRoot.click('[data-state-action="retry"]');
   errorRoot.click('[data-state-action="back"]');
@@ -83,7 +83,7 @@ test('loading state exposes busy semantics, static skeleton bars, and the retain
   assert.match(root.innerHTML, /data-state="loading"/);
   assert.match(root.innerHTML, /aria-busy="true"/);
   assert.match(root.innerHTML, /loading-bars/);
-  assert.match(root.innerHTML, /正在筛选/);
+  assert.match(root.innerHTML, /正在整理推荐/);
   assert.doesNotMatch(root.innerHTML, /state-visual error/);
   assert.match(root.innerHTML, /data-state-action="back"[^>]*>返回</);
   root.click('[data-state-action="back"]');
@@ -96,13 +96,13 @@ test('success copy states the decision directly without generic AI phrasing', ()
     querySelectorAll() { return []; }
   };
   renderRecommendation(resultRoot, {
-    mode: { value: 'inspiration', label: '菜品灵感' },
+    mode: { value: 'inspiration', label: '菜品参考' },
     kind: 'single',
     partyLabel: '1 人用餐',
-    sceneLabel: '想吃点好的',
+    sceneLabel: '犒赏自己',
     primary: {
-      identity: { label: '菜品灵感 · 非实时商家信息' },
-      image: { src: './assets/dishes/placeholder.svg', alt: '菜品灵感占位图', kind: 'placeholder' },
+      identity: { label: '菜品参考' },
+      image: { src: './assets/dishes/placeholder.svg', alt: '暂无对应菜品图片', kind: 'placeholder' },
       id: 'dish:one', name: '番茄牛腩饭', description: '酸甜浓郁，配米饭。',
       storeName: null, tags: ['米饭', '咸鲜'], runway: [], metrics: [],
       reasons: [{ message: '符合你选择的口味' }], passedConstraints: ['exclusion'], tradeoffs: [],
@@ -111,7 +111,8 @@ test('success copy states the decision directly without generic AI phrasing', ()
     alternatives: [], bundleItems: [], assignments: [],
     diagnostics: { missingDinerIds: [], degradedFrom: null, reason: null }
   }, { onSwap() {}, onAlternative() {}, onPrimaryAction() {} });
-  assert.match(resultRoot.innerHTML, /菜品灵感 · 非实时商家信息/);
+  assert.match(resultRoot.innerHTML, /菜品参考/);
+  assert.doesNotMatch(resultRoot.innerHTML, /非实时商家信息/);
   assert.doesNotMatch(resultRoot.innerHTML, /food-spark|为你|智能推荐|AI/);
 });
 
@@ -136,6 +137,6 @@ test('provider fallback is clearly labeled as static inspiration', () => {
   });
 
   assert.match(root.className, /degraded/);
-  assert.match(root.innerHTML, /当前为静态灵感/);
+  assert.match(root.innerHTML, /菜品参考暂时降级/);
   assert.match(root.innerHTML, /实时数据暂时不可用/);
 });

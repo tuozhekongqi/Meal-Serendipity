@@ -3,9 +3,9 @@ import { recommend } from './recommend.js';
 const PLAN_TITLES = Object.freeze({
   single: '本餐首选',
   shared_bundle: '共享菜组合',
-  individual_set: '每个人单独点',
+  individual_set: '每人单独选择',
   same_cuisine_set: '同菜系不同菜',
-  compromise: '先用折中方向'
+  compromise: '折中方案'
 });
 
 function unique(values) {
@@ -188,13 +188,13 @@ function structuralReason(planKind, items, dinerAssignments) {
   if (planKind === 'shared_bundle') {
     return {
       code: 'shared_structure_complete',
-      message: `这组方向由 ${items.length} 道不同角色的安全菜品组成`
+      message: `由 ${items.length} 道不同类型的菜品组成，便于共享搭配`
     };
   }
   if (planKind === 'individual_set') {
     return {
       code: 'individual_assignment_complete',
-      message: `已为 ${dinerAssignments.length} 位食客保留逐人归属和不同菜品`
+      message: `已为 ${dinerAssignments.length} 位用餐者分别安排不同菜品`
     };
   }
   if (planKind === 'same_cuisine_set') {
@@ -203,17 +203,17 @@ function structuralReason(planKind, items, dinerAssignments) {
     return {
       code: 'same_cuisine_structure_complete',
       message: cuisine
-        ? `所有已分配菜品都使用可核实的“${cuisine}”菜系标签，且菜品不重复`
-        : '已分配菜品保留逐人归属且不重复'
+        ? `菜品均标注为“${cuisine}”菜系，且没有重复`
+        : '菜品均保留对应的用餐者，且没有重复'
     };
   }
   if (planKind === 'compromise') {
     return {
       code: 'compromise_direction',
-      message: '这是一个可继续调整的折中方向，不会把未完成的组合说成已满足'
+      message: '当前条件下无法完成原定组合，先提供可调整的折中方案'
     };
   }
-  return { code: 'single_direction', message: '这是当前条件下的首选菜品方向' };
+  return { code: 'single_direction', message: '这是当前条件下的首选菜品' };
 }
 
 function buildPlanEvidence(context, planKind, hero, items, dinerAssignments) {
@@ -243,18 +243,18 @@ function buildPlanEvidence(context, planKind, hero, items, dinerAssignments) {
 }
 
 function directionSummary(planKind, context, items, dinerAssignments, directionDiagnostics) {
-  if (planKind === 'single') return '一道首选菜品，可直接作为这顿的决定。';
+  if (planKind === 'single') return '一道符合当前条件的首选菜品。';
   if (planKind === 'shared_bundle') return `${items.length} 道互补菜品，作为 ${context.partySize} 人共享的搭配方向。`;
-  if (planKind === 'individual_set') return `${dinerAssignments.length} 份不重复菜品，每份都保留对应食客。`;
+  if (planKind === 'individual_set') return `${dinerAssignments.length} 份不重复菜品，每份都保留对应用餐者。`;
   if (planKind === 'same_cuisine_set') {
     const cuisine = dinerAssignments.find(({ recommendation }) => recommendation)
       ?.recommendation?.candidate?.metadata?.cuisineTags?.[0];
-    return `${cuisine ? `${cuisine}方向，` : ''}${dinerAssignments.length} 份不同菜品按食客分配。`;
+    return `${cuisine ? `${cuisine}方向，` : ''}${dinerAssignments.length} 份不同菜品按用餐者分配。`;
   }
   if (directionDiagnostics.reason === 'dining_mode_undecided') {
-    return '先给出一个共同折中菜品；也可直接切换到共享或分人方案。';
+    return '先提供一个共同的折中菜品，也可以切换到共享或每人一份。';
   }
-  return '安全候选不足以完成原定结构，已保留可用部分并明确标出缺口。';
+  return '符合条件的菜品不足以完成原定组合，已保留可用部分并标出缺口。';
 }
 
 function directionId(planKind, hero, items, dinerAssignments) {
@@ -298,7 +298,7 @@ function composeSingleDirections(context, candidates, options) {
     planKind: 'single',
     hero: recommendation,
     title: recommendation.candidate.item.name,
-    differenceLabel: '另一道安全菜品'
+    differenceLabel: '备选菜品'
   }));
 }
 
@@ -356,7 +356,7 @@ function composeIndividualDirection(context, candidates, options) {
     hero: assignments.find(({ recommendation }) => recommendation)?.recommendation ?? null,
     dinerAssignments: assignments,
     directionDiagnostics,
-    differenceLabel: '另一组逐人搭配'
+    differenceLabel: '另一组每人一份'
   });
 }
 
@@ -417,7 +417,7 @@ function composeSameCuisineDirection(context, candidates, options) {
         ? 'missing_cuisine_tag'
         : 'insufficient_same_cuisine_candidates'
     }),
-    differenceLabel: '改用可完成的折中方向'
+    differenceLabel: '改用可完成的折中方案'
   });
 }
 

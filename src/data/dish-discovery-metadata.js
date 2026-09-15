@@ -30,18 +30,18 @@ export const DISH_IMAGE_MANIFEST = Object.freeze({
 });
 
 export const DISH_IMAGE_ALTS = Object.freeze({
-  'rice-bowl': '鸡肉米饭碗菜品灵感图',
-  noodles: '清汤面菜品灵感图',
-  hotpot: '双味火锅菜品灵感图',
-  grill: '烤串拼盘菜品灵感图',
-  braised: '豆制品卤味拼盘灵感图',
-  'light-meal': '鸡胸牛油果谷物碗菜品灵感图',
-  snacks: '酥炸小食拼盘菜品灵感图',
-  plated: '牛排配蔬菜菜品灵感图',
-  dessert: '莓果慕斯甜品灵感图',
-  soup: '青菜云吞汤菜品灵感图',
-  sharing: '炖牛肉共享餐菜品灵感图',
-  celebration: '牛排庆祝餐菜品灵感图'
+  'rice-bowl': '鸡肉米饭碗示意图',
+  noodles: '清汤面示意图',
+  hotpot: '双味火锅示意图',
+  grill: '烤串拼盘示意图',
+  braised: '豆制品卤味拼盘示意图',
+  'light-meal': '鸡胸牛油果谷物碗示意图',
+  snacks: '酥炸小食拼盘示意图',
+  plated: '牛排配蔬菜示意图',
+  dessert: '莓果慕斯甜品示意图',
+  soup: '青菜云吞汤示意图',
+  sharing: '炖牛肉共享餐示意图',
+  celebration: '牛排庆祝餐示意图'
 });
 
 const AUDITED_DISH_IMAGE_KEYS = Object.freeze({

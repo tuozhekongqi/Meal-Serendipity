@@ -47,15 +47,15 @@ const expectedAssetFiles = [
   'soup.webp'
 ];
 const auditedDishImages = Object.freeze({
-  '照烧鸡腿饭': Object.freeze({ imageKey: 'rice-bowl', alt: '鸡肉米饭碗菜品灵感图' }),
-  '烧烤烤串': Object.freeze({ imageKey: 'grill', alt: '烤串拼盘菜品灵感图' }),
-  '卤味拼盘': Object.freeze({ imageKey: 'braised', alt: '豆制品卤味拼盘灵感图' }),
-  '卤香干': Object.freeze({ imageKey: 'braised', alt: '豆制品卤味拼盘灵感图' }),
-  '低脂轻食沙拉': Object.freeze({ imageKey: 'light-meal', alt: '鸡胸牛油果谷物碗菜品灵感图' }),
-  '牛油果鸡胸碗': Object.freeze({ imageKey: 'light-meal', alt: '鸡胸牛油果谷物碗菜品灵感图' }),
-  '蛋白能量碗': Object.freeze({ imageKey: 'light-meal', alt: '鸡胸牛油果谷物碗菜品灵感图' }),
-  '广式云吞汤': Object.freeze({ imageKey: 'soup', alt: '青菜云吞汤菜品灵感图' }),
-  '红酒烩牛肉': Object.freeze({ imageKey: 'sharing', alt: '炖牛肉共享餐菜品灵感图' })
+  '照烧鸡腿饭': Object.freeze({ imageKey: 'rice-bowl', alt: '鸡肉米饭碗示意图' }),
+  '烧烤烤串': Object.freeze({ imageKey: 'grill', alt: '烤串拼盘示意图' }),
+  '卤味拼盘': Object.freeze({ imageKey: 'braised', alt: '豆制品卤味拼盘示意图' }),
+  '卤香干': Object.freeze({ imageKey: 'braised', alt: '豆制品卤味拼盘示意图' }),
+  '低脂轻食沙拉': Object.freeze({ imageKey: 'light-meal', alt: '鸡胸牛油果谷物碗示意图' }),
+  '牛油果鸡胸碗': Object.freeze({ imageKey: 'light-meal', alt: '鸡胸牛油果谷物碗示意图' }),
+  '蛋白能量碗': Object.freeze({ imageKey: 'light-meal', alt: '鸡胸牛油果谷物碗示意图' }),
+  '广式云吞汤': Object.freeze({ imageKey: 'soup', alt: '青菜云吞汤示意图' }),
+  '红酒烩牛肉': Object.freeze({ imageKey: 'sharing', alt: '炖牛肉共享餐示意图' })
 });
 const representativeMismatches = [
   '清蒸鲈鱼套餐',
@@ -222,7 +222,7 @@ test('only explicitly audited dish names resolve to truthful local inspiration i
 
 test('audited inspiration alt text describes the asset instead of claiming an exact dish photo', () => {
   const dish = DISHES.find((candidate) => candidate.item.name === '照烧鸡腿饭');
-  assert.equal(dish.item.image.alt, '鸡肉米饭碗菜品灵感图');
+  assert.equal(dish.item.image.alt, '鸡肉米饭碗示意图');
   assert.doesNotMatch(dish.item.image.alt, /照烧鸡腿饭菜品/);
 });
 

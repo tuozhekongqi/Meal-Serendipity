@@ -102,7 +102,7 @@ function escapeHtml(value) {
 
 function updateMode(mode) {
   roots.mode.dataset.mode = mode;
-  roots.mode.lastChild.textContent = mode === 'live' ? '实时推荐' : '菜品灵感';
+  roots.mode.lastChild.textContent = mode === 'live' ? '实时推荐' : '菜品参考';
 }
 
 function resetRecommendationSession() {
@@ -171,7 +171,7 @@ function handleFlowAction(action) {
 function renderEditingState() {
   roots.result.innerHTML = `<div class="state-card" data-state="initial">
     <div class="state-visual initial" aria-hidden="true"><span class="state-symbol">→</span></div>
-    <h3>从用餐人数开始</h3><p>完成当前步骤后，这里会给出一个可解释的菜品灵感。</p>
+    <h3>完成选择后查看推荐</h3><p>推荐结果将在这里显示。</p>
   </div>`;
 }
 
@@ -179,7 +179,7 @@ function mobileResultActions(viewModel) {
   const primaryAction = viewModel.primary?.action?.label
     ? `<button type="button" class="button button-primary" data-mobile-result="primary">${escapeHtml(viewModel.primary.action.label)}</button>`
     : '';
-  roots.mobileActions.innerHTML = `${primaryAction}<button type="button" class="button button-secondary" data-mobile-result="swap">换一个</button><button type="button" class="button button-secondary" data-mobile-result="back">返回修改条件</button>`;
+  roots.mobileActions.innerHTML = `${primaryAction}<button type="button" class="button button-secondary" data-mobile-result="swap">换一个</button><button type="button" class="button button-secondary" data-mobile-result="back">修改条件</button>`;
   roots.mobileActions.querySelector('[data-mobile-result="primary"]')?.addEventListener('click', () => handlePrimaryAction(viewModel.primary));
   roots.mobileActions.querySelector('[data-mobile-result="swap"]')?.addEventListener('click', swapRecommendation);
   roots.mobileActions.querySelector('[data-mobile-result="back"]')?.addEventListener('click', () => editStep(FLOW_STEP.PREFERENCES));
@@ -288,7 +288,7 @@ function selectAlternative(planId) {
 
   const plan = promoteMealPlanAlternative(currentPlan, planId);
   if (plan === currentPlan) {
-    showToast(roots.toast, '这个替代方案已不可用');
+    showToast(roots.toast, '这个备选方案已不可用');
     return;
   }
 
@@ -311,7 +311,7 @@ async function requestRecommendation() {
   roots.reset.hidden = false;
   const slowMessage = globalThis.setTimeout(() => {
     const copy = roots.result.querySelector('[data-state="loading"] p');
-    if (copy) copy.textContent = '候选较多，仍在检查安全条件和推荐理由。';
+    if (copy) copy.textContent = '菜品较多，仍在核对忌口条件和推荐依据。';
   }, 800);
 
   try {
@@ -353,7 +353,7 @@ async function requestRecommendation() {
 
 function swapRecommendation() {
   if (!providerResponse) {
-    showToast(roots.toast, '暂时没有更多安全候选');
+    showToast(roots.toast, '暂时没有更多符合条件的菜品');
     return;
   }
 
@@ -361,7 +361,7 @@ function swapRecommendation() {
     const context = createContextInputFromFlow(state);
     const composed = planFromCandidates(context, providerResponse);
     if (composed.ids.length === 0) {
-      showToast(roots.toast, '暂时没有更多安全候选');
+      showToast(roots.toast, '暂时没有更多符合条件的菜品');
       return;
     }
     addExcludedCandidates(composed.ids);
@@ -371,7 +371,7 @@ function swapRecommendation() {
       result: { plan: composed.plan, viewModel: composed.viewModel }
     });
   } catch {
-    showToast(roots.toast, '暂时没有更多安全候选');
+    showToast(roots.toast, '暂时没有更多符合条件的菜品');
   }
 }
 
@@ -402,7 +402,7 @@ function handleFeedback(value, box) {
     return;
   }
   swapRecommendation();
-  showToast(roots.toast, '已换一个方向，本次反馈不会上传');
+  showToast(roots.toast, '已更换推荐，本次反馈不会上传');
 }
 
 function editStep(step) {
@@ -416,19 +416,18 @@ function resetApplication() {
   state = createFlowState();
   roots.reset.hidden = true;
   roots.notice.className = 'mode-notice';
-  roots.notice.innerHTML = '<span class="notice-icon" aria-hidden="true">i</span><p><strong>当前是菜品灵感</strong><span>不含实时商家、价格、距离或配送时间。</span></p>';
+  roots.notice.innerHTML = '<span class="notice-icon" aria-hidden="true">i</span><p><strong>菜品参考</strong><span>来自项目内置清单，实际配料请在用餐前确认。</span></p>';
   updateMode('inspiration');
   renderApplication();
-  showToast(roots.toast, '已重置本次选择');
+  showToast(roots.toast, '已重新开始选择');
 }
 
 roots.reset.addEventListener('click', resetApplication);
 roots.dataInfo.addEventListener('click', () => dialog.open({
-  title: '数据与隐私说明',
+  title: '数据与隐私',
   trigger: roots.dataInfo,
-  bodyHtml: `<p>当前版本只使用仓库内的 175 条静态菜品作为灵感，不代表附近真实可下单的商家。</p>
-    <ul><li>不展示实时价格、距离、ETA、营业或库存。</li><li>不请求或保存精确位置。</li><li>忌口原文只在本次页面中使用，刷新后不会恢复。</li><li>多人逐人口味只用于本次推荐，不会汇总保存或发送给 Provider。</li><li>合法单人口味、人数和近期选择可保存在浏览器本地。</li></ul>
-    <p>接入经确认的实时 Provider 后，界面才会展示由数据源实际提供的字段。</p>`
+  bodyHtml: `<p>当前推荐依据项目内置菜品清单，不读取附近商家或实时订单信息。</p>
+    <ul><li>不展示实时价格、距离、配送时间、营业或库存。</li><li>不请求或保存精确位置。</li><li>本次忌口在页面刷新后清除。</li><li>多人偏好只用于本次推荐，不会保存或上传。</li><li>单人口味、人数和近期选择可以保存在本机浏览器中，便于下次继续。</li></ul>`
 }));
 
 if (PROVIDER_CONFIG.endpoint) {
@@ -437,5 +436,5 @@ if (PROVIDER_CONFIG.endpoint) {
 
 renderApplication();
 if (loadedPreferences.ok && loadedPreferences.value) {
-  globalThis.setTimeout(() => showToast(roots.toast, '已恢复上次保存的非敏感偏好'), 0);
+  globalThis.setTimeout(() => showToast(roots.toast, '已恢复上次保存的用餐偏好'), 0);
 }

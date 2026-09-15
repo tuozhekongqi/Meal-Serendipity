@@ -6,7 +6,7 @@ function modeView(mode, notices = []) {
   const seen = new Set();
   return {
     value: safeMode,
-    label: safeMode === 'live' ? '实时推荐' : '菜品灵感',
+    label: safeMode === 'live' ? '实时推荐' : '菜品参考',
     notices: notices.filter((notice) => {
       const key = `${notice?.code ?? ''}:${notice?.message ?? ''}`;
       if (seen.has(key)) return false;

@@ -34,10 +34,10 @@ export const INSPIRATION_BUDGET_TIER = Object.freeze({
 });
 
 const DINING_MODE_CATALOG = Object.freeze({
-  [DINING_MODE.SHARED]: Object.freeze({ value: DINING_MODE.SHARED, label: '一起吃共享菜' }),
-  [DINING_MODE.INDIVIDUAL]: Object.freeze({ value: DINING_MODE.INDIVIDUAL, label: '每个人单独点' }),
-  [DINING_MODE.SHARED_MAIN_PERSONAL]: Object.freeze({ value: DINING_MODE.SHARED_MAIN_PERSONAL, label: '主菜统一，口味各自不同' }),
-  [DINING_MODE.UNDECIDED]: Object.freeze({ value: DINING_MODE.UNDECIDED, label: '还没想好' })
+  [DINING_MODE.SHARED]: Object.freeze({ value: DINING_MODE.SHARED, label: '共享菜品' }),
+  [DINING_MODE.INDIVIDUAL]: Object.freeze({ value: DINING_MODE.INDIVIDUAL, label: '每人单独选择' }),
+  [DINING_MODE.SHARED_MAIN_PERSONAL]: Object.freeze({ value: DINING_MODE.SHARED_MAIN_PERSONAL, label: '同一菜系，分别选菜' }),
+  [DINING_MODE.UNDECIDED]: Object.freeze({ value: DINING_MODE.UNDECIDED, label: '暂未决定' })
 });
 
 function scene(value, label, audience, suggestedDiningModes = []) {
@@ -50,25 +50,25 @@ function scene(value, label, audience, suggestedDiningModes = []) {
 }
 
 export const SCENE_CATALOG = Object.freeze([
-  scene(MEAL_SCENE.SOLO_QUICK, '快速解决', 'single'),
-  scene(MEAL_SCENE.SOLO_FOCUS, '学习 / 工作', 'single'),
-  scene(MEAL_SCENE.SOLO_TREAT, '想吃点好的', 'single'),
+  scene(MEAL_SCENE.SOLO_QUICK, '快速用餐', 'single'),
+  scene(MEAL_SCENE.SOLO_FOCUS, '学习或工作', 'single'),
+  scene(MEAL_SCENE.SOLO_TREAT, '犒赏自己', 'single'),
   scene(MEAL_SCENE.SOLO_LATE_NIGHT, '深夜加餐', 'single'),
-  scene(MEAL_SCENE.SOLO_LIGHTER, '清淡一点', 'single'),
-  scene(MEAL_SCENE.SOLO_SAVE, '今天想省钱', 'single'),
-  scene(MEAL_SCENE.GROUP_GATHERING, '一起聚餐', 'multi', [
+  scene(MEAL_SCENE.SOLO_LIGHTER, '偏好清淡', 'single'),
+  scene(MEAL_SCENE.SOLO_SAVE, '节省预算', 'single'),
+  scene(MEAL_SCENE.GROUP_GATHERING, '多人聚餐', 'multi', [
     DINING_MODE.SHARED,
     DINING_MODE.SHARED_MAIN_PERSONAL,
     DINING_MODE.INDIVIDUAL,
     DINING_MODE.UNDECIDED
   ]),
-  scene(MEAL_SCENE.GROUP_INDIVIDUAL, '各点各的', 'multi', [
+  scene(MEAL_SCENE.GROUP_INDIVIDUAL, '分别点餐', 'multi', [
     DINING_MODE.INDIVIDUAL,
     DINING_MODE.SHARED,
     DINING_MODE.SHARED_MAIN_PERSONAL,
     DINING_MODE.UNDECIDED
   ]),
-  scene(MEAL_SCENE.GROUP_MIXED_TASTE, '口味不太一样', 'multi', [
+  scene(MEAL_SCENE.GROUP_MIXED_TASTE, '口味各异', 'multi', [
     DINING_MODE.SHARED_MAIN_PERSONAL,
     DINING_MODE.INDIVIDUAL,
     DINING_MODE.SHARED,
@@ -80,7 +80,7 @@ export const SCENE_CATALOG = Object.freeze([
     DINING_MODE.UNDECIDED,
     DINING_MODE.INDIVIDUAL
   ]),
-  scene(MEAL_SCENE.GROUP_CELEBRATION, '约会 / 庆祝', 'multi', [
+  scene(MEAL_SCENE.GROUP_CELEBRATION, '约会或庆祝', 'multi', [
     DINING_MODE.SHARED,
     DINING_MODE.SHARED_MAIN_PERSONAL,
     DINING_MODE.INDIVIDUAL,

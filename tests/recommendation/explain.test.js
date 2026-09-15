@@ -91,7 +91,7 @@ test('shows a quick-scene reason only when scored evidence supplies its code', (
   assert.ok(explanation.reasonCodes.includes('quick_reliable_match'));
   assert.match(
     explanation.reasons.find(({ code }) => code === 'quick_reliable_match').message,
-    /选择简单/
+    /准备和搭配相对直接/
   );
   assert.ok(explanation.tradeoffs.some(({ code }) => code === 'live_data_unavailable'));
 });
@@ -152,7 +152,7 @@ test('uses a static budget-tier reason without claiming a live price', () => {
   assert.ok(explanation.reasonCodes.includes('inspiration_budget_match'));
   assert.equal(explanation.reasonCodes.includes('within_budget'), false);
   const message = explanation.reasons.find(({ code }) => code === 'inspiration_budget_match').message;
-  assert.match(message, /预算档/);
+  assert.match(message, /菜品档位/);
   assert.doesNotMatch(message, /实时价格|附近|可下单|保证健康/);
 });
 
@@ -211,6 +211,6 @@ test('individual taste reasons require a real preference match instead of generi
   assert.ok(matched.reasonCodes.includes('individual_taste_match'));
   assert.match(
     matched.reasons.find(({ code }) => code === 'individual_taste_match').message,
-    /本人|个人/
+    /这位用餐者/
   );
 });

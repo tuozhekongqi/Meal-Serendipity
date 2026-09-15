@@ -60,7 +60,7 @@ test('maps all meal-plan kinds to render-safe cards while retaining truthful dia
   const safe = recommendation({
     image: {
       src: './assets/dishes/noodles.webp',
-      alt: '番茄牛腩饭菜品灵感示意图',
+      alt: '番茄牛腩饭示意图',
       kind: 'dish-inspiration'
     }
   });
@@ -74,7 +74,7 @@ test('maps all meal-plan kinds to render-safe cards while retaining truthful dia
     name: '照烧鸡腿饭',
     image: {
       src: './assets/dishes/rice-bowl.webp',
-      alt: '鸡肉米饭碗菜品灵感图',
+      alt: '鸡肉米饭碗示意图',
       kind: 'dish-inspiration'
     }
   });
@@ -109,8 +109,8 @@ test('maps all meal-plan kinds to render-safe cards while retaining truthful dia
     const view = createMealPlanViewModel({ plan: input, mode: 'inspiration', notices: [] });
     assert.equal(view.kind, input.kind);
     assert.equal(view.partyLabel, '2 人用餐');
-    assert.equal(view.sceneLabel, '各点各的');
-    assert.equal(view.mode.label, '菜品灵感');
+    assert.equal(view.sceneLabel, '分别点餐');
+    assert.equal(view.mode.label, '菜品参考');
   }
 
   const single = createMealPlanViewModel({ plan: cases[0], mode: 'inspiration', notices: [] });
@@ -119,7 +119,7 @@ test('maps all meal-plan kinds to render-safe cards while retaining truthful dia
   ]);
   assert.deepEqual(single.primary.image, {
     src: './assets/dishes/noodles.webp',
-    alt: '番茄牛腩饭菜品灵感示意图',
+    alt: '番茄牛腩饭示意图',
     kind: 'dish-inspiration'
   });
 
@@ -139,12 +139,12 @@ test('maps all meal-plan kinds to render-safe cards while retaining truthful dia
   assert.deepEqual(sameCuisine.assignments.map(({ card }) => card.image), [
     {
       src: './assets/dishes/rice-bowl.webp',
-      alt: '鸡肉米饭碗菜品灵感图',
+      alt: '鸡肉米饭碗示意图',
       kind: 'dish-inspiration'
     },
     {
       src: './assets/dishes/placeholder.svg',
-      alt: '菜品灵感占位图',
+      alt: '暂无对应菜品图片',
       kind: 'placeholder'
     }
   ]);
@@ -183,7 +183,7 @@ test('maps a real individual plan to a hero-backed plan summary and selectable p
   });
 
   assert.equal(view.kind, 'individual_set');
-  assert.equal(view.planSummary.title, '每个人单独点');
+  assert.equal(view.planSummary.title, '每人单独选择');
   assert.ok(view.primary.image.src.startsWith('./assets/dishes/'));
   assert.equal(view.assignments.length, 2);
   assert.ok(view.assignments.every(({ card }) => (
