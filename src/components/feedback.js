@@ -11,14 +11,16 @@ function stateMarkup({ kind, title, body, actions = '' }) {
 }
 
 export function renderInitialState(root) {
-  root.innerHTML = stateMarkup({ kind: 'initial', title: '先选一个状态', body: '不想细选，可以直接点“马上推荐”。' });
+  root.innerHTML = stateMarkup({ kind: 'initial', title: '完成选择后查看推荐', body: '推荐结果将在这里显示。' });
 }
 
-export function renderLoadingState(root) {
-  root.innerHTML = `<div class="state-card" data-state="loading" role="status">
+export function renderLoadingState(root, onBack) {
+  root.innerHTML = `<div class="state-card" data-state="loading" role="status" aria-busy="true">
     <div class="loading-bars" aria-hidden="true"><span></span><span></span><span></span></div>
-    <h3>正在筛选</h3><p>检查忌口、口味和近期选择。</p>
+    <h3>正在整理推荐</h3><p>正在核对忌口、口味和近期选择。</p>
+    <div class="state-actions"><button class="button button-secondary" type="button" data-state-action="back">返回</button></div>
   </div>`;
+  root.querySelector('[data-state-action="back"]')?.addEventListener('click', onBack);
 }
 
 export function renderStatusActions(root, kind) {
@@ -27,21 +29,22 @@ export function renderStatusActions(root, kind) {
     : '';
 }
 
-export function renderEmptyState(root, onEdit) {
-  root.innerHTML = stateMarkup({ kind: 'empty', title: '这些条件没有合适结果', body: '忌口不会被自动放宽。修改一个条件再试。', actions: '<button class="button button-primary" type="button" data-state-action="edit">修改条件</button>' });
+export function renderEmptyState(root, { onEdit, onBack }) {
+  root.innerHTML = stateMarkup({ kind: 'empty', title: '暂时没有符合全部条件的菜品', body: '已保留所有忌口条件。可以调整预算或口味后再试。', actions: '<button class="button button-primary" type="button" data-state-action="edit">修改条件</button><button class="button button-secondary" type="button" data-state-action="back">返回上一步</button>' });
   root.querySelector('[data-state-action="edit"]')?.addEventListener('click', onEdit);
+  root.querySelector('[data-state-action="back"]')?.addEventListener('click', onBack);
 }
 
-export function renderErrorState(root, { onRetry, onReset }) {
-  root.innerHTML = stateMarkup({ kind: 'error', title: '暂时无法读取推荐数据', body: '数据读取或页面处理遇到问题。可以重试；若仍失败，再重置本次条件。', actions: '<button class="button button-primary" type="button" data-state-action="retry">重试</button><button class="button button-secondary" type="button" data-state-action="reset">重置</button>' });
+export function renderErrorState(root, { onRetry, onBack }) {
+  root.innerHTML = stateMarkup({ kind: 'error', title: '推荐暂时无法生成', body: '本次选择已经保留，可以重试或返回修改条件。', actions: '<button class="button button-primary" type="button" data-state-action="retry">重试</button><button class="button button-secondary" type="button" data-state-action="back">修改条件</button>' });
   root.querySelector('[data-state-action="retry"]')?.addEventListener('click', onRetry);
-  root.querySelector('[data-state-action="reset"]')?.addEventListener('click', onReset);
+  root.querySelector('[data-state-action="back"]')?.addEventListener('click', onBack);
 }
 
 export function renderFeedback(root, onFeedback) {
   const box = document.createElement('div');
   box.className = 'feedback-box';
-  box.innerHTML = '<p>这个答案合适吗？</p><button class="button button-secondary button-small" type="button" data-feedback="yes">合适</button><button class="button button-secondary button-small" type="button" data-feedback="no">不太合适</button>';
+  box.innerHTML = '<p>本次推荐反馈</p><button class="button button-secondary button-small" type="button" data-feedback="yes">合适</button><button class="button button-secondary button-small" type="button" data-feedback="no">不太合适</button>';
   box.querySelectorAll('[data-feedback]').forEach((button) => button.addEventListener('click', () => onFeedback(button.dataset.feedback, box)));
   root.append(box);
 }

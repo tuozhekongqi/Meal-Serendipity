@@ -31,6 +31,20 @@ test('storage persists only non-sensitive preferences and coarse area', () => {
   assert.equal(raw.includes('上海市黄浦区'), true);
 });
 
+test('storage drops top-level tastes for multi-person contexts but preserves the single-diner contract', () => {
+  const backend = memoryStorage();
+  const storage = createPreferenceStorage({ storage: backend });
+
+  storage.save({ partySize: 2, tastePreferences: ['multi-person-union'] });
+  let raw = [...backend.values.values()][0];
+  assert.equal(raw.includes('multi-person-union'), false);
+  assert.deepEqual(JSON.parse(raw).preferences.tastePreferences, []);
+
+  storage.save({ partySize: 1, tastePreferences: ['single-person-taste'] });
+  raw = [...backend.values.values()][0];
+  assert.equal(raw.includes('single-person-taste'), true);
+});
+
 test('storage unavailability never escapes as an exception', () => {
   const throwing = {
     getItem() { throw new Error('disabled'); },

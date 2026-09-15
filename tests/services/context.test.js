@@ -3,16 +3,18 @@ import test from 'node:test';
 
 import { createUserContext, toProviderRequest } from '../../src/services/context.js';
 
+const NOW = '2026-08-17T03:00:00.000Z';
+
 test('context normalizes bounded preference arrays and numeric constraints', () => {
   const result = createUserContext({
-    partySize: '2',
+    partySize: '1',
     totalBudgetCents: '5000',
     tastes: ['辣', '辣', ' 甜 '],
     exclusions: ['花生', '花生'],
     currentPriority: 'fastest'
   });
 
-  assert.equal(result.partySize, 2);
+  assert.equal(result.partySize, 1);
   assert.equal(result.totalBudgetCents, 5000);
   assert.deepEqual(result.tastePreferences, ['辣', '甜']);
   assert.deepEqual(result.exclusions, ['花生']);
@@ -51,4 +53,104 @@ test('context keeps manual locations coarse instead of coercing null coordinates
   assert.equal(result.location.latitude, null);
   assert.equal(result.location.longitude, null);
   assert.equal(result.location.accuracyMeters, null);
+});
+
+test('multi-person tastes remain diner-local and never enter the provider preference field', () => {
+  const context = createUserContext({
+    partySize: 2,
+    tastePreferences: ['union-taste-must-not-cross-boundary'],
+    dinerProfiles: [
+      { tastePreferences: ['diner-one-private-taste'] },
+      { tastePreferences: ['diner-two-private-taste'] }
+    ]
+  });
+  const request = toProviderRequest(context, {
+    requestId: 'multi-person-privacy',
+    requestedAt: NOW
+  });
+  const serialized = JSON.stringify(request);
+
+  assert.deepEqual(context.tastePreferences, []);
+  assert.deepEqual(context.dinerProfiles.map(({ tastePreferences }) => tastePreferences), [
+    ['diner-one-private-taste'],
+    ['diner-two-private-taste']
+  ]);
+  assert.deepEqual(request.preferences.tastes, []);
+  assert.equal(serialized.includes('union-taste-must-not-cross-boundary'), false);
+  assert.equal(serialized.includes('diner-one-private-taste'), false);
+  assert.equal(serialized.includes('diner-two-private-taste'), false);
+});
+
+test('single-diner legacy taste preferences keep the existing provider contract', () => {
+  const context = createUserContext({ partySize: 1, tastes: ['辣'] });
+  const request = toProviderRequest(context, {
+    requestId: 'single-person-contract',
+    requestedAt: NOW
+  });
+
+  assert.deepEqual(context.tastePreferences, ['辣']);
+  assert.deepEqual(request.preferences.tastes, ['辣']);
+});
+
+test('context normalizes party, scenario, dining mode, budget tier and anonymous diners', () => {
+  const context = createUserContext({
+    partySize: 4,
+    partySizeBucket: '4_plus',
+    mealScene: 'group_mixed_taste',
+    diningMode: 'shared_main_personal',
+    inspirationBudgetTier: 'everyday',
+    dinerProfiles: [
+      { id: 'diner-1', tastePreferences: ['辣'], exclusions: ['花生'] },
+      { id: 'diner-2', tastePreferences: ['清淡'], exclusions: [] }
+    ]
+  });
+
+  assert.equal(context.partySizeBucket, '4_plus');
+  assert.equal(context.mealScene, 'group_mixed_taste');
+  assert.equal(context.diningMode, 'shared_main_personal');
+  assert.equal(context.inspirationBudgetTier, 'everyday');
+  assert.equal(context.dinerProfiles[0].id, 'diner-1');
+  assert.deepEqual(context.dinerProfiles[0].tastePreferences, ['辣']);
+});
+
+test('context rejects incompatible scenarios and bounds anonymous diner preferences', () => {
+  const context = createUserContext({
+    partySize: 1,
+    partySizeBucket: '4_plus',
+    mealScene: 'group_gathering',
+    diningMode: 'shared',
+    inspirationBudgetTier: 'unapproved',
+    dinerProfiles: Array.from({ length: 51 }, (_, index) => ({
+      id: `person-${index + 1}`,
+      tastePreferences: ['辣', '甜', '酸', '咸'],
+      exclusions: Array.from({ length: 31 }, (_, exclusion) => `忌口-${exclusion}`)
+    }))
+  });
+
+  assert.equal(context.partySizeBucket, '1');
+  assert.equal(context.mealScene, null);
+  assert.equal(context.diningMode, null);
+  assert.equal(context.inspirationBudgetTier, null);
+  assert.equal(context.dinerProfiles.length, 50);
+  assert.equal(context.dinerProfiles[0].id, 'diner-1');
+  assert.deepEqual(context.dinerProfiles[0].tastePreferences, ['辣', '甜', '酸']);
+  assert.equal(context.dinerProfiles[0].exclusions.length, 30);
+});
+
+test('phase 3.7 fields never enter a provider request', () => {
+  const dinerOnlyExclusion = 'diner-only-exclusion-sentinel';
+  const request = toProviderRequest(createUserContext({
+    exclusions: ['top-level-exclusion-contract'],
+    mealScene: 'solo_quick',
+    diningMode: null,
+    inspirationBudgetTier: 'economy',
+    dinerProfiles: [{ id: 'diner-1', exclusions: [dinerOnlyExclusion] }]
+  }), { requestId: 'request-3-7', requestedAt: NOW });
+  const serialized = JSON.stringify(request);
+
+  assert.deepEqual(request.constraints.exclusions, ['top-level-exclusion-contract']);
+  assert.equal(serialized.includes(dinerOnlyExclusion), false);
+  for (const forbidden of ['mealScene', 'diningMode', 'inspirationBudgetTier', 'dinerProfiles']) {
+    assert.equal(serialized.includes(forbidden), false);
+  }
 });

@@ -1,11 +1,33 @@
-export const SCENES = Object.freeze([
-  { value: 'balanced', icon: '01', label: '省心稳妥', help: '熟悉、均衡，不想踩雷' },
-  { value: 'comfort', icon: '02', label: '吃得满足', help: '浓郁、扎实，犒劳一下' },
-  { value: 'lighter', icon: '03', label: '清淡舒服', help: '轻盈、温和，少点负担' },
-  { value: 'novelty', icon: '04', label: '换点新鲜', help: '跳出最近常吃的方向' }
-]);
+import {
+  INSPIRATION_BUDGET_TIER,
+  PARTY_SIZE_BUCKET,
+  getDiningModesForScene,
+  getScenesForPartySize
+} from '../domain/scenarios.js';
+import { FLOW_STEP, getVisibleSteps } from '../presentation/flow-state.js';
 
 export const TASTES = Object.freeze(['辣', '咸鲜', '清淡', '酸', '甜', '浓郁']);
+
+const PARTY_OPTIONS = Object.freeze([
+  { value: 1, bucket: PARTY_SIZE_BUCKET.ONE, label: '1 人' },
+  { value: 2, bucket: PARTY_SIZE_BUCKET.TWO, label: '2 人' },
+  { value: 3, bucket: PARTY_SIZE_BUCKET.THREE, label: '3 人' },
+  { value: 4, bucket: PARTY_SIZE_BUCKET.FOUR_PLUS, label: '4 人以上' }
+]);
+
+const BUDGET_OPTIONS = Object.freeze([
+  { value: INSPIRATION_BUDGET_TIER.ECONOMY, label: '节省预算' },
+  { value: INSPIRATION_BUDGET_TIER.EVERYDAY, label: '日常选择' },
+  { value: INSPIRATION_BUDGET_TIER.GENEROUS, label: '丰盛一些' },
+  { value: INSPIRATION_BUDGET_TIER.OPEN, label: '暂不限制' }
+]);
+
+const STEP_LABELS = Object.freeze({
+  [FLOW_STEP.PARTY]: '人数',
+  [FLOW_STEP.SCENE]: '场景',
+  [FLOW_STEP.DINING]: '用餐方式',
+  [FLOW_STEP.PREFERENCES]: '偏好'
+});
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, (character) => ({
@@ -13,104 +35,216 @@ function escapeHtml(value) {
   })[character]);
 }
 
-function progress(step) {
-  return `<div class="progress-block" aria-label="精准筛选进度">
-    <div class="progress-copy"><span>精准筛选</span><span>第 ${step} 步，共 3 步</span></div>
-    <div class="progress-track" aria-hidden="true"><span style="width:${step / 3 * 100}%"></span></div>
+function parseList(value) {
+  return [...new Set(String(value ?? '')
+    .split(/[，,、;；\s]+/)
+    .map((part) => part.trim())
+    .filter(Boolean))]
+    .slice(0, 30);
+}
+
+function progress(state) {
+  const steps = getVisibleSteps(state);
+  const currentIndex = state.step === FLOW_STEP.RESULT ? steps.length : steps.indexOf(state.step);
+  const complete = state.step === FLOW_STEP.RESULT;
+  return `<div class="progress-block" data-progress-complete="${complete}">
+    <div class="progress-copy"><span>选择进度</span><span>${Math.min(currentIndex + 1, steps.length)} / ${steps.length}</span></div>
+    <ol class="progress-list" aria-label="用餐选择进度">
+      ${steps.map((step, index) => `<li${step === state.step ? ' aria-current="step"' : ''} data-progress-state="${index < currentIndex ? 'complete' : index === currentIndex ? 'current' : 'upcoming'}">${STEP_LABELS[step]}</li>`).join('')}
+    </ol>
   </div>`;
 }
 
+function requiredLabel() {
+  return '<span class="required-label">必填</span>';
+}
+
+function partyStep(state) {
+  return `${progress(state)}<fieldset class="field-group">
+    <legend data-step-heading tabindex="-1">用餐人数 ${requiredLabel()}</legend>
+    <p class="field-help">选择用餐人数，后续场景会随人数调整。</p>
+    <div class="chip-list">
+      ${PARTY_OPTIONS.map(({ value, bucket, label }) => `<label class="choice-option" for="party-${bucket}">
+        <input id="party-${bucket}" name="partySize" type="radio" value="${value}" data-party-bucket="${bucket}" ${state.partySizeBucket === bucket ? 'checked' : ''}>
+        <span>${label}</span>
+      </label>`).join('')}
+    </div>
+    ${state.partySizeBucket === PARTY_SIZE_BUCKET.FOUR_PLUS ? `<div class="field">
+      <label for="exact-party-size">实际用餐人数</label>
+      <input id="exact-party-size" name="exactPartySize" type="number" min="4" max="50" step="1" required value="${state.partySize}" aria-describedby="exact-party-size-help">
+      <small id="exact-party-size-help">请输入 4 至 50 人。</small>
+    </div>` : ''}
+  </fieldset>`;
+}
+
 function sceneStep(state) {
-  return `<fieldset class="field-group">
-    <legend>选一个当前状态 <span class="required-label">必填</span></legend>
-    <p class="field-help">已为你预选“省心稳妥”，可以直接开始。</p>
+  const scenes = getScenesForPartySize(state.partySize);
+  return `${progress(state)}<fieldset class="field-group">
+    <legend data-step-heading tabindex="-1">用餐场景 ${requiredLabel()}</legend>
+    <p class="field-help">选择最接近本次用餐的情形。</p>
     <div class="scene-grid">
-      ${SCENES.map((scene) => `<button class="scene-card" type="button" data-scene="${scene.value}" aria-pressed="${state.scene === scene.value}">
-        <span class="scene-icon" aria-hidden="true">${scene.icon}</span><strong>${scene.label}</strong><span>${scene.help}</span>
-      </button>`).join('')}
+      ${scenes.map((scene, index) => `<label class="scene-card" for="scene-${scene.value}">
+        <input id="scene-${scene.value}" name="mealScene" type="radio" value="${scene.value}" aria-label="${escapeHtml(scene.label)}" ${state.mealScene === scene.value ? 'checked' : ''}>
+        <span class="scene-icon" aria-hidden="true">${String(index + 1).padStart(2, '0')}</span><strong>${escapeHtml(scene.label)}</strong>
+      </label>`).join('')}
+    </div>
+  </fieldset>`;
+}
+
+function diningStep(state) {
+  const modes = getDiningModesForScene(state.mealScene);
+  return `${progress(state)}<fieldset class="field-group">
+    <legend data-step-heading tabindex="-1">用餐方式 ${requiredLabel()}</legend>
+    <p class="field-help">选择菜品如何在多人之间安排；忌口条件始终保留。</p>
+    <div class="scene-grid">
+      ${modes.map((mode) => `<label class="scene-card" for="dining-${mode.value}">
+        <input id="dining-${mode.value}" name="diningMode" type="radio" value="${mode.value}" aria-label="${escapeHtml(mode.label)}" ${state.diningMode === mode.value ? 'checked' : ''}>
+        <strong>${escapeHtml(mode.label)}</strong>
+      </label>`).join('')}
+    </div>
+  </fieldset>`;
+}
+
+function tastesFor(state, draft) {
+  return state.partySize === 1 ? state.tastePreferences : draft.tastePreferences;
+}
+
+function exclusionsFor(state, draft) {
+  return state.partySize === 1 ? state.exclusions : draft.exclusions;
+}
+
+function dinerRegion(state, draft, index) {
+  const tastes = tastesFor(state, draft);
+  const exclusions = exclusionsFor(state, draft);
+  return `<fieldset class="field-group diner-preferences" data-diner-region data-diner-id="${draft.id}">
+    <legend>第 ${index + 1} 位用餐者</legend>
+    <p class="field-help">无需填写姓名；最多选择 3 种口味，忌口仅用于本次筛选。</p>
+    <div class="chip-list" aria-label="第 ${index + 1} 位用餐者口味">
+      ${TASTES.map((taste, tasteIndex) => `<button id="taste-${draft.id}-${tasteIndex}" class="choice-chip" type="button" data-diner-taste="${escapeHtml(taste)}" data-diner-id="${draft.id}" aria-pressed="${tastes.includes(taste)}">${escapeHtml(taste)}</button>`).join('')}
+    </div>
+    <div class="field">
+      <label for="${draft.id}-exclusions">忌口或过敏食材 <span class="optional-label">选填</span></label>
+      <input id="${draft.id}-exclusions" name="${draft.id}-exclusions" type="text" value="${escapeHtml(exclusions.join('、'))}" placeholder="例如：花生、香菜" autocomplete="off" maxlength="240" data-diner-exclusions="${draft.id}">
     </div>
   </fieldset>`;
 }
 
 function preferencesStep(state) {
-  return `${progress(2)}
+  return `${progress(state)}
     <fieldset class="field-group">
-      <legend>偏好的口味 <span class="optional-label">选填</span></legend>
-      <p class="field-help">最多选 3 个，越靠前越重要。</p>
+      <legend data-step-heading tabindex="-1">预算倾向 ${requiredLabel()}</legend>
+      <p class="field-help">仅用于比较菜品类型，不代表实际价格。</p>
       <div class="chip-list">
-        ${TASTES.map((taste) => `<button class="choice-chip" type="button" data-taste="${taste}" aria-pressed="${state.tastes.includes(taste)}">${taste}</button>`).join('')}
+        ${BUDGET_OPTIONS.map(({ value, label }) => `<label class="choice-option" for="budget-${value}">
+          <input id="budget-${value}" name="inspirationBudgetTier" type="radio" value="${value}" ${state.inspirationBudgetTier === value ? 'checked' : ''}>
+          <span>${label}</span>
+        </label>`).join('')}
       </div>
-      <div class="field">
-        <label for="exclusions">不吃或需要避开的食材 <span class="optional-label">选填</span></label>
-        <input id="exclusions" name="exclusions" type="text" value="${escapeHtml(state.exclusions)}" placeholder="例如：花生、香菜、海鲜" autocomplete="off" maxlength="240" aria-describedby="exclusions-help">
-        <small id="exclusions-help">仅用于这次推荐，不会保存原文。严重过敏请同时向商家确认。</small>
-      </div>
-      <div class="field">
-        <label for="party-size">用餐人数 <span class="optional-label">选填</span></label>
-        <select id="party-size" name="partySize">
-          ${[1,2,3,4].map((size) => `<option value="${size}" ${state.partySize === size ? 'selected' : ''}>${size === 4 ? '4 人或更多' : `${size} 人`}</option>`).join('')}
-        </select>
-      </div>
-    </fieldset>`;
+    </fieldset>
+    ${state.dinerDrafts.map((draft, index) => dinerRegion(state, draft, index)).join('')}
+    <p class="privacy-note"><span>不保存用餐者称呼和本次忌口。如有严重过敏，请在用餐前再次确认配料。</span></p>`;
 }
 
-function confirmationStep(state) {
-  const scene = SCENES.find(({ value }) => value === state.scene)?.label ?? '省心稳妥';
-  const tastes = state.tastes.length ? state.tastes.join('、') : '不限定';
-  return `${progress(3)}
-    <div class="field-group">
-      <h3>确认这次的方向</h3>
-      <p class="field-help">推荐会严格避开你填写的忌口，其余条件用于排序。</p>
-      <div class="confirmation">
-        <div class="summary-line"><span>当前状态</span><strong>${scene}</strong></div>
-        <div class="summary-line"><span>口味</span><strong>${escapeHtml(tastes)}</strong></div>
-        <div class="summary-line"><span>忌口</span><strong>${state.exclusions.trim() ? '已填写，仅本次使用' : '未填写'}</strong></div>
-        <div class="summary-line"><span>人数</span><strong>${state.partySize === 4 ? '4 人或更多' : `${state.partySize} 人`}</strong></div>
-      </div>
-      <p class="privacy-note"><span>当前没有实时外卖数据，因此不会请求精确位置，也不会展示价格、距离或 ETA。</span></p>
-    </div>`;
+function resultStep(state) {
+  return progress(state);
+}
+
+function stepMarkup(state) {
+  if (state.step === FLOW_STEP.PARTY) return partyStep(state);
+  if (state.step === FLOW_STEP.SCENE) return sceneStep(state);
+  if (state.step === FLOW_STEP.DINING) return diningStep(state);
+  if (state.step === FLOW_STEP.PREFERENCES) return preferencesStep(state);
+  return resultStep(state);
+}
+
+function stepIsValid(state) {
+  if (state.step === FLOW_STEP.PARTY) {
+    return Number.isInteger(state.partySize) && state.partySize >= 1 && state.partySize <= 50;
+  }
+  if (state.step === FLOW_STEP.SCENE) {
+    return getScenesForPartySize(state.partySize).some(({ value }) => value === state.mealScene);
+  }
+  if (state.step === FLOW_STEP.DINING) {
+    return getDiningModesForScene(state.mealScene).some(({ value }) => value === state.diningMode);
+  }
+  if (state.step === FLOW_STEP.PREFERENCES) return Boolean(state.inspirationBudgetTier);
+  return false;
 }
 
 function actionsFor(state) {
-  if (state.step === 1) return [
-    { action: 'recommend', label: '马上推荐', className: 'button-primary' },
-    { action: 'precise', label: '精准筛选', className: 'button-secondary' }
-  ];
-  if (state.step === 2) return [
-    { action: 'back', label: '返回', className: 'button-secondary' },
-    { action: 'next', label: '下一步', className: 'button-primary' },
-    { action: 'skip', label: '跳过选填', className: 'inline-link' }
-  ];
-  return [
-    { action: 'back', label: '返回', className: 'button-secondary' },
-    { action: 'recommend', label: '生成推荐', className: 'button-primary' }
-  ];
+  if (state.step === FLOW_STEP.PARTY) {
+    return [{ action: 'next', label: '下一步', className: 'button-primary', disabled: !stepIsValid(state) }];
+  }
+  if ([FLOW_STEP.SCENE, FLOW_STEP.DINING].includes(state.step)) {
+    return [
+      { action: 'back', label: '返回', className: 'button-secondary' },
+      { action: 'next', label: '下一步', className: 'button-primary', disabled: !stepIsValid(state) }
+    ];
+  }
+  if (state.step === FLOW_STEP.PREFERENCES) {
+    return [
+      { action: 'back', label: '返回', className: 'button-secondary' },
+      { action: 'recommend', label: '生成推荐', className: 'button-primary', disabled: !stepIsValid(state) }
+    ];
+  }
+  return [];
 }
 
 function renderActions(root, state) {
-  root.innerHTML = actionsFor(state).map(({ action, label, className }) => (
-    `<button type="button" class="${className === 'inline-link' ? className : `button ${className}`}" data-flow-action="${action}">${label}</button>`
+  root.innerHTML = actionsFor(state).map(({ action, label, className, disabled }) => (
+    `<button type="button" class="button ${className}" data-flow-action="${action}" ${disabled ? 'disabled' : ''}>${label}</button>`
   )).join('');
 }
 
-export function renderInputFlow({ root, desktopActions, mobileActions, state, onChange, onAction }) {
-  root.innerHTML = state.step === 1 ? sceneStep(state) : state.step === 2 ? preferencesStep(state) : confirmationStep(state);
+export function renderInputFlow({ root, desktopActions, mobileActions, state, onEvent, onAction }) {
+  root.innerHTML = stepMarkup(state);
   renderActions(desktopActions, state);
   renderActions(mobileActions, state);
 
-  root.querySelectorAll('[data-scene]').forEach((button) => button.addEventListener('click', () => {
-    onChange({ scene: button.dataset.scene });
+  root.querySelectorAll('[data-party-bucket]').forEach((input) => input.addEventListener('change', () => {
+    const partySize = input.dataset.partyBucket === PARTY_SIZE_BUCKET.FOUR_PLUS
+      ? Math.max(4, state.partySize)
+      : Number(input.value);
+    onEvent({ type: 'select_party_size', partySize });
   }));
-  root.querySelectorAll('[data-taste]').forEach((button) => button.addEventListener('click', () => {
-    const taste = button.dataset.taste;
-    const next = state.tastes.includes(taste)
-      ? state.tastes.filter((value) => value !== taste)
-      : [...state.tastes, taste].slice(0, 3);
-    onChange({ tastes: next });
+  root.querySelector('#exact-party-size')?.addEventListener('input', (event) => {
+    const partySize = Number(event.target.value);
+    const valid = Number.isInteger(partySize) && partySize >= 4 && partySize <= 50;
+    onEvent({ type: 'select_party_size', partySize }, { render: false });
+    [desktopActions, mobileActions].forEach((container) => {
+      const next = container.querySelector('[data-flow-action="next"]');
+      if (next) next.disabled = !valid;
+    });
+  });
+  root.querySelectorAll('[name="mealScene"]').forEach((input) => input.addEventListener('change', () => {
+    onEvent({ type: 'select_scene', mealScene: input.value });
   }));
-  root.querySelector('#exclusions')?.addEventListener('input', (event) => onChange({ exclusions: event.target.value }, { render: false }));
-  root.querySelector('#party-size')?.addEventListener('change', (event) => onChange({ partySize: Number(event.target.value) }));
-  [desktopActions, mobileActions].forEach((container) => container.querySelectorAll('[data-flow-action]').forEach((button) => {
-    button.addEventListener('click', () => onAction(button.dataset.flowAction));
+  root.querySelectorAll('[name="diningMode"]').forEach((input) => input.addEventListener('change', () => {
+    onEvent({ type: 'select_dining_mode', diningMode: input.value });
   }));
+  root.querySelectorAll('[name="inspirationBudgetTier"]').forEach((input) => input.addEventListener('change', () => {
+    onEvent({ type: 'set_budget', value: input.value });
+  }));
+  root.querySelectorAll('[data-diner-taste]').forEach((button) => button.addEventListener('click', () => {
+    const draft = state.dinerDrafts.find(({ id }) => id === button.dataset.dinerId);
+    if (!draft) return;
+    const current = tastesFor(state, draft);
+    const taste = button.dataset.dinerTaste;
+    const tastePreferences = current.includes(taste)
+      ? current.filter((value) => value !== taste)
+      : [...current, taste].slice(0, 3);
+    onEvent({ type: 'update_diner_draft', dinerId: draft.id, tastePreferences });
+  }));
+  root.querySelectorAll('[data-diner-exclusions]').forEach((input) => input.addEventListener('input', () => {
+    onEvent({
+      type: 'update_diner_draft',
+      dinerId: input.dataset.dinerExclusions,
+      exclusions: parseList(input.value)
+    }, { render: false });
+  }));
+  [desktopActions, mobileActions].forEach((container) => {
+    container.querySelectorAll('[data-flow-action]').forEach((button) => {
+      button.addEventListener('click', () => onAction(button.dataset.flowAction));
+    });
+  });
 }

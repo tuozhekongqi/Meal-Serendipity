@@ -67,3 +67,56 @@ test('requires the caller to inject the current time', () => {
     /options\.now/
   );
 });
+
+test('carries scored scenario evidence into recommendation reasons without changing the API', () => {
+  const inspiration = makeLiveCandidate({
+    id: 'inspiration:quick',
+    sourceMode: 'inspiration',
+    store: null,
+    pricing: null,
+    delivery: null,
+    availability: null,
+    item: { isAvailable: null },
+    dataUpdatedAt: null,
+    metadata: {
+      discoveryTraits: { convenient: 1, stable: 1, filling: 0 },
+      priceTier: 1,
+      supportedDiningModes: ['shared']
+    }
+  });
+  const context = makeContext({
+    mealScene: 'solo_quick',
+    inspirationBudgetTier: 'economy',
+    diningMode: 'shared'
+  });
+
+  const result = recommend(context, [inspiration], { now: NOW });
+
+  assert.equal(result.primary.candidate.id, 'inspiration:quick');
+  assert.deepEqual(result.primary.evidence, {
+    sceneReasonCode: 'quick_reliable_match',
+    inspirationBudgetMatched: true,
+    diningModeMatched: true,
+    matchedTraits: ['convenient', 'stable'],
+    taste: {
+      scope: 'single',
+      matchedPreferences: ['咸鲜'],
+      unmatchedPreferences: [],
+      matchedDinerCount: 1,
+      preferenceDinerCount: 1
+    }
+  });
+  assert.ok(result.primary.reasonCodes.includes('quick_reliable_match'));
+  assert.ok(result.primary.reasonCodes.includes('inspiration_budget_match'));
+  assert.ok(result.primary.reasonCodes.includes('dining_mode_match'));
+  assert.ok(result.primary.reasonCodes.includes('taste_match'));
+  assert.ok(result.primary.tradeoffs.some(({ code }) => code === 'live_data_unavailable'));
+});
+
+test('preserves legacy live recommendation reasons when scoring returns no evidence', () => {
+  const result = recommend(makeContext(), [makeLiveCandidate()], { now: NOW });
+
+  assert.equal('evidence' in result.primary, false);
+  assert.equal(result.primary.reasonCodes.includes('quick_reliable_match'), false);
+  assert.ok(result.primary.reasonCodes.includes('within_budget'));
+});

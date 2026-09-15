@@ -1,4 +1,5 @@
 import { CURRENT_PRIORITY } from '../domain/models.js';
+import { getScenarioProfile, scoreScenarioEvidence } from './scenario-profiles.js';
 
 export const SCORE_WEIGHTS = Object.freeze({
   [CURRENT_PRIORITY.BALANCED]: Object.freeze({
@@ -112,6 +113,27 @@ function round(value, precision = 4) {
  * @param {import('../domain/models.js').Candidate} candidate
  */
 export function scoreCandidate(context, candidate) {
+  const profile = candidate.sourceMode === 'inspiration'
+    ? getScenarioProfile(context.mealScene)
+    : null;
+  if (profile) {
+    const scenarioEvidence = scoreScenarioEvidence(context, candidate);
+    const score = Object.entries(profile.scoreWeights).reduce(
+      (total, [key, weight]) => total + scenarioEvidence.components[key] * weight,
+      0
+    );
+
+    return {
+      candidate,
+      score: round(score),
+      components: Object.fromEntries(
+        Object.entries(scenarioEvidence.components).map(([key, value]) => [key, round(value)])
+      ),
+      weights: profile.scoreWeights,
+      evidence: scenarioEvidence.evidence
+    };
+  }
+
   const weights = SCORE_WEIGHTS[context.currentPriority] ?? SCORE_WEIGHTS.balanced;
   const components = {
     taste: tasteComponent(context, candidate),

@@ -3,6 +3,22 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+const APPROVED_DISH_ASSETS = Object.freeze([
+  'braised.webp',
+  'celebration.webp',
+  'dessert.webp',
+  'grill.webp',
+  'hotpot.webp',
+  'light-meal.webp',
+  'noodles.webp',
+  'placeholder.svg',
+  'plated.webp',
+  'rice-bowl.webp',
+  'sharing.webp',
+  'snacks.webp',
+  'soup.webp'
+]);
+
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const argumentsMap = new Map(process.argv.slice(2).map((argument) => {
   const [key, ...value] = argument.split('=');
@@ -66,10 +82,23 @@ function createIco() {
   return buffer;
 }
 
+async function readApprovedDishAsset(file) {
+  const sourcePath = path.join(projectRoot, 'assets', 'dishes', file);
+  try {
+    return await readFile(sourcePath);
+  } catch (error) {
+    if (error?.code === 'ENOENT') {
+      throw new Error(`Approved dish source file is missing: assets/dishes/${file}`);
+    }
+    throw error;
+  }
+}
+
 async function main() {
   assertSafeOutputDirectory(outputDirectory);
   await rm(outputDirectory, { recursive: true, force: true });
   await mkdir(path.join(outputDirectory, 'assets'), { recursive: true });
+  await mkdir(path.join(outputDirectory, 'assets', 'dishes'), { recursive: true });
 
   await build({
     absWorkingDir: projectRoot,
@@ -93,7 +122,11 @@ async function main() {
     writeFile(path.join(outputDirectory, 'index.html'), indexHtml),
     writeFile(path.join(outputDirectory, '404.html'), await readFile(path.join(projectRoot, '404.html'))),
     writeFile(path.join(outputDirectory, 'favicon.svg'), await readFile(path.join(projectRoot, 'favicon.svg'))),
-    writeFile(path.join(outputDirectory, 'favicon.ico'), createIco())
+    writeFile(path.join(outputDirectory, 'favicon.ico'), createIco()),
+    ...APPROVED_DISH_ASSETS.map(async (file) => writeFile(
+      path.join(outputDirectory, 'assets', 'dishes', file),
+      await readApprovedDishAsset(file)
+    ))
   ]);
 
   process.stdout.write(`Built GitHub Pages artifact at ${outputDirectory}\n`);
